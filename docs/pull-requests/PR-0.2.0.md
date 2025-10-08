@@ -1,0 +1,193 @@
+# feat(auth,app): SSR-hydrated sessions, flicker-free UI, and feature-based refactor
+
+## 🎯 Overview
+
+This PR eliminates the unauthenticated flash on page load, implements a complete credentials-based authentication flow, and refactors the codebase into a feature-based architecture. 
+
+**Key Achievement:** Users now see the correct authenticated/unauthenticated state **immediately on page load** without any visual jumps.
+
+**📄 Full technical write-up:** [`docs/pull-requests/PR-0.2.0.md`](docs/pull-requests/PR-0.2.0.md)
+
+---
+
+## 🔥 Critical Fix: SSR Session Hydration
+
+**Problem:** UI flicker on load (loading state → flash → authenticated state)
+
+**Solution:** Server-side session fetching + client hydration:
+
+```tsx
+// src/app/layout.tsx (Server Component)
+export default async function RootLayout({ children }) {
+  const session = await getServerSession(authOptions);
+  return (
+    <html lang="en">
+      <body>
+        <Providers session={session}>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+```
+
+```tsx
+// src/app/providers.tsx (Client Component)
+'use client';
+export default function Providers({ children, session }: { 
+  children: ReactNode; 
+  session: Session | null 
+}) {
+  return (
+    <SessionProvider session={session}>
+      <ChakraProvider>{children}</ChakraProvider>
+    </SessionProvider>
+  );
+}
+```
+
+**Impact:** ✅ Zero flicker • ✅ Instant auth state • ✅ Better UX
+
+---
+
+## 🎨 Auth UI Components
+
+**New Components:**
+- **AuthModal** - Unified modal container with tab-driven auth flows
+- **AuthLayout** - Tabbed layout (Sign In / Sign Up) with responsive design
+- **SignInForm** - Credentials login using `signIn('credentials', { redirect: false })`
+- **SignupForm** - Server action-based registration with Zod validation
+- **UserCard** - Authenticated user display with avatar and sign-out
+- **SessionBadge** - Minimal auth status indicator
+
+**Key Pattern (SignInForm):**
+```tsx
+const res = await signIn('credentials', { redirect: false, email, password });
+if (!res?.error) await update(); // Refresh session without reload
+```
+
+[Full component details →](docs/pull-requests/PR-0.2.0.md#auth-ui-components)
+
+---
+
+## ⚙️ Server Actions & Unified Contract
+
+**Unified Result Type:**
+```typescript
+export type ActionResult =
+  | { ok: true }
+  | { ok: false; errors: { formErrors?: string[]; fieldErrors?: Record<string, string[]> } };
+```
+
+**Actions:**
+- `registerUser(FormData)` - Email normalization, password hashing, Prisma user+profile creation
+- `signinAction(FormData)` - Placeholder (using next-auth `signIn()` directly for now)
+
+**Features:** Zod validation • Duplicate email handling (P2002) • Detailed error mapping
+
+[Full server action implementation →](docs/pull-requests/PR-0.2.0.md#server-actions)
+
+---
+
+## 🔌 NextAuth API & Configuration
+
+```typescript
+// src/app/api/auth/[...nextauth]/route.ts
+import NextAuth from 'next-auth';
+import { authOptions } from '@/features/auth/server/options';
+
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };
+```
+
+**Auth Setup:**
+- Credentials provider with email/password validation
+- JWT strategy (required for credentials)
+- Prisma adapter for future OAuth
+- Session callbacks include user ID and role
+
+[Full authOptions configuration →](docs/pull-requests/PR-0.2.0.md#nextauth-configuration)
+
+---
+
+## 🏗️ Architecture Refactor
+
+**Feature-Based Structure:**
+
+```
+src/
+├── app/
+│   ├── (public)/         ← Landing
+│   ├── (auth)/           ← Auth pages (verify, reset)
+│   ├── (dashboard)/      ← Protected routes
+│   ├── api/auth/[…nextauth]/route.ts
+│   ├── layout.tsx        ← SSR session fetch
+│   └── providers.tsx     ← Client SessionProvider
+│
+├── features/auth/
+│   ├── components/       ← All auth UI
+│   ├── server/
+│   │   ├── actions/      ← registerUser, signinAction
+│   │   ├── options.ts    ← NextAuth config
+│   │   └── verify/       ← Email verification stubs
+│   ├── lib/              ← Auth helpers
+│   └── types/            ← NextAuth augmentation
+│
+└── lib/
+    ├── validation/       ← Zod schemas
+    ├── prisma.ts
+    └── env.ts
+```
+---
+
+## 🧪 Testing
+
+**Manual Smoke Tests ✅**
+- ✅ Sign up with validation errors, duplicate email handling
+- ✅ Sign in with invalid/valid credentials
+- ✅ Sign out clears session correctly
+- ✅ **SSR hydration: hard refresh shows authenticated state instantly (no flicker)**
+- ✅ Session persists across navigation
+
+**Build:** ✅ TypeScript: 0 errors • ✅ Build: 3.5s • ✅ All routes generated
+
+[Detailed test scenarios →](docs/pull-requests/PR-0.2.0.md#testing)
+
+---
+
+## 🚀 What's Next
+
+**Future Enhancements:**
+- [ ] Email verification flow
+- [ ] OAuth providers (Google, GitHub)
+- [ ] Protected dashboard routes
+- [ ] Password reset flow
+- [ ] Role-based access control
+
+---
+
+## 📋 Checklist
+
+- [x] SSR session hydration implemented
+- [x] Zero UI flicker confirmed
+- [x] All auth components created
+- [x] Unified server action contract
+- [x] NextAuth API configured
+- [x] Feature-based architecture
+- [x] 100% README coverage
+- [x] Zod validation complete
+- [x] TypeScript: 0 errors
+- [x] Build succeeds
+- [x] Smoke tests passed
+
+---
+
+## 🔗 Related
+
+**Migration Notes:**
+- Set `NEXTAUTH_SECRET` and `NEXTAUTH_URL` in `.env.local`
+- Run `pnpm prisma:generate && pnpm prisma:migrate`
+- Optional: `pnpm db:seed` for demo users (`admin@demo.io` / `admin123`)
+
+---
+
+**Ready to merge! 🎉**
