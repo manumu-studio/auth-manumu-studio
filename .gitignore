@@ -66,3 +66,5 @@ brew/
 
 # Local docs and deprecated code
 docs/_archive/
+.env.example.bak
+email-validation-scaffold.sh
