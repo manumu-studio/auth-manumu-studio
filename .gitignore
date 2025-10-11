@@ -68,3 +68,4 @@ brew/
 docs/_archive/
 .env.example.bak
 email-validation-scaffold.sh
+verify-email-scaffold.sh

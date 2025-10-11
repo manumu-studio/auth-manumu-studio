@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition, type FormEvent } from 'react';
 import type { SignInFormProps } from './SignInForm.types';
-import styles from './SingInForm.module.scss';
+import styles from './SignInForm.module.scss';
 
 import {
   Box,

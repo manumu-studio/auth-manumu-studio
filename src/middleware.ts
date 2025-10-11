@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-// No-op: lets every request continue
 export function middleware(_req: NextRequest) {
+  // pass-through; do nothing
   return NextResponse.next();
 }
 
-// (Optional) only run on specific paths later
+// (optional) Only run on real app paths, not Next internals
 export const config = {
-  // matcher: ['/dashboard/:path*', '/api/:path*'],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

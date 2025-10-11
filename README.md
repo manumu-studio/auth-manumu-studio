@@ -1,19 +1,21 @@
 # M2 Auth & Profiles — Next.js + Prisma + Postgres (+ Chakra)
 
 
-A focused Next.js starter with **Credentials sign-in/sign-up**, **Prisma + Postgres**, and **Chakra UI**. Built with the **App Router**, **TypeScript**, **Zod** validation, and a clean **server/client boundary**.
+A focused Next.js starter with **Credentials + Google OAuth sign-in/sign-up**, **Prisma + Postgres**, and **Chakra UI**. Built with the **App Router**, **TypeScript**, **Zod** validation, and a clean **server/client boundary**.
 
-> OAuth providers + NextAuth wiring can be enabled later (already planned). Current UI uses server actions with a unified result shape.
+> Multi-provider authentication hub with email-first UX and one-click Google sign-in. Additional OAuth providers (GitHub, Facebook) can be added as needed.
 
 ---
 
 ## 🚀 Features
 
-- **Auth (current)**: Credentials sign-in/sign-up via server actions
+- **Auth**: Credentials + Google OAuth via NextAuth v4 with Prisma adapter
+- **Multi-Provider Hub**: Email-first sign-in flow with animated collapse + one-click OAuth
+- **Email Verification**: Required for credentials, optional for OAuth (trusted providers)
 - **DB**: Prisma ORM + PostgreSQL (Neon-ready)
-- **UI**: Chakra UI, responsive layout
+- **UI**: Chakra UI, responsive layout, modern sign-in hub
 - **Validation**: Zod schemas with shared field rules
-- **Types**: Full TS, unified `ActionResult` contract
+- **Types**: Full TS, unified `ActionResult` contract, augmented NextAuth types
 - **DX**: Clear server/client boundary, Providers split
 - **Prisma**: Migrations + optional seeding
 
@@ -40,19 +42,38 @@ pnpm i
 
 2) Environment
 
-Copy .env.example to .env.local and fill in values:
+Copy `.env.example` to `.env.local` and fill in values:
 
+```bash
 # Database
 DATABASE_URL="postgresql://user:password@host:5432/db?sslmode=require"
 
-# Auth (for future NextAuth wiring)
-NEXTAUTH_SECRET="dev-only-secret"
+# NextAuth
+NEXTAUTH_SECRET="dev-only-secret-change-in-prod"
 NEXTAUTH_URL="http://localhost:3000"
-# Optional fallback also supported by env.ts:
-# AUTH_URL="http://localhost:3000"
 
+# Google OAuth (optional - sign-in works without it)
+GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
-Server-only env parsing lives in src/lib/env.ts (Zod validated). Real secrets are ignored by Git; only .env.example is tracked.
+# Optional: APP_URL fallback for callback URL assembly
+APP_URL="http://localhost:3000"
+```
+
+Server-only env parsing lives in `src/lib/env.ts` (Zod validated). Real secrets are ignored by Git; only `.env.example` is tracked.
+
+### OAuth Setup (Google)
+
+To enable Google sign-in:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
+2. Create OAuth 2.0 Client ID (Web application)
+3. Add authorized redirect URIs:
+   - **Local**: `http://localhost:3000/api/auth/callback/google`
+   - **Production**: `https://YOUR_DOMAIN/api/auth/callback/google`
+4. Copy Client ID and Client Secret to `.env.local`
+
+> **Note**: Use separate OAuth clients for local and production environments.
 
 3) Database
 pnpm prisma:generate
@@ -65,46 +86,69 @@ pnpm dev
 
 Open http://localhost:3000
 
-📁 Project Structure (key parts)
+## 📁 Project Structure (key parts)
 
+```
 src/
   app/
     (public)/
-      page.tsx              # demo entry
+      page.tsx              # Multi-provider sign-in hub
+    (auth)/
+      verify/               # Email verification pages
     api/
-      auth/[...nextauth]/   # NextAuth route (GET/POST handlers)
-      debug-session/        # session debug endpoint
+      auth/
+        [...nextauth]/      # NextAuth route (GET/POST handlers)
+        verify/             # Email verification API
+      debug-session/        # Session debug endpoint
     layout.tsx              # Server root; SSR session → Providers
     providers.tsx           # Client: SessionProvider + Chakra
   features/
     auth/
       components/
-        AuthModal/
-        AuthLayout/
-        SignInForm/
-        SignupForm/
-        UserCard/
-        SessionBadge/
+        AuthModal/          # Sign-in/sign-up modal
+        AuthLayout/         # Auth page layout wrapper
+        SignInForm/         # Credentials sign-in form
+        SignupForm/         # User registration form
+        ProviderButtons/    # Google + multi-provider hub components
+          AuthProvidersGroup.tsx
+          GoogleButton/
+        UserCard/           # Display current user info
+        VerifyBanner/       # Email verification prompt
       server/
-        options.ts          # NextAuth config
+        options.ts          # NextAuth config (JWT + Prisma adapter)
+        providers/
+          google.ts         # Google OAuth provider factory
         actions/
-          signin.ts
-          signup.ts
+          signin.ts         # Server action for credentials
+          signup.ts         # Server action for registration
+        verify/
+          createToken.ts    # Generate verification tokens
+          consumeToken.ts   # Validate and consume tokens
+          resend.ts         # Resend verification email
         queries.ts
       lib/
-        auth-client.ts      # (reserved)
-        auth-ssr.ts         # (reserved)
+        auth-client.ts      # Client-side auth utilities
+        auth-ssr.ts         # Server-side auth utilities
+        email/
+          provider.ts       # Resend email integration
       types/
-        next-auth.d.ts      # session/user augmentation (role, id)
+        next-auth.d.ts      # Session/user augmentation (role, id)
+        verification.d.ts   # Verification token types
   lib/
-    env.ts                  # server-only env loader (Zod)
-    prisma.ts               # Prisma client
+    env.ts                  # Server-only env loader (Zod)
+    prisma.ts               # Prisma client singleton
     validation/
-      fields.ts
+      fields.ts             # Shared field validation schemas
       signin.ts
       signup.ts
+      verify.ts
+  middleware.ts             # Protected route middleware
+  styles/
+    globals.scss            # Global styles
   docs/
-    _archive/               # deprecated & future features (documented)
+    journal/                # Development journal entries
+    pull-requests/          # PR documentation
+```
 
 
 🔒 Unified Action Result
@@ -137,24 +181,34 @@ Entry 1 — Signup (UI + Server Action)
 
 Entry 2 — Sign-in + Unified Actions + Env/Migration
 
-### Sessions via NextAuth (Credentials)
+## 🔐 Authentication Architecture
 
-This project uses Auth.js (NextAuth) Credentials with the Prisma adapter to create real sessions.
+This project uses **NextAuth v4** with JWT strategy and Prisma adapter:
 
-- Config lives in `src/auth.ts` (Credentials provider, Prisma adapter, `session: 'database'`).
-- API route: `src/app/api/auth/[...nextauth]/route.ts` re-exports NextAuth handlers.
-- Sign-in: the `SignInForm` calls `signIn('credentials', { redirect:false })`.
-- Providers remain split: `app/layout.tsx` is server, `app/providers.tsx` is client and wraps `SessionProvider` + `ChakraProvider`.
-- Env: requires `NEXTAUTH_SECRET` and `NEXTAUTH_URL` (or `AUTH_URL` fallback) parsed via `src/lib/env.ts`.
+- **Config**: `src/features/auth/server/options.ts` (Credentials + Google OAuth)
+- **Strategy**: JWT sessions (works with both Credentials and OAuth)
+- **Adapter**: PrismaAdapter for user/account storage
+- **API Route**: `src/app/api/auth/[...nextauth]/route.ts` re-exports NextAuth handlers
+- **Providers**:
+  - **Credentials**: Email/password with email verification gate
+  - **Google OAuth**: Conditional (enabled only if env vars present)
+- **Email Verification**: Required for credentials login, auto-trusted for OAuth
+- **Account Linking**: Enabled for Google (same email = same account)
 
-🗂 Roadmap (next)
+### Sign-In Flow
 
-Sessions & NextAuth integration
+1. **Email-first UI**: Click "Sign In With Email" → animated form expansion
+2. **Google OAuth**: Click "Log In With Google" → OAuth redirect
+3. **Credentials**: Validates email verification before allowing login
+4. **Session**: JWT token with custom fields (id, role, name, email)
 
-OAuth providers (Google, etc.)
+## 🗂 Roadmap (next)
 
-Tiny smoke tests for actions
-
-Protected routes & role checks
+- [ ] Additional OAuth providers (GitHub, Facebook)
+- [ ] Domain restriction for Google OAuth (`hd` parameter)
+- [ ] Unit/integration tests for auth flows
+- [ ] Protected routes & role-based access control
+- [ ] Multi-factor authentication (MFA)
+- [ ] Password reset flow
 
 Happy shipping! 🚀
