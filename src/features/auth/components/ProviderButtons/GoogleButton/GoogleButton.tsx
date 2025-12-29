@@ -2,18 +2,13 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import styles from "./GoogleButton.module.scss";
-
-type Props = {
-  label?: string;
-  callbackUrl?: string;
-  className?: string;
-};
+import type { GoogleButtonProps } from "./GoogleButton.types";
 
 export default function GoogleButton({
   label = "Log In With Google",
   callbackUrl,
   className,
-}: Props) {
+}: GoogleButtonProps) {
   const [loading, setLoading] = useState(false);
 
   async function onClick() {

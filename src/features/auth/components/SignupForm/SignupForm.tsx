@@ -66,11 +66,11 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           <HStack spacing={4}>
             <FormControl>
               <FormLabel>First name</FormLabel>
-              <Input name="firstname" autoComplete="given-name" isDisabled={isPending} />
+              <Input name="firstname" autoComplete="given-name" isRequired isDisabled={isPending} />
             </FormControl>
             <FormControl>
               <FormLabel>Last name</FormLabel>
-              <Input name="lastname" autoComplete="family-name" isDisabled={isPending} />
+              <Input name="lastname" autoComplete="family-name" isRequired isDisabled={isPending} />
             </FormControl>
           </HStack>
 

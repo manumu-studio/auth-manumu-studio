@@ -1,26 +1,16 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Box, Collapse, Divider } from "@chakra-ui/react";
 import styles from "./AuthProvidersGroup.module.scss";
-
-type Props = {
-  /** Content that appears when the top CTA is expanded (your email/credentials form) */
-  children: ReactNode;
-  /** Optional label for the top CTA button */
-  topCtaLabel?: string;
-  /** Optional Google button (or any other provider) */
-  googleSlot?: ReactNode;
-  /** Optional footer area (e.g., “Create account” link) */
-  footerSlot?: ReactNode;
-};
+import type { AuthProvidersGroupProps } from "./AuthProvidersGroup.types";
 
 export default function AuthProvidersGroup({
   children,
   topCtaLabel = "Sign In With Email",
   googleSlot,
   footerSlot,
-}: Props) {
+}: AuthProvidersGroupProps) {
   const [expanded, setExpanded] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -52,3 +42,4 @@ export default function AuthProvidersGroup({
     </Box>
   );
 }
+

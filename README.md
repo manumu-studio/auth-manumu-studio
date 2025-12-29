@@ -1,214 +1,304 @@
-# M2 Auth & Profiles — Next.js + Prisma + Postgres (+ Chakra)
+# Manumu Studio Authentication
 
+![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Deployment](https://img.shields.io/badge/deployed-Vercel-black?logo=vercel)
 
-A focused Next.js starter with **Credentials + Google OAuth sign-in/sign-up**, **Prisma + Postgres**, and **Chakra UI**. Built with the **App Router**, **TypeScript**, **Zod** validation, and a clean **server/client boundary**.
-
-> Multi-provider authentication hub with email-first UX and one-click Google sign-in. Additional OAuth providers (GitHub, Facebook) can be added as needed.
-
----
-
-## 🚀 Features
-
-- **Auth**: Credentials + Google OAuth via NextAuth v4 with Prisma adapter
-- **Multi-Provider Hub**: Email-first sign-in flow with animated collapse + one-click OAuth
-- **Email Verification**: Required for credentials, optional for OAuth (trusted providers)
-- **DB**: Prisma ORM + PostgreSQL (Neon-ready)
-- **UI**: Chakra UI, responsive layout, modern sign-in hub
-- **Validation**: Zod schemas with shared field rules
-- **Types**: Full TS, unified `ActionResult` contract, augmented NextAuth types
-- **DX**: Clear server/client boundary, Providers split
-- **Prisma**: Migrations + optional seeding
+> Full-stack authentication starter built with Next.js 15, NextAuth.js, Prisma, and PostgreSQL. Supports credentials + OAuth login (GitHub, Google), with email verification, secure sessions, and modular architecture.
 
 ---
 
-## 🧪 Demo Users (if seeded)
+## 🎯 Overview
 
-- **Admin**: `admin@demo.io` / `admin123`
-- **User**: `user@demo.io` / `user123`
+**Manumu Studio Authentication** (or "Manumu Authentication" in short) is a production-ready authentication starter that provides a complete, secure authentication system out of the box. Built with modern best practices, it offers multiple authentication methods, email verification, and a polished user experience.
 
-> Run `pnpm db:seed` to create these users (see below).
+### Key Features
+
+- ✅ **Multi-Provider Authentication**: Credentials (email/password) + OAuth (GitHub, Google)
+- ✅ **Email Verification**: Required for credentials, optional for OAuth (trusted providers)
+- ✅ **Secure Sessions**: JWT-based stateless sessions with NextAuth.js
+- ✅ **Type-Safe**: Full TypeScript coverage with Zod validation
+- ✅ **Modern Stack**: Next.js 15 App Router, Prisma ORM, PostgreSQL (Neon Serverless)
+- ✅ **Production-Ready**: SSR session hydration, zero-flicker UX, feature-based architecture
+
+---
+
+## 🚀 Tech Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Authentication**: [NextAuth.js v4](https://next-auth.js.org/) (Auth.js)
+- **Database**: [Prisma](https://www.prisma.io/) + [PostgreSQL](https://www.postgresql.org/) (hosted on [Neon Serverless](https://neon.tech))
+- **Email**: [Resend](https://resend.com/) (with SMTP fallback support)
+- **Validation**: [Zod](https://zod.dev/)
+- **UI**: [Chakra UI](https://chakra-ui.com/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+
+---
+
+## 🌐 Hosted Demo
+
+**Live Demo**: [https://auth.manumu.dev](https://auth.manumu.dev) *(or your custom domain)*
+
+### Testing the Authentication Flow
+
+To test the authentication system:
+
+1. **Sign up with email**: Enter your email address and create a password. You'll receive a verification email with a one-time login link.
+2. **Use OAuth**: Click "Log In With GitHub" or "Log In With Google" for instant authentication (no email verification required).
+3. **Email verification**: After signing up with email, check your inbox and click the verification link to activate your account.
+
+> **Note**: The demo uses a development database. Accounts may be reset periodically.
 
 ---
 
 ## ⚡ Quick Start
 
-### Prereqs
-- Node 20+
-- pnpm
+### Prerequisites
 
-### 1) Install
-```bash
-pnpm i
+- **Node.js** 20 or higher
+- **pnpm** (recommended) or npm/yarn
+- **PostgreSQL database** (local or [Neon Serverless](https://neon.tech))
 
-2) Environment
-
-Copy `.env.example` to `.env.local` and fill in values:
+### 1. Clone the Repository
 
 ```bash
-# Database
-DATABASE_URL="postgresql://user:password@host:5432/db?sslmode=require"
-
-# NextAuth
-NEXTAUTH_SECRET="dev-only-secret-change-in-prod"
-NEXTAUTH_URL="http://localhost:3000"
-
-# Google OAuth (optional - sign-in works without it)
-GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-
-# Optional: APP_URL fallback for callback URL assembly
-APP_URL="http://localhost:3000"
+git clone https://github.com/yourusername/manumu-authentication.git
+cd manumu-authentication
 ```
 
-Server-only env parsing lives in `src/lib/env.ts` (Zod validated). Real secrets are ignored by Git; only `.env.example` is tracked.
+### 2. Install Dependencies
 
-### OAuth Setup (Google)
+```bash
+pnpm install
+```
 
-To enable Google sign-in:
+### 3. Environment Setup
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
-2. Create OAuth 2.0 Client ID (Web application)
-3. Add authorized redirect URIs:
-   - **Local**: `http://localhost:3000/api/auth/callback/google`
-   - **Production**: `https://YOUR_DOMAIN/api/auth/callback/google`
-4. Copy Client ID and Client Secret to `.env.local`
+Copy `.env.example` to `.env.local`:
 
-> **Note**: Use separate OAuth clients for local and production environments.
+```bash
+cp .env.example .env.local
+```
 
-3) Database
+Edit `.env.local` and fill in the required values. See [Environment Variables](#-environment-variables) below for details.
+
+**Required variables:**
+- `DATABASE_URL` - PostgreSQL connection string
+- `NEXTAUTH_SECRET` - Strong random string (32+ characters)
+- `NEXTAUTH_URL` - Application URL (e.g., `http://localhost:3000`)
+
+### 4. Database Setup
+
+```bash
+# Generate Prisma Client
 pnpm prisma:generate
+
+# Run migrations
 pnpm prisma:migrate
-pnpm db:seed     # optional demo users
 
-4) Dev
+# (Optional) Seed demo users
+pnpm db:seed
+```
+
+### 5. Start Development Server
+
+```bash
 pnpm dev
+```
 
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Open http://localhost:3000
+---
 
-## 📁 Project Structure (key parts)
+## 🔧 Environment Variables
+
+See [`.env.example`](.env.example) for a complete list of all environment variables.
+
+### Required Variables
+
+```bash
+# Database (Neon Serverless or local PostgreSQL)
+DATABASE_URL="postgresql://user:password@host:5432/db?sslmode=require"
+
+# NextAuth.js
+NEXTAUTH_SECRET="your-strong-random-secret-min-32-chars"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+### Optional Variables
+
+**OAuth Providers** (enable by setting both CLIENT_ID and CLIENT_SECRET):
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
+- `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`
+- `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET`
+
+**Email Provider**:
+- `RESEND_API_KEY` - For Resend email service
+- `RESEND_FROM` - Sender email address
+- Or use SMTP: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
+
+**Application**:
+- `APP_URL` - Fallback URL for callback assembly
+- `VERIFY_TOKEN_TTL_MINUTES` - Token expiration (default: 30)
+- `VERIFY_RESEND_COOLDOWN_MINUTES` - Resend cooldown (default: 2)
+
+### Manual Setup Steps
+
+1. **OAuth Provider Setup**:
+   - [Google OAuth Setup Guide](https://console.cloud.google.com/apis/credentials)
+   - [GitHub OAuth Setup Guide](https://github.com/settings/developers)
+   - Add callback URLs: `{APP_URL}/api/auth/callback/{provider}`
+
+2. **Email Provider**:
+   - Sign up for [Resend](https://resend.com/) and get API key
+   - Or configure SMTP settings for your email provider
+   - Set `RESEND_FROM` to your verified sender address
+
+3. **Generate NEXTAUTH_SECRET**:
+   ```bash
+   openssl rand -base64 32
+   ```
+
+---
+
+## 🧪 Demo Users
+
+If you seed the database, these demo accounts are available:
+
+- **Admin**: `admin@demo.io` / `admin123`
+- **User**: `user@demo.io` / `user123`
+
+> Run `pnpm db:seed` to create these users.
+
+---
+
+## 📁 Project Structure
 
 ```
 src/
-  app/
-    (public)/
-      page.tsx              # Multi-provider sign-in hub
-    (auth)/
-      verify/               # Email verification pages
-    api/
-      auth/
-        [...nextauth]/      # NextAuth route (GET/POST handlers)
-        verify/             # Email verification API
-      debug-session/        # Session debug endpoint
-    layout.tsx              # Server root; SSR session → Providers
-    providers.tsx           # Client: SessionProvider + Chakra
-  features/
-    auth/
-      components/
-        AuthModal/          # Sign-in/sign-up modal
-        AuthLayout/         # Auth page layout wrapper
-        SignInForm/         # Credentials sign-in form
-        SignupForm/         # User registration form
-        ProviderButtons/    # Google + multi-provider hub components
-          AuthProvidersGroup.tsx
-          GoogleButton/
-        UserCard/           # Display current user info
-        VerifyBanner/       # Email verification prompt
-      server/
-        options.ts          # NextAuth config (JWT + Prisma adapter)
-        providers/
-          google.ts         # Google OAuth provider factory
-        actions/
-          signin.ts         # Server action for credentials
-          signup.ts         # Server action for registration
-        verify/
-          createToken.ts    # Generate verification tokens
-          consumeToken.ts   # Validate and consume tokens
-          resend.ts         # Resend verification email
-        queries.ts
-      lib/
-        auth-client.ts      # Client-side auth utilities
-        auth-ssr.ts         # Server-side auth utilities
-        email/
-          provider.ts       # Resend email integration
-      types/
-        next-auth.d.ts      # Session/user augmentation (role, id)
-        verification.d.ts   # Verification token types
-  lib/
-    env.ts                  # Server-only env loader (Zod)
-    prisma.ts               # Prisma client singleton
-    validation/
-      fields.ts             # Shared field validation schemas
-      signin.ts
-      signup.ts
-      verify.ts
-  middleware.ts             # Protected route middleware
-  styles/
-    globals.scss            # Global styles
-  docs/
-    journal/                # Development journal entries
-    pull-requests/          # PR documentation
+├── app/
+│   ├── (public)/          # Public landing page
+│   ├── (auth)/            # Auth pages (verify, reset)
+│   ├── (dashboard)/       # Protected routes
+│   ├── api/
+│   │   ├── auth/          # NextAuth API routes
+│   │   └── verify/        # Email verification API
+│   ├── layout.tsx         # Root layout (SSR session)
+│   └── providers.tsx     # Client providers
+│
+├── features/
+│   └── auth/
+│       ├── components/    # UI components
+│       ├── server/
+│       │   ├── actions/   # Server actions
+│       │   ├── providers/ # OAuth providers
+│       │   └── verify/   # Email verification
+│       ├── lib/           # Auth utilities
+│       └── types/         # TypeScript types
+│
+└── lib/
+    ├── validation/        # Zod schemas
+    ├── prisma.ts          # Prisma client
+    └── env.ts             # Environment validation
 ```
 
-
-🔒 Unified Action Result
-export type ActionResult =
-  | { ok: true }
-  | { ok: false; errors: { formErrors?: string[]; fieldErrors?: Record<string, string[]> } };
-
-
-Both actions (signinAction, registerUser) return this shape. Forms branch on ok and show errors.formErrors?.[0] when present.
-
-🔧 Scripts
-pnpm dev              # run locally
-pnpm build            # production build
-pnpm typecheck        # TS check
-
-# Prisma
-pnpm prisma:generate  # generate client
-pnpm prisma:migrate   # create/apply migrations
-pnpm prisma:deploy    # deploy migrations (prod)
-pnpm db:seed          # seed demo users (optional)
-
-🧭 Development Journal
-
-See docs/DEVELOPMENT_JOURNAL.md
-:
-
-Entry 0 — Bootstrap
-
-Entry 1 — Signup (UI + Server Action)
-
-Entry 2 — Sign-in + Unified Actions + Env/Migration
+---
 
 ## 🔐 Authentication Architecture
 
-This project uses **NextAuth v4** with JWT strategy and Prisma adapter:
+This project uses **NextAuth.js v4** (Auth.js) with JWT strategy and Prisma adapter:
 
-- **Config**: `src/features/auth/server/options.ts` (Credentials + Google OAuth)
-- **Strategy**: JWT sessions (works with both Credentials and OAuth)
+- **Strategy**: JWT sessions (stateless, works with Credentials + OAuth)
 - **Adapter**: PrismaAdapter for user/account storage
-- **API Route**: `src/app/api/auth/[...nextauth]/route.ts` re-exports NextAuth handlers
 - **Providers**:
   - **Credentials**: Email/password with email verification gate
   - **Google OAuth**: Conditional (enabled only if env vars present)
-- **Email Verification**: Required for credentials login, auto-trusted for OAuth
-- **Account Linking**: Enabled for Google (same email = same account)
+  - **GitHub OAuth**: Conditional (enabled only if env vars present)
+- **Email Verification**: Required for credentials, auto-trusted for OAuth
+- **Account Linking**: Enabled for OAuth providers (same email = same account)
 
 ### Sign-In Flow
 
 1. **Email-first UI**: Click "Sign In With Email" → animated form expansion
-2. **Google OAuth**: Click "Log In With Google" → OAuth redirect
+2. **OAuth Providers**: Click "Log In With Google" or "Log In With GitHub" → OAuth redirect
 3. **Credentials**: Validates email verification before allowing login
 4. **Session**: JWT token with custom fields (id, role, name, email)
 
-## 🗂 Roadmap (next)
+For detailed architecture documentation, see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-- [ ] Additional OAuth providers (GitHub, Facebook)
-- [ ] Domain restriction for Google OAuth (`hd` parameter)
-- [ ] Unit/integration tests for auth flows
-- [ ] Protected routes & role-based access control
-- [ ] Multi-factor authentication (MFA)
+---
+
+## 🛡️ Security
+
+This project implements industry-standard security practices:
+
+- **Password Hashing**: bcryptjs with 10 salt rounds
+- **Session Security**: JWT tokens signed with strong secret
+- **Input Validation**: Zod schemas on client and server
+- **Email Verification**: Token-based with TTL and cooldown protection
+- **OAuth Security**: Provider-verified email addresses
+
+For comprehensive security documentation, see [`docs/SECURITY.md`](docs/SECURITY.md).
+
+---
+
+## 📚 Documentation
+
+- **[Development Journal](docs/DEVELOPMENT_JOURNAL.md)** - Project development history
+- **[Architecture](docs/ARCHITECTURE.md)** - System architecture and flow diagrams
+- **[Security](docs/SECURITY.md)** - Security practices and considerations
+- **[Codebase Audit](docs/CODEBASE_AUDIT.md)** - Comprehensive codebase analysis
+
+---
+
+## 🔧 Scripts
+
+```bash
+# Development
+pnpm dev              # Start development server
+pnpm build            # Production build
+pnpm start            # Start production server
+pnpm typecheck        # TypeScript type checking
+pnpm lint             # ESLint
+
+# Database
+pnpm prisma:generate  # Generate Prisma Client
+pnpm prisma:migrate   # Create/apply migrations
+pnpm prisma:deploy    # Deploy migrations (production)
+pnpm db:seed          # Seed demo users
+```
+
+---
+
+## 🗂 Roadmap
+
+- [x] Google OAuth integration
+- [x] GitHub OAuth integration
+- [x] Email verification system
+- [ ] Facebook OAuth provider
 - [ ] Password reset flow
+- [ ] Multi-factor authentication (MFA)
+- [ ] Protected routes & role-based access control
+- [ ] Unit/integration tests
 
-Happy shipping! 🚀
+---
+
+## 📝 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+Built with:
+- [Next.js](https://nextjs.org/)
+- [NextAuth.js](https://next-auth.js.org/)
+- [Prisma](https://www.prisma.io/)
+- [Chakra UI](https://chakra-ui.com/)
+- [Zod](https://zod.dev/)
+
+---
+
+**Happy shipping! 🚀**

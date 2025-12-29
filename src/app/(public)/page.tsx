@@ -17,7 +17,7 @@ import AuthModal from "@/features/auth/components/AuthModal";
 import UserCard from "@/features/auth/components/UserCard";
 import { useSession } from "next-auth/react";
 
-import { AuthProvidersGroup, GoogleButton } from "@/features/auth/components/ProviderButtons";
+import { AuthProvidersGroup, GoogleButton, GitHubButton } from "@/features/auth/components/ProviderButtons";
 import SignInForm from "@/features/auth/components/SignInForm/SignInForm";
 
 function EmailFormCard() {
@@ -84,21 +84,28 @@ export default function PublicHomePage(): ReactNode {
   return (
     <Container maxW="lg" py={16}>
       <VStack spacing={8} align="stretch">
-        <Heading textAlign="center">Welcome to M2 Auth &amp; Profiles</Heading>
+        <Heading textAlign="center">Welcome to Manumu Authentication</Heading>
 
         <AuthProvidersGroup
           topCtaLabel="Sign In With Email"
           googleSlot={
-            <GoogleButton
-              label="Log In With Google"
-              callbackUrl="/"
-              className="darkBtn"
-            />
+            <>
+              <GoogleButton
+                label="Log In With Google"
+                callbackUrl="/"
+                className="darkBtn"
+              />
+              <GitHubButton
+                label="Log In With GitHub"
+                callbackUrl="/"
+                className="darkBtn"
+              />
+            </>
           }
           footerSlot={
             <Text textAlign="center" color="gray.500" mt={2}>
               New here?{" "}
-              <ChakraLink as={NextLink} href="#" onClick={(e) => { e.preventDefault(); openSignup(); }}>
+              <ChakraLink as={NextLink} href="#" onClick={(e: React.MouseEvent<HTMLAnchorElement>) => { e.preventDefault(); openSignup(); }}>
                 Create Account
               </ChakraLink>
             </Text>

@@ -1,34 +1,5 @@
-.container {
-  display: flex;
-  width: 920px; /* feel free to tweak (880–980) */
-  height: 540px; /* modal inner height */
-  background: #fff;
-  position: relative;
-
-  @media (max-width: 860px) {
-    width: 100%;
-    height: auto;
-    flex-direction: column;
-  }
-}
-
-.image {
-  position: relative;
-  width: 42%;
-  min-width: 320px;
-  height: 100%;
-  overflow: hidden; /* keep image clipped */
-  isolation: isolate; /* keep pseudo above image */
-  border-bottom-right-radius: 40%;
-  /* Curved “cutout” on the right edge via a white pill overlay */
-
-  @media (max-width: 860px) {
-    display: none; /* hide image on mobile */
-  }
-}
-
 .content {
-  width: 58%;
+  width: 100%;
   height: 100%;
   padding: 24px 28px;
   overflow: auto; /* scroll if form is taller than box */

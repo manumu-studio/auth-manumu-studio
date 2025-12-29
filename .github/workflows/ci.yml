@@ -15,13 +15,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 1) Install pnpm FIRST so setup-node's cache logic can find it
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           run_install: false
 
-      # 2) Then setup Node with pnpm cache
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -39,6 +37,15 @@ jobs:
 
       - name: Generate Prisma Client
         run: pnpm exec prisma generate
+
+      - name: Type Check
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Run Tests
+        run: pnpm test
 
       - name: Build
         env:

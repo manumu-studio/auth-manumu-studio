@@ -1,22 +1,34 @@
-# feat(auth,app): SSR-hydrated sessions, flicker-free UI, and feature-based refactor
+# PR-0.2.0 — SSR-Hydrated Sessions, Flicker-Free UI, and Feature-Based Refactor
 
-## 🎯 Overview
-
-This PR eliminates the unauthenticated flash on page load, implements a complete credentials-based authentication flow, and refactors the codebase into a feature-based architecture. 
-
-**Key Achievement:** Users now see the correct authenticated/unauthenticated state **immediately on page load** without any visual jumps.
-
-**📄 Full technical write-up:** [`docs/pull-requests/PR-0.2.0.md`](docs/pull-requests/PR-0.2.0.md)
+**Date:** October 8, 2025  
+**Type:** Refactor + Feature Enhancement  
+**Status:** ✅ Merged
 
 ---
 
-## 🔥 Critical Fix: SSR Session Hydration
+## Summary
 
-**Problem:** UI flicker on load (loading state → flash → authenticated state)
+This PR eliminates the unauthenticated flash on page load, implements a complete credentials-based authentication flow, and refactors the codebase into a feature-based architecture for **ManuMu Authentication**.
 
-**Solution:** Server-side session fetching + client hydration:
+**Key Achievement:** Users now see the correct authenticated/unauthenticated state **immediately on page load** without any visual jumps.
 
-```tsx
+---
+
+## Critical Fix: SSR Session Hydration
+
+### Problem
+
+Users experienced a flash of unauthenticated content (FOUC) on page load:
+1. Page loads → Shows "Sign In" button
+2. JavaScript loads → Fetches session
+3. Session found → Changes to "Welcome, User"
+4. Visual jump → Poor UX
+
+### Solution
+
+Server-side session fetching with client hydration:
+
+```typescript
 // src/app/layout.tsx (Server Component)
 export default async function RootLayout({ children }) {
   const session = await getServerSession(authOptions);
@@ -30,7 +42,7 @@ export default async function RootLayout({ children }) {
 }
 ```
 
-```tsx
+```typescript
 // src/app/providers.tsx (Client Component)
 'use client';
 export default function Providers({ children, session }: { 
@@ -49,69 +61,18 @@ export default function Providers({ children, session }: {
 
 ---
 
-## 🎨 Auth UI Components
+## Architecture Refactor: Feature-Based Structure
 
-**New Components:**
-- **AuthModal** - Unified modal container with tab-driven auth flows
-- **AuthLayout** - Tabbed layout (Sign In / Sign Up) with responsive design
-- **SignInForm** - Credentials login using `signIn('credentials', { redirect: false })`
-- **SignupForm** - Server action-based registration with Zod validation
-- **UserCard** - Authenticated user display with avatar and sign-out
-- **SessionBadge** - Minimal auth status indicator
+### Before: Flat Structure
 
-**Key Pattern (SignInForm):**
-```tsx
-const res = await signIn('credentials', { redirect: false, email, password });
-if (!res?.error) await update(); // Refresh session without reload
+```
+src/
+├── app/
+├── components/
+└── lib/
 ```
 
-[Full component details →](docs/pull-requests/PR-0.2.0.md#auth-ui-components)
-
----
-
-## ⚙️ Server Actions & Unified Contract
-
-**Unified Result Type:**
-```typescript
-export type ActionResult =
-  | { ok: true }
-  | { ok: false; errors: { formErrors?: string[]; fieldErrors?: Record<string, string[]> } };
-```
-
-**Actions:**
-- `registerUser(FormData)` - Email normalization, password hashing, Prisma user+profile creation
-- `signinAction(FormData)` - Placeholder (using next-auth `signIn()` directly for now)
-
-**Features:** Zod validation • Duplicate email handling (P2002) • Detailed error mapping
-
-[Full server action implementation →](docs/pull-requests/PR-0.2.0.md#server-actions)
-
----
-
-## 🔌 NextAuth API & Configuration
-
-```typescript
-// src/app/api/auth/[...nextauth]/route.ts
-import NextAuth from 'next-auth';
-import { authOptions } from '@/features/auth/server/options';
-
-const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST };
-```
-
-**Auth Setup:**
-- Credentials provider with email/password validation
-- JWT strategy (required for credentials)
-- Prisma adapter for future OAuth
-- Session callbacks include user ID and role
-
-[Full authOptions configuration →](docs/pull-requests/PR-0.2.0.md#nextauth-configuration)
-
----
-
-## 🏗️ Architecture Refactor
-
-**Feature-Based Structure:**
+### After: Feature-Based Structure
 
 ```
 src/
@@ -137,24 +98,105 @@ src/
     ├── prisma.ts
     └── env.ts
 ```
+
+**Benefits:**
+- ✅ Scalable architecture
+- ✅ Clear separation of concerns
+- ✅ Predictable file locations
+- ✅ Easier team collaboration
+
 ---
 
-## 🧪 Testing
+## Auth UI Components
 
-**Manual Smoke Tests ✅**
+### New Components
+
+- **AuthModal** - Unified modal container with tab-driven auth flows
+- **AuthLayout** - Tabbed layout (Sign In / Sign Up) with responsive design
+- **SignInForm** - Credentials login using `signIn('credentials', { redirect: false })`
+- **SignupForm** - Server action-based registration with Zod validation
+- **UserCard** - Authenticated user display with avatar and sign-out
+- **SessionBadge** - Minimal auth status indicator
+
+### Sign-In Pattern
+
+```tsx
+const res = await signIn('credentials', { redirect: false, email, password });
+if (!res?.error) await update(); // Refresh session without reload
+```
+
+---
+
+## Server Actions & Unified Contract
+
+### Unified Result Type
+
+```typescript
+export type ActionResult =
+  | { ok: true }
+  | { ok: false; errors: { 
+      formErrors?: string[];
+      fieldErrors?: Record<string, string[]>;
+    }};
+```
+
+### Actions
+
+- `registerUser(FormData)` - Email normalization, password hashing, Prisma user+profile creation
+- `signinAction(FormData)` - Placeholder (using next-auth `signIn()` directly for now)
+
+**Features:** Zod validation • Duplicate email handling (P2002) • Detailed error mapping
+
+---
+
+## NextAuth API & Configuration
+
+```typescript
+// src/app/api/auth/[...nextauth]/route.ts
+import NextAuth from 'next-auth';
+import { authOptions } from '@/features/auth/server/options';
+
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };
+```
+
+### Auth Setup
+
+- Credentials provider with email/password validation
+- JWT strategy (required for credentials)
+- Prisma adapter for future OAuth
+- Session callbacks include user ID and role
+
+---
+
+## Testing
+
+### Manual Smoke Tests ✅
+
 - ✅ Sign up with validation errors, duplicate email handling
 - ✅ Sign in with invalid/valid credentials
 - ✅ Sign out clears session correctly
 - ✅ **SSR hydration: hard refresh shows authenticated state instantly (no flicker)**
 - ✅ Session persists across navigation
 
-**Build:** ✅ TypeScript: 0 errors • ✅ Build: 3.5s • ✅ All routes generated
+### Build Verification
 
-[Detailed test scenarios →](docs/pull-requests/PR-0.2.0.md#testing)
+- ✅ TypeScript: 0 errors
+- ✅ Build: 3.5s
+- ✅ All routes generated
 
 ---
 
-## 🚀 What's Next
+## Migration Notes
+
+**Environment Setup:**
+- Set `NEXTAUTH_SECRET` and `NEXTAUTH_URL` in `.env.local`
+- Run `pnpm prisma:generate && pnpm prisma:migrate`
+- Optional: `pnpm db:seed` for demo users (`admin@demo.io` / `admin123`)
+
+---
+
+## What's Next
 
 **Future Enhancements:**
 - [ ] Email verification flow
@@ -165,7 +207,7 @@ src/
 
 ---
 
-## 📋 Checklist
+## Checklist
 
 - [x] SSR session hydration implemented
 - [x] Zero UI flicker confirmed
@@ -181,13 +223,6 @@ src/
 
 ---
 
-## 🔗 Related
+**Ready to merge! 🚀**
 
-**Migration Notes:**
-- Set `NEXTAUTH_SECRET` and `NEXTAUTH_URL` in `.env.local`
-- Run `pnpm prisma:generate && pnpm prisma:migrate`
-- Optional: `pnpm db:seed` for demo users (`admin@demo.io` / `admin123`)
-
----
-
-**Ready to merge! 🎉**
+*This PR establishes the foundation for a production-ready authentication system with excellent UX and scalable architecture.*

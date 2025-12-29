@@ -1,8 +1,8 @@
 {
-  "name": "m2-next-auth-prisma-postgres-starter",
+  "name": "manumu-authentication",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee",
+  "packageManager": "pnpm@9.12.3",
   "type": "module",
   "scripts": {
     "dev": "next dev",
@@ -10,12 +10,15 @@
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
+    "test": "exec vitest run",
+    "test:watch": "vitest --watch",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "smoke": "tsx -e \"fetch('http://localhost:3000/api/healthz').then(r=>r.text()).then(console.log)\"",
-    "scaffold:verify": "APPLY=1 ./verify-email-scaffold.sh"
+    "scaffold:verify": "APPLY=1 ./verify-email-scaffold.sh",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -25,7 +28,7 @@
     "@prisma/client": "^6.16.3",
     "bcryptjs": "^3.0.2",
     "framer-motion": "^12.23.22",
-    "next": "15.5.3",
+    "next": "15.5.7",
     "next-auth": "^4.24.11",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -34,23 +37,27 @@
     "zod": "^4.1.9"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
+    "@eslint/eslintrc": "^3.0.0",
     "@eslint/js": "^9.36.0",
-    "@next/eslint-plugin-next": "^15.5.4",
+    "@next/eslint-plugin-next": "^15.5.7",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20.19.19",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@typescript-eslint/parser": "^8.44.1",
+    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/ui": "^4.0.16",
     "dotenv": "^17.2.3",
     "eslint": "^9.36.0",
-    "eslint-config-next": "15.5.3",
+    "eslint-config-next": "15.5.7",
     "globals": "^16.4.0",
     "prisma": "^6.16.3",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.44.1"
+    "typescript-eslint": "^8.44.1",
+    "vitest": "^2.1.9",
+    "husky": "^8.0.0"
   }
 }

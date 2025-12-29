@@ -1,4 +1,26 @@
-// src/features/auth/server/actions/signup.ts  (or src/lib/actions/signup.ts)
+/**
+ * Server action for user registration
+ * 
+ * Handles the complete user sign-up flow:
+ * 1. Validates input with Zod
+ * 2. Checks for duplicate email
+ * 3. Hashes password with bcrypt
+ * 4. Creates user and profile records
+ * 5. Generates verification token
+ * 6. Sends verification email
+ * 
+ * @param {FormData} formData - Form data containing user registration fields
+ * @returns {Promise<ActionResult>} Success result with email verification metadata
+ * 
+ * @example
+ * ```ts
+ * const result = await registerUser(formData);
+ * if (result.ok && result.meta?.requiresEmailVerification) {
+ *   // Show "check your email" message
+ * }
+ * ```
+ */
+
 "use server";
 
 import bcrypt from "bcryptjs";
@@ -9,6 +31,12 @@ import type { ActionResult } from "./types";
 import { createVerificationToken } from "@/features/auth/server/verify/createToken";
 import { sendVerificationEmail } from "@/features/auth/lib/email/provider";
 
+/**
+ * Register a new user account
+ * 
+ * @param {FormData} formData - Registration form data
+ * @returns {Promise<ActionResult>} Action result with success/error status
+ */
 export async function registerUser(formData: FormData): Promise<ActionResult> {
   const raw = {
     firstname: formData.get("firstname")?.toString(),
@@ -35,6 +63,7 @@ export async function registerUser(formData: FormData): Promise<ActionResult> {
 
   const data = parsed.data;
 
+  // Normalize and sanitize input data
   const email = data.email.trim().toLowerCase();
   const firstname = data.firstname?.trim();
   const lastname = data.lastname?.trim();
@@ -42,11 +71,13 @@ export async function registerUser(formData: FormData): Promise<ActionResult> {
   const city = data.city?.trim();
   const address = data.address?.trim();
 
+  // Check for duplicate email before creating user
   const exists = await prisma.user.findUnique({ where: { email } });
   if (exists) {
     return { ok: false, errors: { formErrors: ["Email already registered"] } };
   }
 
+  // Hash password with bcrypt (10 salt rounds - balanced security/performance)
   const hash = await bcrypt.hash(data.password, 10);
 
   try {

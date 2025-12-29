@@ -12,10 +12,10 @@ export default function UserCard() {
 
   const name = data.user.name ?? '';
   const email = data.user.email ?? '';
-  // @ts-expect-error role might be added later on the session
-  const role = (data.user.role as string | undefined) ?? 'USER';
+  // Role is available via NextAuth type augmentation
+  const role = data.user.role ?? 'USER';
   const initials = name
-    ? name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()
+    ? name.split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase()
     : (email[0]?.toUpperCase() ?? 'U');
 
   async function onSignOut() {
