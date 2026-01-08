@@ -54,6 +54,7 @@ export default function SignupStep({
       }, 350); // Slightly longer than animation duration (300ms)
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [mounted, signupSuccess]);
 
   return (
