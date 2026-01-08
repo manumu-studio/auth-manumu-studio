@@ -10,3 +10,47 @@
   // Badge styling handled by Tailwind
 }
 
+// Dark theme card wrapper to match signInBox (#2d2d2d)
+.cardWrapper {
+  @media (prefers-color-scheme: dark) {
+    background-color: #2d2d2d !important;
+    border-color: #404040 !important;
+    box-shadow: none !important;
+    
+    &:hover {
+      box-shadow: none !important;
+    }
+  }
+}
+
+.cardHeader {
+  @media (prefers-color-scheme: dark) {
+    background-color: #2d2d2d !important;
+    border-color: #404040 !important;
+    background: #2d2d2d !important; // Override gradient
+  }
+}
+
+.cardText {
+  @media (prefers-color-scheme: dark) {
+    color: #ffffff !important;
+  }
+}
+
+.cardTextSecondary {
+  @media (prefers-color-scheme: dark) {
+    color: #c8c6c4 !important;
+  }
+}
+
+.cardTextTertiary {
+  @media (prefers-color-scheme: dark) {
+    color: #8a8886 !important;
+  }
+}
+
+.cardDivider {
+  @media (prefers-color-scheme: dark) {
+    border-color: #404040 !important;
+  }
+}

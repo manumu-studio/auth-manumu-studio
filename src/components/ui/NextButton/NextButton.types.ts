@@ -7,4 +7,5 @@ export interface NextButtonProps {
   isLoading?: boolean;
   disabled?: boolean;
   variant?: 'primary' | 'secondary';
+  className?: string;
 }

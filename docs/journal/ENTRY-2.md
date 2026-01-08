@@ -178,7 +178,7 @@ export const authOptions: NextAuthOptions = {
 - `src/features/auth/components/AuthLayout/` - Tabbed auth layout
 - `src/features/auth/components/SignInForm/` - Sign-in form
 - `src/features/auth/components/SignupForm/` - Sign-up form
-- `src/features/auth/components/UserCard/` - User display component
+- `src/components/ui/UserCard/` - User display component (presentational)
 
 ### Server
 - `src/features/auth/server/actions/signin.ts` - Sign-in server action

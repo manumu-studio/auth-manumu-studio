@@ -21,6 +21,7 @@
 - **Type-safe**: TypeScript + Zod on client and server
 - **Database**: Prisma ORM + PostgreSQL (Neon-ready)
 - **UI/UX**: Tailwind CSS + Framer Motion (polished multi-step auth flow)
+- **Theme System**: Hybrid approach using Tailwind utilities + SCSS Module overrides with `@media (prefers-color-scheme: dark)` for consistent dark theme support
 - **Deploy**: Vercel-ready with environment validation
 
 ---
@@ -193,6 +194,8 @@ src/
     ├── prisma.ts          # Prisma client
     └── env.ts             # Environment validation
 ```
+
+**Note:** The public home page (`app/(public)/page.tsx`) renders UserCard (presentational) and Sign Out button separately when authenticated, maintaining clear separation of concerns.
 
 ---
 

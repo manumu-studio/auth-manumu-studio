@@ -53,7 +53,7 @@ export default function AuthShell({ children, title, subtitle, animateOnChange =
 
   return (
     <div 
-      className={`${styles.root} min-h-screen flex items-center justify-center p-0 md:p-5`}
+      className={`${styles.root} min-h-screen flex flex-col md:items-center md:justify-center p-0 md:p-5`}
       role="main"
       aria-label="Authentication"
     >
@@ -66,22 +66,22 @@ export default function AuthShell({ children, title, subtitle, animateOnChange =
         }}
         className={styles.signInBox}
       >
-        {/* Logo - Top Left - Fixed position, no animation */}
+        {/* Logo - Centered - Fixed position, no animation */}
         <div className={styles.logoContainer}>
           <div className={styles.logoWrapper}>
             <Image 
-              src="/assets/logo-white.webp"
+              src="/assets/logo-black.webp"
               alt="Company Logo"
               fill
-              className="object-contain dark:hidden"
+              className={`object-contain ${styles.logoLight}`}
               priority
               aria-hidden="false"
             />
             <Image
-              src="/assets/logo-black.webp"
+              src="/assets/logo-white.webp"
               alt="Company Logo"
               fill
-              className="object-contain hidden dark:block"
+              className={`object-contain ${styles.logoDark}`}
               priority
               aria-hidden="false"
             />

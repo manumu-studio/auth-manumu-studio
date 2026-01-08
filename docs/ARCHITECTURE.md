@@ -203,8 +203,10 @@ graph TD
     H --> K[SignupStep]
     H --> L[GoogleButton]
     H --> M[GitHubButton]
-    G --> N[VerifyBanner]
-    G --> O[ResendLink]
+    H --> N[UserCard]
+    H --> O[Sign Out Button]
+    G --> P[VerifyBanner]
+    G --> Q[ResendLink]
 ```
 
 ---
@@ -317,6 +319,35 @@ erDiagram
 - Only for trusted OAuth providers
 - Email verified by provider
 - No account takeover risk
+
+### Theme System Implementation
+
+**Decision**: Hybrid Tailwind CSS + SCSS Module overrides for dark theme
+
+**Rationale**:
+- Tailwind `dark:` classes work with class-based dark mode
+- SCSS `@media (prefers-color-scheme: dark)` works with system preferences
+- Hybrid approach ensures consistent theming across components
+- Components use SCSS overrides for precise dark theme matching (e.g., `#2d2d2d` background, `#404040` borders)
+
+**Implementation**:
+- **Tailwind**: Used for utility classes and component styling
+- **SCSS Modules**: Used for dark theme overrides in `*.module.scss` files
+- **Media Queries**: `@media (prefers-color-scheme: dark)` for system preference support
+- **Components**: AuthShell, UserCard, NextButton use SCSS overrides for theme parity
+
+### UX Enhancements
+
+**Autofocus Behavior**:
+- PasswordStep: Auto-focuses password input after step transition (350ms delay)
+- SignupStep: Auto-focuses first input (firstname) after step transition (350ms delay)
+- Improves keyboard navigation and reduces clicks/taps
+- Delay ensures animations complete before focus
+
+**Component Separation**:
+- UserCard is presentational (displays user information only)
+- Sign Out button rendered at page level (`app/(public)/page.tsx`)
+- Clear separation of concerns: UserCard can be reused without Sign Out dependency
 
 ---
 

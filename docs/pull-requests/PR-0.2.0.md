@@ -115,7 +115,7 @@ src/
 - **AuthLayout** - Tabbed layout (Sign In / Sign Up) with responsive design
 - **SignInForm** - Credentials login using `signIn('credentials', { redirect: false })`
 - **SignupForm** - Server action-based registration with Zod validation
-- **UserCard** - Authenticated user display with avatar and sign-out
+- **UserCard** - Authenticated user display with avatar (presentational component; sign-out handled at page level)
 - **SessionBadge** - Minimal auth status indicator
 
 ### Sign-In Pattern

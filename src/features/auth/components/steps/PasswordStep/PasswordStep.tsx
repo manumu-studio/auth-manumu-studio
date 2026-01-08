@@ -38,6 +38,18 @@ export default function PasswordStep({
     setMounted(true);
   }, []);
 
+  // Auto-focus password input after step transition completes
+  useEffect(() => {
+    if (mounted && passwordInputRef.current) {
+      // Delay to ensure animation completes
+      const timer = setTimeout(() => {
+        passwordInputRef.current?.focus();
+      }, 350); // Slightly longer than animation duration (300ms)
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [mounted, passwordInputRef]);
+
   return (
     <motion.div
       key="password-step"
@@ -89,6 +101,7 @@ export default function PasswordStep({
             onClick={onBack}
             disabled={isPending}
             variant="secondary"
+            className="backButtonDark"
             aria-label="Go back to email step"
           >
             Back

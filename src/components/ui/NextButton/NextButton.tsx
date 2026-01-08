@@ -11,6 +11,7 @@ export default function NextButton({
   isLoading = false,
   disabled = false,
   variant = 'primary',
+  className,
 }: NextButtonProps) {
   const isDisabled = disabled || isLoading;
 
@@ -18,14 +19,14 @@ export default function NextButton({
   const variantClasses =
     variant === 'primary'
       ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white focus:ring-blue-500 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800'
-      : 'bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-900 focus:ring-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600 dark:active:bg-gray-500 dark:text-white';
+      : `${styles.secondaryButton} ${className || ''}`;
 
   return (
     <motion.button
       type={type}
       onClick={onClick}
       disabled={isDisabled}
-      className={`${styles.root} ${baseClasses} ${variantClasses}`}
+      className={`${styles.root} ${baseClasses} ${variantClasses} ${className === 'backButtonDark' ? styles.backButtonDark : ''}`}
       whileHover={!isDisabled ? { scale: 1.01 } : {}}
       whileTap={!isDisabled ? { scale: 0.99 } : {}}
       transition={{ 

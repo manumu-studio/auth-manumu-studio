@@ -42,6 +42,21 @@ export default function SignupStep({
     setMounted(true);
   }, []);
 
+  // Auto-focus first input (firstname) after step transition completes
+  useEffect(() => {
+    if (mounted && !signupSuccess) {
+      // Delay to ensure animation completes
+      const timer = setTimeout(() => {
+        const firstInput = document.getElementById('firstname') as HTMLInputElement;
+        if (firstInput) {
+          firstInput.focus();
+        }
+      }, 350); // Slightly longer than animation duration (300ms)
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [mounted, signupSuccess]);
+
   return (
     <motion.div
       key="signup-step"
@@ -209,6 +224,7 @@ export default function SignupStep({
                 onClick={onBack}
                 disabled={isPending}
                 variant="secondary"
+                className="backButtonDark"
                 aria-label="Go back to sign in"
               >
                 Back

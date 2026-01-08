@@ -190,3 +190,17 @@ If issues arise:
 **Ready to merge! 🚀**
 
 *This PR completes the UI/UX branch with a 100% clean, production-ready codebase. All dead code has been removed, and the codebase is ready for main branch migration.*
+<<<<<<< HEAD
+
+---
+
+## Addendum: Theme Parity Hotfix
+
+**Note**: Following this PR, a hotfix branch (`hotfix/theme-parity-ui`) addressed UI/theme synchronization:
+- Logo display fix (SCSS media queries)
+- UserCard dark theme synchronization (`#2d2d2d` background)
+- Back button styling parity with ProviderButtons
+- Sign Out button placement decision (kept outside UserCard)
+- Autofocus improvements on PasswordStep and SignupStep
+
+See `docs/journal/ENTRY-6.md` for detailed documentation of these fixes.

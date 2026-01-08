@@ -7,6 +7,8 @@ import { SignInSchema } from '@/lib/validation/signin';
 import { SignUpSchema } from '@/lib/validation/signup';
 import AuthShell from '@/components/ui/AuthShell';
 import UserCard from '@/components/ui/UserCard';
+import NextButton from '@/components/ui/NextButton';
+import { signOut } from 'next-auth/react';
 import { registerUser } from '@/features/auth/server/actions';
 import EmailStep from '@/features/auth/components/steps/EmailStep';
 import PasswordStep from '@/features/auth/components/steps/PasswordStep';
@@ -228,13 +230,42 @@ export default function MimicPage() {
 
   // Show UserCard if authenticated, otherwise show login form
   if (status === 'authenticated' && session?.user) {
+    const handleSignOut = async () => {
+      await signOut({ callbackUrl: '/' });
+    };
+
     return (
       <AuthShell
         title="Welcome back"
         subtitle="You're signed in to your account"
         animateOnChange={false}
       >
-        <UserCard />
+        <div className="space-y-4">
+          <UserCard />
+          <NextButton
+            type="button"
+            onClick={handleSignOut}
+            variant="secondary"
+          >
+            <span className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+              Sign out
+            </span>
+          </NextButton>
+        </div>
       </AuthShell>
     );
   }

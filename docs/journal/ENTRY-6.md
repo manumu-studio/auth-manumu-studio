@@ -190,6 +190,43 @@ This cleanup phase provides:
 
 ---
 
+<<<<<<< HEAD
+## Theme Parity Hotfix
+
+Following the initial cleanup, a hotfix branch (`hotfix/theme-parity-ui`) addressed UI/theme synchronization issues:
+
+### Logo Display Fix
+- **Issue**: Logo showed black in both light and dark themes
+- **Solution**: Switched from Tailwind `dark:` classes to SCSS media queries (`@media (prefers-color-scheme: dark)`)
+- **Files**: `AuthShell.tsx`, `AuthShell.module.scss`
+- **Result**: Correct logo per theme (black in light, white in dark)
+
+### UserCard Dark Theme Synchronization
+- **Issue**: UserCard remained white in dark theme, not matching signInBox
+- **Solution**: Added SCSS dark theme overrides matching signInBox (`#2d2d2d` background, `#404040` borders)
+- **Files**: `UserCard.tsx`, `UserCard.module.scss`
+- **Result**: UserCard matches dark theme styling consistently
+
+### Back Button Styling Parity
+- **Issue**: Back button didn't match ProviderButtons styling
+- **Solution**: Created `.secondaryButton` and `.backButtonDark` classes for consistent styling
+- **Files**: `NextButton.tsx`, `NextButton.module.scss`, `NextButton.types.ts` (added `className` prop)
+- **Result**: Consistent button styling across themes
+
+### Sign Out Button Placement
+- **Decision**: Keep Sign Out button outside UserCard (presentational component)
+- **Rationale**: UserCard displays user information; Sign Out is a page-level action
+- **Files**: `UserCard.tsx` (removed unused `signOut` import), `app/(public)/page.tsx`
+- **Result**: Better separation of concerns, UserCard remains reusable
+
+### Autofocus Improvements
+- **Enhancement**: Added auto-focus to PasswordStep and SignupStep inputs
+- **Implementation**: 350ms delay after step transition to ensure animations complete
+- **Files**: `PasswordStep.tsx`, `SignupStep.tsx`
+- **Result**: Improved UX with automatic input focus after step transitions
+
+---
+
 ## Next Steps
 
 With the UI/UX branch complete and cleaned up:
@@ -203,4 +240,4 @@ With the UI/UX branch complete and cleaned up:
 ---
 
 **Cleanup Complete** ✅  
-*The codebase is now 100% clean, production-ready, and ready for main branch migration. All UI/UX work is completed.*
+*The codebase is now 100% clean, production-ready, and ready for main branch migration. All UI/UX work is completed, including theme parity fixes.*
