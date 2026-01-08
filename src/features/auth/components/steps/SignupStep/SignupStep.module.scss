@@ -1,0 +1,32 @@
+.signupForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.signupRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.signupSuccess {
+  padding: 1rem;
+  background-color: #107c10;
+  color: #ffffff;
+  border-radius: 4px;
+  text-align: center;
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", "Lucida Grande", "Roboto", sans-serif;
+  font-size: 0.875rem;
+  
+  @media (prefers-color-scheme: light) {
+    background-color: #107c10;
+    color: #ffffff;
+  }
+}
+

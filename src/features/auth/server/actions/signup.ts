@@ -74,7 +74,7 @@ export async function registerUser(formData: FormData): Promise<ActionResult> {
   // Check for duplicate email before creating user
   const exists = await prisma.user.findUnique({ where: { email } });
   if (exists) {
-    return { ok: false, errors: { formErrors: ["Email already registered"] } };
+    return { ok: false, errors: { formErrors: ["Unable to create account. Please try again."] } };
   }
 
   // Hash password with bcrypt (10 salt rounds - balanced security/performance)
@@ -99,13 +99,11 @@ export async function registerUser(formData: FormData): Promise<ActionResult> {
     // 3) Tell the client to show "check your email"
     return {
       ok: true,
-      // You can add metadata your client can read:
-      // @ts-ignore - extend your ActionResult if you want strict typing
       meta: { requiresEmailVerification: true, email },
     };
   } catch (err: unknown) {
     if (err instanceof PrismaClientKnownRequestError && err.code === "P2002") {
-      return { ok: false, errors: { formErrors: ["Email already registered"] } };
+      return { ok: false, errors: { formErrors: ["Unable to create account. Please try again."] } };
     }
     return { ok: false, errors: { formErrors: ["Unexpected error creating user"] } };
   }

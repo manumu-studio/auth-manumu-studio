@@ -1,12 +1,12 @@
 # Architecture Documentation
 
-**Manumu Studio Authentication** - System Architecture and Design
+**ManuMu Studio Authentication** - System Architecture and Design
 
 ---
 
 ## Overview
 
-This document describes the high-level architecture, data flows, and design decisions for Manumu Studio Authentication.
+This document describes the high-level architecture, data flows, and design decisions for ManuMu Studio Authentication.
 
 ---
 
@@ -34,7 +34,7 @@ graph TB
 
 ### Technology Stack
 
-- **Frontend**: Next.js 15 App Router, React 18, Chakra UI
+- **Frontend**: Next.js 15 App Router, React 18, Tailwind CSS + Framer Motion
 - **Authentication**: NextAuth.js v4 (Auth.js)
 - **Database**: Prisma ORM + PostgreSQL (Neon Serverless)
 - **Email**: Resend API (with SMTP fallback)
@@ -194,16 +194,17 @@ src/
 graph TD
     A[Root Layout] --> B[Providers]
     B --> C[SessionProvider]
-    B --> D[ChakraProvider]
     C --> E[App Pages]
     E --> F[Public Page]
     E --> G[Auth Pages]
-    F --> H[AuthProvidersGroup]
-    H --> I[SignInForm]
-    H --> J[GoogleButton]
-    H --> K[GitHubButton]
-    G --> L[VerifyBanner]
-    G --> M[ResendLink]
+    F --> H[AuthShell]
+    H --> I[EmailStep]
+    H --> J[PasswordStep]
+    H --> K[SignupStep]
+    H --> L[GoogleButton]
+    H --> M[GitHubButton]
+    G --> N[VerifyBanner]
+    G --> O[ResendLink]
 ```
 
 ---

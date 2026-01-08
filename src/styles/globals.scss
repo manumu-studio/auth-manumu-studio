@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 root {
   color-scheme: light;
 }
@@ -6,4 +10,35 @@ body {
   padding: 0;
   margin: 0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+// Dark mode styles for provider buttons in mimic page
+.providerButtonDark {
+  background-color: #2d2d2d !important;
+  border-color: #605e5c !important;
+  color: #ffffff !important;
+  
+  &:hover:not(:disabled) {
+    background-color: #3b3b3b !important;
+    border-color: #8a8886 !important;
+  }
+  
+  .label {
+    color: #ffffff !important;
+  }
+  
+  @media (prefers-color-scheme: light) {
+    background-color: #ffffff !important;
+    border-color: #8a8886 !important;
+    color: #1b1b1b !important;
+    
+    &:hover:not(:disabled) {
+      background-color: #f8fafc !important;
+      border-color: #d1d5db !important;
+    }
+    
+    .label {
+      color: #1b1b1b !important;
+    }
+  }
 }

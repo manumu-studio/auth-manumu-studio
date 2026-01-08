@@ -1,0 +1,150 @@
+.root {
+  background-color: #f5f5f5;
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: #2d2d2d;
+    // Background image only on desktop
+    @media (min-width: 768px) {
+      background-image: url('https://logincdn.msftauth.net/shared/5/images/fluent_web_dark_2_bf5f23287bc9f60c9be2.svg');
+    }
+  }
+}
+
+.signInBox {
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  max-width: 440px;
+  width: calc(100% - 40px);
+  padding: 44px;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  min-width: 320px;
+  min-height: 338px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  
+  // Mobile optimizations
+  @media (max-width: 767px) {
+    width: 100%;
+    max-width: 100%;
+    padding: 24px 20px;
+    margin: 0;
+    border-radius: 0;
+    min-height: auto;
+    box-shadow: none;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: #2d2d2d;
+    
+    // Remove shadow on mobile dark mode
+    @media (max-width: 767px) {
+      box-shadow: none;
+    }
+  }
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 6px;
+  width: 100%;
+  
+  // Smaller logo on mobile
+  @media (max-width: 767px) {
+    margin-bottom: 4px;
+  }
+}
+
+.logoWrapper {
+  position: relative;
+  width: 108px;
+  height: 80px;
+  margin: 0 auto;
+  
+  // Smaller logo on mobile
+  @media (max-width: 767px) {
+    width: 80px;
+    height: 60px;
+  }
+}
+
+.logo {
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.logoLight {
+  display: block;
+  
+  @media (prefers-color-scheme: dark) {
+    display: none;
+  }
+}
+
+.logoDark {
+  display: none;
+  
+  @media (prefers-color-scheme: dark) {
+    display: block;
+  }
+}
+
+.titleContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+  width: 100%;
+  
+  // Less spacing on mobile
+  @media (max-width: 767px) {
+    margin-bottom: 20px;
+  }
+}
+
+.title {
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", "Lucida Grande", "Roboto", sans-serif;
+  font-weight: 400;
+  font-size: 1.5rem;
+  line-height: 1.75rem;
+  color: #1b1b1b;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  width: 100%;
+  
+  // Slightly smaller on mobile
+  @media (max-width: 767px) {
+    font-size: 1.375rem;
+    line-height: 1.625rem;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    color: #ffffff;
+  }
+}
+
+.subtitle {
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", "Lucida Grande", "Roboto", sans-serif;
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #605e5c;
+  margin: 8px 0 0 0;
+  text-align: center;
+  width: 100%;
+  
+  @media (prefers-color-scheme: dark) {
+    color: #c8c6c4;
+  }
+}
+
+// Content area for form elements

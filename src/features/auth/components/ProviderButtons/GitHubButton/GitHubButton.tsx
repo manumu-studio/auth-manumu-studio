@@ -5,7 +5,7 @@ import styles from "./GitHubButton.module.scss";
 import type { GitHubButtonProps } from "./GitHubButton.types";
 
 export default function GitHubButton({
-  label = "Log In With GitHub",
+  label = "Continue with GitHub",
   callbackUrl,
   className,
 }: GitHubButtonProps) {

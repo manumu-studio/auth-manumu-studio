@@ -1,5 +1,5 @@
 /**
- * NextAuth.js type augmentations for Manumu Studio Authentication
+ * NextAuth.js type augmentations for ManuMu Studio Authentication
  * 
  * Extends the default NextAuth Session and User types to include
  * custom fields: id and role.

@@ -1,125 +1,307 @@
-"use client";
+'use client';
 
-import { ReactNode, useState } from "react";
-import {
-  Box,
-  Container,
-  Heading,
-  VStack,
-  Text,
-  useToast,
-  Link as ChakraLink,
-  useDisclosure,
-} from "@chakra-ui/react";
-import NextLink from "next/link";
+import { useState, useTransition, useRef } from 'react';
+import { signIn, useSession } from 'next-auth/react';
+import { AnimatePresence } from 'framer-motion';
+import { SignInSchema } from '@/lib/validation/signin';
+import { SignUpSchema } from '@/lib/validation/signup';
+import AuthShell from '@/components/ui/AuthShell';
+import UserCard from '@/components/ui/UserCard';
+import { registerUser } from '@/features/auth/server/actions';
+import EmailStep from '@/features/auth/components/steps/EmailStep';
+import PasswordStep from '@/features/auth/components/steps/PasswordStep';
+import SignupStep from '@/features/auth/components/steps/SignupStep';
+import type { SignupData } from '@/features/auth/components/steps/SignupStep';
 
-import AuthModal from "@/features/auth/components/AuthModal";
-import UserCard from "@/features/auth/components/UserCard";
-import { useSession } from "next-auth/react";
 
-import { AuthProvidersGroup, GoogleButton, GitHubButton } from "@/features/auth/components/ProviderButtons";
-import SignInForm from "@/features/auth/components/SignInForm/SignInForm";
+type Step = 'email' | 'password' | 'signup';
 
-function EmailFormCard() {
-  const toast = useToast();
-  const [justSignedIn, setJustSignedIn] = useState(false);
+export default function MimicPage() {
+  const { data: session, status, update } = useSession();
+  const [step, setStep] = useState<Step>('email');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  
+  // Signup form state
+  const [signupData, setSignupData] = useState<SignupData>({
+    firstname: '',
+    lastname: '',
+    email: '',
+    password: '',
+    repeatpassword: '',
+    country: '',
+    city: '',
+    address: '',
+  });
+  const [signupErrors, setSignupErrors] = useState<Record<string, string>>({});
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+  const directionRef = useRef<'forward' | 'backward'>('forward');
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
-  return (
-    <Box>
-      <SignInForm
-        onSuccess={() => {
-          setJustSignedIn(true);
-          toast({
-            title: "Signed in",
-            description: "Welcome back!",
-            status: "success",
-            position: "top",
-          });
-        }}
-        onError={(msg) =>
-          toast({
-            title: "Sign in failed",
-            description: msg || "Please check your credentials.",
-            status: "error",
-            position: "top",
-          })
-        }
-      />
-      {justSignedIn ? (
-        <Text mt={3} fontSize="sm" color="gray.500">
-          You’re signed in — you can close this panel.
-        </Text>
-      ) : null}
-    </Box>
-  );
-}
+  const handleEmailNext = () => {
+    setError(null);
+    
+    // Validate email format
+    const emailValidation = SignInSchema.pick({ email: true }).safeParse({ email });
+    if (!emailValidation.success) {
+      setError('Please enter a valid email address');
+      // Focus back on email input if validation fails
+      emailInputRef.current?.focus();
+      return;
+    }
 
-export default function PublicHomePage(): ReactNode {
-  const { status } = useSession();
-  const isAuthed = status === "authenticated";
-
-  const {
-    isOpen: isAuthOpen,
-    onOpen: onAuthOpen,
-    onClose: onAuthClose,
-  } = useDisclosure();
-  const [initialTab, setInitialTab] = useState<"login" | "signup">("login");
-
-  const openSignup = () => {
-    setInitialTab("signup");
-    onAuthOpen();
+    // Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
+    setEmail(normalizedEmail);
+    directionRef.current = 'forward';
+    setShouldAnimate(true);
+    setStep('password');
+    // Reset animation flag after animation completes
+    setTimeout(() => setShouldAnimate(false), 500);
   };
 
-  if (isAuthed) {
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    setError(null); // Clear error on input change
+  };
+
+  const handlePasswordSubmit = async () => {
+    setError(null);
+
+    if (!password) {
+      setError('Please enter your password');
+      passwordInputRef.current?.focus();
+      return;
+    }
+
+    startTransition(async () => {
+      // Normalize email again before submission
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const res = await signIn('credentials', {
+        redirect: false,
+        email: normalizedEmail,
+        password,
+      });
+
+      if (res?.error) {
+        if (res.error === 'EMAIL_NOT_VERIFIED') {
+          setError('Please verify your email address before signing in. Check your inbox for a verification link.');
+        } else {
+          setError('Invalid credentials. Please check your email and password.');
+        }
+        // Focus back on password input on error
+        passwordInputRef.current?.focus();
+        return;
+      }
+
+      // Refresh session context without reloading the page
+      // This will trigger a re-render and show the UserCard
+      await update();
+    });
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    setError(null); // Clear error on input change
+  };
+
+  const handleBack = () => {
+    setError(null);
+    setPassword('');
+    directionRef.current = 'backward';
+    setShouldAnimate(true);
+    setStep('email');
+    // Reset animation flag after animation completes
+    setTimeout(() => setShouldAnimate(false), 500);
+  };
+
+  const handleGoToSignup = () => {
+    setError(null);
+    directionRef.current = 'forward';
+    setShouldAnimate(true);
+    setStep('signup');
+    // Reset animation flag after animation completes
+    setTimeout(() => setShouldAnimate(false), 500);
+  };
+
+  const handleSignupBack = () => {
+    setSignupErrors({});
+    setError(null);
+    directionRef.current = 'backward';
+    setShouldAnimate(true);
+    setStep('email');
+    // Reset animation flag after animation completes
+    setTimeout(() => setShouldAnimate(false), 500);
+  };
+
+  const handleSignupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSignupErrors({});
+    setError(null);
+
+    // Validate form data
+    const validation = SignUpSchema.safeParse(signupData);
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.issues.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setSignupErrors(fieldErrors);
+      return;
+    }
+
+    startTransition(async () => {
+      const formData = new FormData();
+      Object.entries(signupData).forEach(([key, value]) => {
+        if (value) formData.append(key, value);
+      });
+
+      const res = await registerUser(formData);
+      
+      if (!res.ok) {
+        const fieldErrors: Record<string, string> = {};
+        if (res.errors?.fieldErrors) {
+          Object.entries(res.errors.fieldErrors).forEach(([key, messages]) => {
+            if (messages && messages[0]) {
+              fieldErrors[key] = messages[0];
+            }
+          });
+        }
+        if (res.errors?.formErrors?.[0]) {
+          setError(res.errors.formErrors[0]);
+        }
+        setSignupErrors(fieldErrors);
+        return;
+      }
+
+      // Success - show success message
+      setSignupSuccess(true);
+      setError(null);
+      setSignupErrors({});
+      
+      // Reset form after a delay
+      setTimeout(() => {
+        setSignupData({
+          firstname: '',
+          lastname: '',
+          email: '',
+          password: '',
+          repeatpassword: '',
+          country: '',
+          city: '',
+          address: '',
+        });
+        setSignupSuccess(false);
+        handleSignupBack();
+      }, 3000);
+    });
+  };
+
+  const handleSignupDataChange = (field: keyof SignupData, value: string) => {
+    setSignupData({ ...signupData, [field]: value });
+  };
+
+  const handleSignupErrorClear = (field: string) => {
+    setSignupErrors({ ...signupErrors, [field]: '' });
+  };
+
+  const getTitle = () => {
+    if (step === 'email') return 'Sign in to ManuMu';
+    if (step === 'password') return email;
+    if (step === 'signup') return 'Create your account';
+    return 'Sign in to ManuMu';
+  };
+
+  const getSubtitle = () => {
+    if (step === 'password') return 'Enter your password';
+    if (step === 'signup') return 'Enter your information';
+    return undefined;
+  };
+
+  // Show UserCard if authenticated, otherwise show login form
+  if (status === 'authenticated' && session?.user) {
     return (
-      <Container maxW="container.md" py={12}>
-        <VStack minH="50vh" align="center" justify="center" spacing={6}>
-          <Heading size="lg" textAlign="center">Welcome back</Heading>
-          <UserCard />
-        </VStack>
-      </Container>
+      <AuthShell
+        title="Welcome back"
+        subtitle="You're signed in to your account"
+        animateOnChange={false}
+      >
+        <UserCard />
+      </AuthShell>
     );
   }
 
+  // Show loading state while checking session
+  if (status === 'loading') {
+    return (
+      <AuthShell
+        title="Loading..."
+        subtitle="Please wait"
+        animateOnChange={false}
+      >
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </AuthShell>
+    );
+  }
+
+  // Show login form for unauthenticated users
   return (
-    <Container maxW="lg" py={16}>
-      <VStack spacing={8} align="stretch">
-        <Heading textAlign="center">Welcome to Manumu Authentication</Heading>
-
-        <AuthProvidersGroup
-          topCtaLabel="Sign In With Email"
-          googleSlot={
-            <>
-              <GoogleButton
-                label="Log In With Google"
-                callbackUrl="/"
-                className="darkBtn"
-              />
-              <GitHubButton
-                label="Log In With GitHub"
-                callbackUrl="/"
-                className="darkBtn"
-              />
-            </>
-          }
-          footerSlot={
-            <Text textAlign="center" color="gray.500" mt={2}>
-              New here?{" "}
-              <ChakraLink as={NextLink} href="#" onClick={(e: React.MouseEvent<HTMLAnchorElement>) => { e.preventDefault(); openSignup(); }}>
-                Create Account
-              </ChakraLink>
-            </Text>
-          }
-        >
-          <EmailFormCard />
-        </AuthProvidersGroup>
-
-        <AuthModal
-          isOpen={isAuthOpen}
-          onCloseAction={onAuthClose}
-          initialTab={initialTab}
-        />
-      </VStack>
-    </Container>
+    <AuthShell
+      title={getTitle()}
+      subtitle={getSubtitle()}
+      animateOnChange={shouldAnimate}
+      direction={directionRef.current}
+    >
+      <AnimatePresence mode="wait" custom={directionRef.current}>
+        {step === 'email' ? (
+          <EmailStep
+            email={email}
+            error={error}
+            isPending={isPending}
+            emailInputRef={emailInputRef}
+            direction={directionRef.current}
+            onEmailChange={handleEmailChange}
+            onNext={handleEmailNext}
+            onGoToSignup={handleGoToSignup}
+          />
+        ) : step === 'password' ? (
+          <PasswordStep
+            password={password}
+            error={error}
+            isPending={isPending}
+            passwordInputRef={passwordInputRef}
+            direction={directionRef.current}
+            onPasswordChange={handlePasswordChange}
+            onSubmit={handlePasswordSubmit}
+            onBack={handleBack}
+          />
+        ) : (
+          <SignupStep
+            signupData={signupData}
+            signupErrors={signupErrors}
+            signupSuccess={signupSuccess}
+            error={error}
+            isPending={isPending}
+            emailInputRef={emailInputRef}
+            direction={directionRef.current}
+            onSignupDataChange={handleSignupDataChange}
+            onSignupErrorClear={handleSignupErrorClear}
+            onSubmit={handleSignupSubmit}
+            onBack={handleSignupBack}
+          />
+        )}
+      </AnimatePresence>
+    </AuthShell>
   );
 }
+

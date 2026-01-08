@@ -1,5 +1,5 @@
 /**
- * NextAuth.js configuration for Manumu Studio Authentication
+ * NextAuth.js configuration for ManuMu Studio Authentication
  * 
  * Supports multiple authentication providers:
  * - Credentials (email/password) with email verification

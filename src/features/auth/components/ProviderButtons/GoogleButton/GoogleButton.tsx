@@ -5,7 +5,7 @@ import styles from "./GoogleButton.module.scss";
 import type { GoogleButtonProps } from "./GoogleButton.types";
 
 export default function GoogleButton({
-  label = "Log In With Google",
+  label = "Continue with Google",
   callbackUrl,
   className,
 }: GoogleButtonProps) {

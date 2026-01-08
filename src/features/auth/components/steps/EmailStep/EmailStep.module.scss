@@ -1,0 +1,79 @@
+.separator {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.separatorLine {
+  flex: 1;
+  height: 1px;
+  background-color: #605e5c;
+  
+  @media (prefers-color-scheme: light) {
+    background-color: #8a8886;
+  }
+}
+
+.separatorText {
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", "Lucida Grande", "Roboto", sans-serif;
+  font-size: 0.875rem;
+  color: #c8c6c4;
+  white-space: nowrap;
+  
+  @media (prefers-color-scheme: light) {
+    color: #605e5c;
+  }
+}
+
+.providerButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.createAccount {
+  text-align: center;
+  margin-top: 0.75rem;
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", "Lucida Grande", "Roboto", sans-serif;
+  font-size: 0.875rem;
+}
+
+.createAccountText {
+  color: #c8c6c4;
+  
+  @media (prefers-color-scheme: light) {
+    color: #605e5c;
+  }
+}
+
+.createAccountLink {
+  color: #0078d4;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  
+  &:hover {
+    color: #106ebe;
+  }
+  
+  &:active {
+    color: #005a9e;
+  }
+  
+  @media (prefers-color-scheme: light) {
+    color: #0078d4;
+    
+    &:hover {
+      color: #106ebe;
+    }
+    
+    &:active {
+      color: #005a9e;
+    }
+  }
+}
+

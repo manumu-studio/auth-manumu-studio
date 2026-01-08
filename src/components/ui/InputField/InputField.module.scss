@@ -1,0 +1,205 @@
+.root {
+  margin-bottom: 0.75rem;
+}
+
+.inputWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.inputContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.inputContainerInner {
+  position: relative;
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.875rem;
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", "Lucida Grande", "Roboto", sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+  color: #ffffff;
+  background-color: transparent;
+  border: none;
+  border-top: 1px solid #605e5c;
+  border-left: 1px solid #605e5c;
+  border-right: 1px solid #605e5c;
+  border-bottom: 1px solid #605e5c;
+  border-radius: 4px;
+  transition: border-bottom-width 0.2s ease, border-bottom-color 0.2s ease;
+  outline: none;
+  
+  &::placeholder {
+    color: transparent;
+    opacity: 0;
+  }
+  
+  // Override browser autocomplete/autofill styles
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background-color: transparent !important;
+    background-clip: content-box !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+  
+  &:focus {
+    border-top-color: #605e5c;
+    border-left-color: #605e5c;
+    border-right-color: #605e5c;
+    border-bottom-color: #0078d4;
+    border-bottom-width: 2px;
+    background-color: transparent;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: transparent;
+  }
+  
+  // Light mode support
+  @media (prefers-color-scheme: light) {
+    color: #1b1b1b;
+    background-color: transparent;
+    border-top-color: #8a8886;
+    border-left-color: #8a8886;
+    border-right-color: #8a8886;
+    border-bottom-color: #8a8886;
+    
+    &::placeholder {
+      color: transparent;
+      opacity: 0;
+    }
+    
+    // Override browser autocomplete/autofill styles for light mode
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus,
+    &:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+      -webkit-text-fill-color: #1b1b1b !important;
+      background-color: transparent !important;
+      background-clip: content-box !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+    
+    &:focus {
+      border-top-color: #8a8886;
+      border-left-color: #8a8886;
+      border-right-color: #8a8886;
+      border-bottom-color: #0078d4;
+      border-bottom-width: 2px;
+      background-color: transparent;
+    }
+    
+    &:disabled {
+      background-color: transparent;
+    }
+  }
+}
+
+.inputFocused {
+  border-top-color: #605e5c;
+  border-left-color: #605e5c;
+  border-right-color: #605e5c;
+  border-bottom-color: #0078d4;
+  border-bottom-width: 2px;
+  
+  @media (prefers-color-scheme: light) {
+    border-top-color: #8a8886;
+    border-left-color: #8a8886;
+    border-right-color: #8a8886;
+    border-bottom-color: #0078d4;
+    border-bottom-width: 2px;
+  }
+}
+
+.inputError {
+  border-color: #d13438;
+  
+  @media (prefers-color-scheme: light) {
+    border-color: #d13438;
+  }
+}
+
+.focusUnderline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #0078d4;
+  transform-origin: left;
+  z-index: 1;
+}
+
+.label {
+  position: absolute;
+  left: 0.875rem;
+  pointer-events: none;
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", "Lucida Grande", "Roboto", sans-serif;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  z-index: 2;
+  padding: 0 0.25rem;
+}
+
+.labelFloating {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #a19f9d;
+  background-color: #fff;
+  
+  @media (prefers-color-scheme: dark) {
+    background-color: #2d2d2d;
+    color: #a19f9d;
+  }
+  
+  @media (prefers-color-scheme: light) {
+    color: #605e5c;
+    background-color: #fff;
+  }
+}
+
+.labelPlaceholder {
+  font-size: 0.9375rem;
+  color: #a19f9d;
+  background-color: transparent;
+  
+  @media (prefers-color-scheme: dark) {
+    color: #a19f9d;
+  }
+  
+  @media (prefers-color-scheme: light) {
+    color: #605e5c;
+  }
+}
+
+.required {
+  color: #d13438;
+  margin-left: 0.25rem;
+}
+
+.error {
+  color: #d13438;
+  font-size: 0.8125rem;
+  margin-top: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", "Lucida Grande", "Roboto", sans-serif;
+  
+  @media (prefers-color-scheme: light) {
+    color: #d13438;
+  }
+}

@@ -3,7 +3,7 @@
 **Project:** ManuMu Authentication  
 **Status:** Active Development
 
-This journal tracks the development progress of ManuMu Authentication, a production-ready authentication starter built with Next.js, Prisma, and Chakra UI.
+This journal tracks the development progress of ManuMu Authentication, a production-ready authentication starter built with Next.js, Prisma, and Tailwind CSS.
 
 ---
 
@@ -16,7 +16,7 @@ This journal tracks the development progress of ManuMu Authentication, a product
 Established the foundational architecture and development environment:
 - Next.js 15 App Router with TypeScript
 - Prisma ORM with PostgreSQL
-- Chakra UI component library
+- Tailwind CSS + Framer Motion (migrated from Chakra UI)
 - Server/client boundary separation
 - Environment configuration setup
 
@@ -87,10 +87,23 @@ Added GitHub OAuth provider:
 
 ---
 
+### [Entry 6 — UI/UX Completion & Final Codebase Cleanup](./journal/ENTRY-6.md)
+**Date:** January 30, 2025  
+**Type:** Cleanup + Finalization
+
+Final cleanup and polish phase:
+- Removed unused `shared/` folder (AuthHeroImage component + types.ts)
+- UI/UX implementation completed and polished
+- All dead code eliminated from codebase
+- Codebase is now 100% functional
+- Ready for main branch migration
+
+---
+
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
-Initial project setup with Next.js, Prisma, and Chakra UI.
+Initial project setup with Next.js, Prisma, and Tailwind CSS.
 
 ### [PR-0.2.0 — SSR-Hydrated Sessions & Feature-Based Refactor](./pull-requests/PR-0.2.0.md)
 Eliminated UI flicker and implemented feature-based architecture.
@@ -104,12 +117,15 @@ Google OAuth provider with multi-provider sign-in hub.
 ### [PR-0.5.0 — GitHub OAuth Integration](./pull-requests/PR-0.5.0.md)
 GitHub OAuth provider following consistent architecture patterns.
 
+### [PR-0.6.0 — UI/UX Completion & Final Codebase Cleanup](./pull-requests/PR-0.6.0.md)
+Final cleanup phase removing all unused code and preparing for main branch migration.
+
 ---
 
 ## Project Status
 
-**Current Version:** 0.5.0  
-**Last Updated:** January 27, 2025
+**Current Version:** 0.6.0  
+**Last Updated:** January 30, 2025
 
 ### Completed Features
 
@@ -121,6 +137,8 @@ GitHub OAuth provider following consistent architecture patterns.
 - ✅ Multi-provider sign-in hub
 - ✅ SSR session hydration
 - ✅ Feature-based architecture
+- ✅ UI/UX implementation (Tailwind CSS + Framer Motion)
+- ✅ Codebase cleanup (100% functional code)
 
 ### In Progress
 
@@ -156,4 +174,4 @@ GitHub OAuth provider following consistent architecture patterns.
 
 ---
 
-**Last Updated:** January 27, 2025
+**Last Updated:** January 30, 2025

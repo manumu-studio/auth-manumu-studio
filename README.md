@@ -1,4 +1,4 @@
-# Manumu Studio Authentication
+# ManuMu Studio Authentication
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)
@@ -11,16 +11,17 @@
 
 ## 🎯 Overview
 
-**Manumu Studio Authentication** (or "Manumu Authentication" in short) is a production-ready authentication starter that provides a complete, secure authentication system out of the box. Built with modern best practices, it offers multiple authentication methods, email verification, and a polished user experience.
+**ManuMu Studio Authentication** (or "ManuMu Authentication" in short) is a production-ready authentication starter that provides a complete, secure authentication system out of the box. Built with modern best practices, it offers multiple authentication methods, email verification, and a polished user experience.
 
 ### Key Features
 
-- ✅ **Multi-Provider Authentication**: Credentials (email/password) + OAuth (GitHub, Google)
-- ✅ **Email Verification**: Required for credentials, optional for OAuth (trusted providers)
-- ✅ **Secure Sessions**: JWT-based stateless sessions with NextAuth.js
-- ✅ **Type-Safe**: Full TypeScript coverage with Zod validation
-- ✅ **Modern Stack**: Next.js 15 App Router, Prisma ORM, PostgreSQL (Neon Serverless)
-- ✅ **Production-Ready**: SSR session hydration, zero-flicker UX, feature-based architecture
+- **Auth methods**: Email/password (Credentials) + OAuth (Google, GitHub)
+- **Email verification**: Token-based verification with TTL + resend cooldown
+- **Sessions**: JWT strategy (stateless) via NextAuth.js
+- **Type-safe**: TypeScript + Zod on client and server
+- **Database**: Prisma ORM + PostgreSQL (Neon-ready)
+- **UI/UX**: Tailwind CSS + Framer Motion (polished multi-step auth flow)
+- **Deploy**: Vercel-ready with environment validation
 
 ---
 
@@ -31,7 +32,7 @@
 - **Database**: [Prisma](https://www.prisma.io/) + [PostgreSQL](https://www.postgresql.org/) (hosted on [Neon Serverless](https://neon.tech))
 - **Email**: [Resend](https://resend.com/) (with SMTP fallback support)
 - **Validation**: [Zod](https://zod.dev/)
-- **UI**: [Chakra UI](https://chakra-ui.com/)
+- **UI**: [Tailwind CSS](https://tailwindcss.com/) + [Framer Motion](https://www.framer.com/motion/)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 
 ---
@@ -131,7 +132,7 @@ NEXTAUTH_URL="http://localhost:3000"
 **OAuth Providers** (enable by setting both CLIENT_ID and CLIENT_SECRET):
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`
-- `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET`
+
 
 **Email Provider**:
 - `RESEND_API_KEY` - For Resend email service
@@ -162,16 +163,6 @@ NEXTAUTH_URL="http://localhost:3000"
 
 ---
 
-## 🧪 Demo Users
-
-If you seed the database, these demo accounts are available:
-
-- **Admin**: `admin@demo.io` / `admin123`
-- **User**: `user@demo.io` / `user123`
-
-> Run `pnpm db:seed` to create these users.
-
----
 
 ## 📁 Project Structure
 
@@ -276,11 +267,13 @@ pnpm db:seed          # Seed demo users
 - [x] Google OAuth integration
 - [x] GitHub OAuth integration
 - [x] Email verification system
-- [ ] Facebook OAuth provider
+- [x] UI/UX implementation
+- [x] Codebase cleanup (100% functional code)
 - [ ] Password reset flow
-- [ ] Multi-factor authentication (MFA)
-- [ ] Protected routes & role-based access control
-- [ ] Unit/integration tests
+- [ ] Account lockout policy
+- [ ] MFA / 2FA
+- [ ] Rate limiting on API endpoints
+- [ ] Expanded test coverage (integration + E2E)
 
 ---
 
@@ -296,7 +289,8 @@ Built with:
 - [Next.js](https://nextjs.org/)
 - [NextAuth.js](https://next-auth.js.org/)
 - [Prisma](https://www.prisma.io/)
-- [Chakra UI](https://chakra-ui.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Framer Motion](https://www.framer.com/motion/)
 - [Zod](https://zod.dev/)
 
 ---
