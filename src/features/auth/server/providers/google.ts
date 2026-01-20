@@ -1,8 +1,9 @@
 import GoogleProvider from "next-auth/providers/google";
+import { env } from "@/lib/env";
 
 export function googleProvider() {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = env.GOOGLE_CLIENT_ID;
+  const clientSecret = env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) return null;
 
   return GoogleProvider({

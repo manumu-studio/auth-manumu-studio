@@ -133,8 +133,11 @@
 
 ### Rate Limiting
 
-- **Email Resend**: Cooldown protection prevents abuse
-- **Future Enhancement**: Global rate limiting for API endpoints
+- **Email Resend**: `/api/auth/verify/resend` is rate limited
+- **Credentials Sign-in**: Rate limited inside NextAuth credentials authorize
+- **Sign-up**: Rate limited in the registration server action
+- **Identifiers**: IP + email when available
+- **Response**: 429 with generic message to avoid enumeration
 
 ### Error Handling
 
@@ -157,6 +160,13 @@
 - `NEXTAUTH_SECRET`: Strong random string (32+ characters)
 - `DATABASE_URL`: PostgreSQL connection string with credentials
 - OAuth provider secrets (if using OAuth)
+
+### Rate Limiting (Upstash)
+
+- `UPSTASH_REDIS_REST_URL`: Upstash REST URL
+- `UPSTASH_REDIS_REST_TOKEN`: Upstash REST token
+- `RATE_LIMIT_MAX`: Max requests per window (default: 3)
+- `RATE_LIMIT_WINDOW_MINUTES`: Window length in minutes (default: 60)
 
 ---
 
@@ -243,13 +253,13 @@ If you discover a security vulnerability, please report it responsibly:
 
 ### Dead Code Removal
 
-**Status**: ✅ **Complete** - All unused code has been removed from the codebase.
+**Status**: **✔** **Complete** - All unused code has been removed from the codebase.
 
 **Recent Cleanup (Branch 6):**
-- ✅ Removed unused `shared/` folder components
-- ✅ Eliminated broken component references
-- ✅ Cleaned up unused type aliases
-- ✅ Codebase is now 100% functional
+- **✔** Removed unused `shared/` folder components
+- **✔** Eliminated broken component references
+- **✔** Cleaned up unused type aliases
+- **✔** Codebase is now 100% functional
 
 **Impact:**
 - Better security posture (no hidden code paths)

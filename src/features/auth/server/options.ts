@@ -20,6 +20,8 @@ import { compare } from "bcryptjs";
 import { z } from "zod";
 import { googleProvider } from "@/features/auth/server/providers/google";
 import { githubProvider } from "@/features/auth/server/providers/github";
+import { env } from "@/lib/env";
+import { buildRateLimitKey, getRequestIp, rateLimit } from "@/lib/rateLimit";
 
 /**
  * Zod schema for validating credentials input
@@ -39,7 +41,7 @@ export const authOptions: NextAuthOptions = {
 
   // Use JWT strategy so credentials + OAuth both work without DB sessions
   session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: env.NEXTAUTH_SECRET,
 
   providers: [
     Credentials({
@@ -57,7 +59,7 @@ export const authOptions: NextAuthOptions = {
        * @returns {Promise<Object|null>} User object if valid, null otherwise
        * @throws {Error} "EMAIL_NOT_VERIFIED" if email not verified
        */
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         // Validate input format with Zod
         const parsed = CredentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
@@ -66,6 +68,18 @@ export const authOptions: NextAuthOptions = {
         
         // Normalize email (lowercase, trimmed) and fetch user
         const normalizedEmail = email.trim().toLowerCase();
+
+        const ip = getRequestIp(req?.headers ?? {});
+        const identifier = buildRateLimitKey({
+          scope: "signin",
+          ip,
+          email: normalizedEmail,
+        });
+        const limitResult = await rateLimit(identifier);
+        if (!limitResult.success) {
+          throw new Error("RATE_LIMITED");
+        }
+
         const user = await prisma.user.findUnique({
           where: { email: normalizedEmail },
           select: {

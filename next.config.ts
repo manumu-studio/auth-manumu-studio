@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   },
   // Needed for Prisma in serverless runtimes
   serverExternalPackages: ['@prisma/client'],
-  eslint: { ignoreDuringBuilds: true },
+  eslint: { ignoreDuringBuilds: false },
 };
 
 export default nextConfig;
