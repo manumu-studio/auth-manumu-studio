@@ -9,11 +9,12 @@
 
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 
 // Token expiration time (default: 30 minutes)
-const TTL_MIN = Number(process.env.VERIFY_TOKEN_TTL_MINUTES ?? 30);
+const TTL_MIN = env.VERIFY_TOKEN_TTL_MINUTES;
 // Application URL for verification links
-const APP_URL = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
+const APP_URL = env.APP_URL || env.NEXTAUTH_URL || env.AUTH_URL || "http://localhost:3000";
 
 /**
  * Creates a verification token for email verification

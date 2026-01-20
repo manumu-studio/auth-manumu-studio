@@ -94,6 +94,8 @@ export default function MimicPage() {
       if (res?.error) {
         if (res.error === 'EMAIL_NOT_VERIFIED') {
           setError('Please verify your email address before signing in. Check your inbox for a verification link.');
+        } else if (res.error === 'RATE_LIMITED') {
+          setError('Too many requests. Please try again later.');
         } else {
           setError('Invalid credentials. Please check your email and password.');
         }

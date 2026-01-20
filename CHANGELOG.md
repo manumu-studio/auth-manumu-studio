@@ -20,10 +20,10 @@ This format follows [Conventional Commits](https://www.conventionalcommits.org/e
 - Lint, typecheck, and build all pass (0 errors)
 
 ### 🧪 Testing
-- ✅ Sign-in and sign-up flows validated  
-- ✅ SSR hydration confirmed (no flicker)  
-- ✅ Session persistence across reloads  
-- ✅ Logout clears session consistently  
+- **✔** Sign-in and sign-up flows validated  
+- **✔** SSR hydration confirmed (no flicker)  
+- **✔** Session persistence across reloads  
+- **✔** Logout clears session consistently  
 
 ### 📚 Docs
 - Full PR write-up: [`docs/pull-requests/PR-0.2.0.md`](docs/pull-requests/PR-0.2.0.md)

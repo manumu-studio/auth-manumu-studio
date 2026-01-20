@@ -100,6 +100,19 @@ Final cleanup and polish phase:
 
 ---
 
+### [Entry 7 — Rate Limiting (Critical Security)](./journal/ENTRY-7.md)
+**Date:** January 20, 2026  
+**Type:** Security Hardening
+
+Implemented rate limiting across critical auth paths:
+- API resend verification endpoint
+- Credentials sign-in (NextAuth authorize)
+- Sign-up server action
+- Upstash-backed limiter with safe in-memory fallback
+- New env validation and security docs updates
+
+---
+
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -120,6 +133,9 @@ GitHub OAuth provider following consistent architecture patterns.
 ### [PR-0.6.0 — UI/UX Completion & Final Codebase Cleanup](./pull-requests/PR-0.6.0.md)
 Final cleanup phase removing all unused code and preparing for main branch migration.
 
+### [PR-0.7.0 — Rate Limiting (Critical Security)](./pull-requests/PR-0.7.0.md)
+Rate limiting for resend, sign-in, and sign-up with shared limiter utility.
+
 ---
 
 ## Project Status
@@ -129,16 +145,17 @@ Final cleanup phase removing all unused code and preparing for main branch migra
 
 ### Completed Features
 
-- ✅ User registration with validation
-- ✅ Credentials authentication
-- ✅ Email verification system
-- ✅ Google OAuth integration
-- ✅ GitHub OAuth integration
-- ✅ Multi-provider sign-in hub
-- ✅ SSR session hydration
-- ✅ Feature-based architecture
-- ✅ UI/UX implementation (Tailwind CSS + Framer Motion)
-- ✅ Codebase cleanup (100% functional code)
+- **✔** User registration with validation
+- **✔** Credentials authentication
+- **✔** Email verification system
+- **✔** Google OAuth integration
+- **✔** GitHub OAuth integration
+- **✔** Multi-provider sign-in hub
+- **✔** SSR session hydration
+- **✔** Feature-based architecture
+- **✔** UI/UX implementation (Tailwind CSS + Framer Motion)
+- **✔** Codebase cleanup (100% functional code)
+- **✔** Rate limiting on auth endpoints
 
 ### In Progress
 

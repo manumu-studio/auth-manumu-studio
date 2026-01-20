@@ -205,8 +205,6 @@ graph TD
     H --> M[GitHubButton]
     H --> N[UserCard]
     H --> O[Sign Out Button]
-    G --> P[VerifyBanner]
-    G --> Q[ResendLink]
 ```
 
 ---
@@ -391,6 +389,7 @@ graph TD
 3. **Session Security**: JWT signed with strong secret
 4. **Email Verification**: Token-based with TTL
 5. **OAuth Security**: Provider-verified email addresses
+6. **Rate Limiting**: IP + email limits on sensitive auth endpoints
 
 ### Security Flow
 
@@ -440,7 +439,6 @@ graph TB
 
 ### Planned Architecture Improvements
 
-- **Rate Limiting**: Redis-based rate limiting for API endpoints
 - **Caching**: Redis cache for session validation
 - **Monitoring**: Application performance monitoring
 - **Analytics**: User authentication analytics

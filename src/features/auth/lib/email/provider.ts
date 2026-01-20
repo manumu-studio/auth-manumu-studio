@@ -11,11 +11,12 @@ import { Resend } from "resend";
 import { getVerificationEmailSubject } from "@/features/auth/server/verify/templates/verifyEmail.subject";
 import { getVerificationEmailText } from "@/features/auth/server/verify/templates/verifyEmail.text";
 import { verifyEmailHtml } from "@/features/auth/server/verify/templates/verifyEmail.html";
+import { env } from "@/lib/env";
 
 // Resend API key (optional - falls back to console logging if not set)
-const resendKey = process.env.RESEND_API_KEY;
+const resendKey = env.RESEND_API_KEY;
 // Sender email address (defaults to Resend onboarding address)
-const from = process.env.RESEND_FROM || "Acme <onboarding@resend.dev>";
+const from = env.RESEND_FROM || "Acme <onboarding@resend.dev>";
 // Initialize Resend client only if API key is provided
 const resend = resendKey ? new Resend(resendKey) : null;
 

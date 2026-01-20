@@ -65,8 +65,8 @@ To test the authentication system:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/manumu-authentication.git
-cd manumu-authentication
+git clone https://github.com/yourusername/auth-manumu-studio.git
+cd auth-manumu-studio
 ```
 
 ### 2. Install Dependencies
@@ -144,6 +144,15 @@ NEXTAUTH_URL="http://localhost:3000"
 - `APP_URL` - Fallback URL for callback assembly
 - `VERIFY_TOKEN_TTL_MINUTES` - Token expiration (default: 30)
 - `VERIFY_RESEND_COOLDOWN_MINUTES` - Resend cooldown (default: 2)
+
+**Rate Limiting (Upstash)**:
+- `UPSTASH_REDIS_REST_URL` - Upstash REST URL
+- `UPSTASH_REDIS_REST_TOKEN` - Upstash REST token
+- `RATE_LIMIT_MAX` - Max requests per window (default: 3)
+- `RATE_LIMIT_WINDOW_MINUTES` - Window length in minutes (default: 60)
+
+**Build/CI**:
+- `SKIP_ENV_VALIDATION=true` - Skip env validation during CI builds (build-time only)
 
 ### Manual Setup Steps
 
@@ -272,10 +281,11 @@ pnpm db:seed          # Seed demo users
 - [x] Email verification system
 - [x] UI/UX implementation
 - [x] Codebase cleanup (100% functional code)
+- [x] Rate limiting on auth endpoints
+- [x] Rate limiting on API endpoints
 - [ ] Password reset flow
 - [ ] Account lockout policy
 - [ ] MFA / 2FA
-- [ ] Rate limiting on API endpoints
 - [ ] Expanded test coverage (integration + E2E)
 
 ---

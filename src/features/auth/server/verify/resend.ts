@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/features/auth/lib/email/provider";
 import crypto from "crypto";
+import { env } from "@/lib/env";
 
-const TTL_MIN = Number(process.env.VERIFY_TOKEN_TTL_MINUTES ?? 30);
-const COOLDOWN_MIN = Number(process.env.VERIFY_RESEND_COOLDOWN_MINUTES ?? 2);
-const APP_URL = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
+const TTL_MIN = env.VERIFY_TOKEN_TTL_MINUTES;
+const COOLDOWN_MIN = env.VERIFY_RESEND_COOLDOWN_MINUTES;
+const APP_URL = env.APP_URL || env.NEXTAUTH_URL || env.AUTH_URL || "http://localhost:3000";
 
 export async function resendVerificationToken(email: string) {
   const normalized = email.toLowerCase().trim();

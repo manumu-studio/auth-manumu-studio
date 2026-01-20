@@ -30,6 +30,8 @@ import { SignUpSchema } from "@/lib/validation/signup";
 import type { ActionResult } from "./types";
 import { createVerificationToken } from "@/features/auth/server/verify/createToken";
 import { sendVerificationEmail } from "@/features/auth/lib/email/provider";
+import { headers } from "next/headers";
+import { buildRateLimitKey, getRequestIp, rateLimit } from "@/lib/rateLimit";
 
 /**
  * Register a new user account
@@ -70,6 +72,17 @@ export async function registerUser(formData: FormData): Promise<ActionResult> {
   const country = data.country?.toUpperCase();
   const city = data.city?.trim();
   const address = data.address?.trim();
+
+  const ip = getRequestIp(await headers());
+  const identifier = buildRateLimitKey({
+    scope: "signup",
+    ip,
+    email,
+  });
+  const limitResult = await rateLimit(identifier);
+  if (!limitResult.success) {
+    return { ok: false, errors: { formErrors: ["Too many requests. Please try again later."] } };
+  }
 
   // Check for duplicate email before creating user
   const exists = await prisma.user.findUnique({ where: { email } });

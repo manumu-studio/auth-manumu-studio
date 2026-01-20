@@ -1,8 +1,9 @@
 import GitHubProvider from "next-auth/providers/github";
+import { env } from "@/lib/env";
 
 export function githubProvider() {
-  const clientId = process.env.GITHUB_CLIENT_ID;
-  const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+  const clientId = env.GITHUB_CLIENT_ID;
+  const clientSecret = env.GITHUB_CLIENT_SECRET;
   if (!clientId || !clientSecret) return null;
 
   return GitHubProvider({
