@@ -34,6 +34,7 @@ This phase blocks any third‑party auth work. Ship in the order below.
 
 **Goal:** Baseline HTTP security protections.
 
+**Status:** **✔** Complete
 **Scope (minimum):**
 - Content‑Security‑Policy (CSP)
 - HSTS

@@ -112,7 +112,16 @@ Implemented rate limiting across critical auth paths:
 - New env validation and security docs updates
 
 ---
+### [Entry 8 — Security Headers (CSP + HSTS)](./journal/ENTRY-8.md)
+**Date:** January 20, 2026  
+**Type:** Security Hardening
 
+Implemented baseline security headers:
+- CSP, HSTS, X-Frame-Options, Referrer-Policy, X-Content-Type-Options
+- Middleware-based enforcement for auth and public routes
+- Documentation updates
+
+---
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -136,12 +145,15 @@ Final cleanup phase removing all unused code and preparing for main branch migra
 ### [PR-0.7.0 — Rate Limiting (Critical Security)](./pull-requests/PR-0.7.0.md)
 Rate limiting for resend, sign-in, and sign-up with shared limiter utility.
 
+### [PR-0.8.0 — Security Headers (CSP + HSTS)](./pull-requests/PR-0.8.0.md)
+Baseline security headers enforced at middleware level.
+
 ---
 
 ## Project Status
 
-**Current Version:** 0.6.0  
-**Last Updated:** January 30, 2025
+**Current Version:** 0.8.0  
+**Last Updated:** January 20, 2026
 
 ### Completed Features
 
@@ -156,6 +168,7 @@ Rate limiting for resend, sign-in, and sign-up with shared limiter utility.
 - **✔** UI/UX implementation (Tailwind CSS + Framer Motion)
 - **✔** Codebase cleanup (100% functional code)
 - **✔** Rate limiting on auth endpoints
+- **✔** Security headers (CSP + HSTS)
 
 ### In Progress
 

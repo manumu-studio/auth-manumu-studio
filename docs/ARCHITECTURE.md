@@ -390,6 +390,7 @@ graph TD
 4. **Email Verification**: Token-based with TTL
 5. **OAuth Security**: Provider-verified email addresses
 6. **Rate Limiting**: IP + email limits on sensitive auth endpoints
+7. **Security Headers**: CSP, HSTS, X-Frame-Options, Referrer-Policy
 
 ### Security Flow
 
