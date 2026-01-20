@@ -4,7 +4,7 @@ This phase turns ManuMu Auth into a real authorization server. Complete in order
 
 ---
 
-## 4) `feature/oauth-client-registry`
+## 10) `feature/oauth-client-registry`
 
 **Goal:** Register third‑party apps with strict redirect/origin controls.
 
@@ -25,7 +25,7 @@ This phase turns ManuMu Auth into a real authorization server. Complete in order
 
 ---
 
-## 5) `feature/oauth-authorization-endpoint`
+## 11) `feature/oauth-authorization-endpoint`
 
 **Goal:** Implement `/oauth/authorize` with consent + redirect validation.
 
@@ -46,7 +46,7 @@ This phase turns ManuMu Auth into a real authorization server. Complete in order
 
 ---
 
-## 6) `feature/oauth-token-endpoint`
+## 12) `feature/oauth-token-endpoint`
 
 **Goal:** Implement `/oauth/token` to exchange code for tokens.
 
@@ -66,7 +66,7 @@ This phase turns ManuMu Auth into a real authorization server. Complete in order
 
 ---
 
-## 7) `feature/jwks-and-oidc-discovery`
+## 13) `feature/jwks-and-oidc-discovery`
 
 **Goal:** Expose verification metadata for third‑party APIs.
 

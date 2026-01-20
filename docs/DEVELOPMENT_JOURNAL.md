@@ -122,6 +122,17 @@ Implemented baseline security headers:
 - Documentation updates
 
 ---
+### [Entry 9 — Auth Critical Flow Tests](./journal/ENTRY-9.md)
+**Date:** January 20, 2026  
+**Type:** Testing + Quality
+
+Added core test coverage for critical auth flows:
+- Password hashing verification
+- Token generation + validation
+- Email verification resend + consume flows
+- Rate limit enforcement on signup, resend, and sign-in
+
+---
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -148,11 +159,14 @@ Rate limiting for resend, sign-in, and sign-up with shared limiter utility.
 ### [PR-0.8.0 — Security Headers (CSP + HSTS)](./pull-requests/PR-0.8.0.md)
 Baseline security headers enforced at middleware level.
 
+### [PR-0.9.0 — Auth Critical Flow Tests](./pull-requests/PR-0.9.0.md)
+Unit/integration tests for critical authentication flows and rate limiting.
+
 ---
 
 ## Project Status
 
-**Current Version:** 0.8.0  
+**Current Version:** 0.9.0  
 **Last Updated:** January 20, 2026
 
 ### Completed Features
@@ -169,6 +183,7 @@ Baseline security headers enforced at middleware level.
 - **✔** Codebase cleanup (100% functional code)
 - **✔** Rate limiting on auth endpoints
 - **✔** Security headers (CSP + HSTS)
+- **✔** Auth critical flow tests (hashing, verification, rate limiting)
 
 ### In Progress
 
@@ -181,7 +196,7 @@ Baseline security headers enforced at middleware level.
 - 🔜 Password reset flow
 - 🔜 Multi-factor authentication
 - 🔜 Protected routes & RBAC
-- 🔜 Unit/integration tests
+- 🔜 E2E test coverage
 
 ---
 
@@ -204,4 +219,4 @@ Baseline security headers enforced at middleware level.
 
 ---
 
-**Last Updated:** January 30, 2025
+**Last Updated:** January 20, 2026

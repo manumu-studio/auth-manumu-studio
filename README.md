@@ -21,6 +21,7 @@
 - **Type-safe**: TypeScript + Zod on client and server
 - **Database**: Prisma ORM + PostgreSQL (Neon-ready)
 - **UI/UX**: Tailwind CSS + Framer Motion (polished multi-step auth flow)
+- **Testing**: Critical auth flow coverage (hashing, verification, rate limits)
 - **Theme System**: Hybrid approach using Tailwind utilities + SCSS Module overrides with `@media (prefers-color-scheme: dark)` for consistent dark theme support
 - **Deploy**: Vercel-ready with environment validation
 
@@ -283,6 +284,7 @@ pnpm db:seed          # Seed demo users
 - [x] Codebase cleanup (100% functional code)
 - [x] Rate limiting on auth endpoints
 - [x] Rate limiting on API endpoints
+- [x] Auth critical flow tests (hashing, verification, rate limits)
 - [ ] Password reset flow
 - [ ] Account lockout policy
 - [ ] MFA / 2FA

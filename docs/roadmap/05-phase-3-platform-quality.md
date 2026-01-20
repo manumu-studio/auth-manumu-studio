@@ -1,13 +1,13 @@
 # Phase 3: Platform Quality
 
-10. `feature/account-lockout`
+## 16). `feature/account-lockout`
     - Failed login tracking and temporary lockouts
 
-11. `feature/refresh-tokens-rotation`
+## 17). `feature/refresh-tokens-rotation`
     - Refresh tokens with rotation strategy
 
-12. `feature/token-revocation-introspection`
+## 18). `feature/token-revocation-introspection`
     - Revocation + introspection endpoints
 
-13. `feature/admin-app-management`
+## 19). `feature/admin-app-management`
     - Internal admin UI for client registration + secrets
