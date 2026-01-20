@@ -20,7 +20,8 @@
 - **Sessions**: JWT strategy (stateless) via NextAuth.js
 - **Type-safe**: TypeScript + Zod on client and server
 - **Database**: Prisma ORM + PostgreSQL (Neon-ready)
-- **UI/UX**: Tailwind CSS + Framer Motion (polished multi-step auth flow)s- **Theme System**: Hybrid approach using Tailwind utilities + SCSS Module overrides with `@media (prefers-color-scheme: dark)` for consistent dark theme support
+- **UI/UX**: Tailwind CSS + Framer Motion (polished multi-step auth flow)
+- **Theme System**: Hybrid approach using Tailwind utilities + SCSS Module overrides with `@media (prefers-color-scheme: dark)` for consistent dark theme support
 - **Deploy**: Vercel-ready with environment validation
 
 ---

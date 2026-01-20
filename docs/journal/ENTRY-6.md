@@ -43,7 +43,6 @@ src/features/auth/components/
 ├── ProviderButtons/       # OAuth buttons (Google, GitHub)
 │   ├── GoogleButton/
 │   └── GitHubButton/
-├── ResendLink/           # Email resend functionality
 ├── steps/                 # Multi-step form components
 │   ├── EmailStep/
 │   ├── PasswordStep/
@@ -57,8 +56,7 @@ src/components/ui/
 ├── AuthShell/            # Layout wrapper with animations
 ├── InputField/           # Form input component
 ├── NextButton/           # Button component
-├── UserCard/             # User profile card
-└── VerifyBanner/         # Verification status banner
+└── UserCard/             # User profile card
 ```
 
 **Assessment**: **✔** **Clean** - All components are used and properly organized.
@@ -190,7 +188,6 @@ This cleanup phase provides:
 
 ---
 
-<<<<<<< HEAD
 ## Theme Parity Hotfix
 
 Following the initial cleanup, a hotfix branch (`hotfix/theme-parity-ui`) addressed UI/theme synchronization issues:
@@ -226,7 +223,6 @@ Following the initial cleanup, a hotfix branch (`hotfix/theme-parity-ui`) addres
 - **Result**: Improved UX with automatic input focus after step transitions
 
 ---
-
 ## Next Steps
 
 With the UI/UX branch complete and cleaned up:
@@ -238,6 +234,5 @@ With the UI/UX branch complete and cleaned up:
 5. **Protected Routes** - Route-level authentication guards
 
 ---
-
 **Cleanup Complete** **✔**  
 *The codebase is now 100% clean, production-ready, and ready for main branch migration. All UI/UX work is completed, including theme parity fixes.*
