@@ -4,7 +4,7 @@ This phase blocks any third‑party auth work. Ship in the order below.
 
 ---
 
-## 1) `feature/rate-limiting-auth`
+## 7) `feature/rate-limiting-auth`
 
 **Goal:** Prevent brute force and abuse on auth endpoints.
 
@@ -30,7 +30,7 @@ This phase blocks any third‑party auth work. Ship in the order below.
 
 ---
 
-## 2) `feature/security-headers`
+## 8) `feature/security-headers`
 
 **Goal:** Baseline HTTP security protections.
 
@@ -52,9 +52,9 @@ This phase blocks any third‑party auth work. Ship in the order below.
 
 ---
 
-## 3) `test/auth-critical-flows`
+## 9) `test/auth-critical-flows`
 
-**Goal:** Add tests for the most sensitive auth paths.
+**Goal:** Add tests for the most sensitive auth pa ths.
 
 **Scope:**
 - Password hashing verification
