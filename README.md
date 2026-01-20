@@ -150,6 +150,9 @@ NEXTAUTH_URL="http://localhost:3000"
 - `RATE_LIMIT_MAX` - Max requests per window (default: 3)
 - `RATE_LIMIT_WINDOW_MINUTES` - Window length in minutes (default: 60)
 
+**Build/CI**:
+- `SKIP_ENV_VALIDATION=true` - Skip env validation during CI builds (build-time only)
+
 ### Manual Setup Steps
 
 1. **OAuth Provider Setup**:

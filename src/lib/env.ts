@@ -23,7 +23,9 @@ const EnvSchema = z.object({
   RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(60),
 });
 
-export const env = EnvSchema.parse({
+const shouldSkipValidation = process.env.SKIP_ENV_VALIDATION === "true";
+
+const rawEnv = {
   DATABASE_URL: process.env.DATABASE_URL,
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
@@ -41,4 +43,11 @@ export const env = EnvSchema.parse({
   UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
   RATE_LIMIT_MAX: process.env.RATE_LIMIT_MAX,
   RATE_LIMIT_WINDOW_MINUTES: process.env.RATE_LIMIT_WINDOW_MINUTES,
-});
+};
+
+const parsed = (shouldSkipValidation ? EnvSchema.partial() : EnvSchema).safeParse(rawEnv);
+if (!parsed.success) {
+  throw parsed.error;
+}
+
+export const env = parsed.data as z.infer<typeof EnvSchema>;
