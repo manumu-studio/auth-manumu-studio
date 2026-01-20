@@ -89,11 +89,13 @@ export const authOptions: NextAuthOptions = {
             password: true,
             role: true,
             emailVerified: true,
+            origin: true,
           },
         });
         
         // User not found or no password (OAuth-only account)
         if (!user || !user.password) return null;
+        if (user.origin === "PETSGRAM") return null;
 
         // Verify password using bcrypt (constant-time comparison)
         const ok = await compare(password, user.password);

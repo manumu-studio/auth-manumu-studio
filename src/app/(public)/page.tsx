@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
 import { AnimatePresence } from 'framer-motion';
 import { SignInSchema } from '@/lib/validation/signin';
@@ -20,6 +21,7 @@ type Step = 'email' | 'password' | 'signup';
 
 export default function MimicPage() {
   const { data: session, status, update } = useSession();
+  const router = useRouter();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -233,7 +235,9 @@ export default function MimicPage() {
   // Show UserCard if authenticated, otherwise show login form
   if (status === 'authenticated' && session?.user) {
     const handleSignOut = async () => {
-      await signOut({ callbackUrl: '/' });
+      const res = await signOut({ redirect: false, callbackUrl: '/' });
+      await update();
+      router.replace(res?.url ?? '/');
     };
 
     return (
@@ -248,6 +252,7 @@ export default function MimicPage() {
             type="button"
             onClick={handleSignOut}
             variant="secondary"
+            className="text-gray-900 dark:text-white"
           >
             <span className="flex items-center gap-2">
               <svg

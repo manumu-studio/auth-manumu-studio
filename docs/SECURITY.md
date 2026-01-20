@@ -12,6 +12,12 @@
 - **OAuth Providers**: GitHub, Google (with more providers easily added)
 - **Account Linking**: Automatic linking by email address when emails match
 
+### Account Origin Separation
+
+- **First-Party Users**: Standard ManuMu accounts created via sign-up or OAuth providers.
+- **Petsgram Users**: Third-party application users are marked as `PETSGRAM` and cannot sign in to ManuMu with the same email.
+- **Isolation Rule**: A Petsgram account must use a different email to create a ManuMu first-party account.
+
 ### Email Verification
 
 - **Required for Credentials**: Users cannot sign in with email/password until email is verified
@@ -110,6 +116,23 @@
 - **Callback URLs**: Validate callback URLs in OAuth app settings
 - **Secret Rotation**: Rotate OAuth secrets regularly
 - **HTTPS**: Always use HTTPS in production
+
+### OAuth Client Registry (Third-Party Apps)
+
+To support third-party applications, this service maintains an internal OAuth client registry.
+Clients are stored in the `oauth_clients` table with strict redirect and origin allowlists.
+
+**Rules:**
+- Redirect URIs must be exact matches and use HTTPS (HTTP only allowed for localhost).
+- Origins must be bare origins (no path/query/hash) and HTTPS outside localhost.
+- Client secrets are stored as SHA-256 hashes; plaintext is shown only at creation/rotation.
+- Secrets can be rotated without changing client identifiers.
+
+**Petsgram Integration (Local):**
+- **client_id**: `petsgram-web`
+- **redirect_uri**: `http://localhost:5173/auth/callback`
+- **allowed_origin**: `http://localhost:5173`
+- Seed script prints the initial `client_secret` once on creation.
 
 ---
 

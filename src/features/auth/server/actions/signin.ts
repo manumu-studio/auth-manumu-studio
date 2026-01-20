@@ -57,6 +57,9 @@ export async function signinAction(formData: FormData): Promise<ActionResult> {
     // Generic error message to prevent email enumeration
     return { ok: false, errors: { formErrors: ['Invalid credentials'] } };
   }
+  if (user.origin === "PETSGRAM") {
+    return { ok: false, errors: { formErrors: ['Invalid credentials'] } };
+  }
 
   // Verify password using bcrypt (constant-time comparison)
   const valid = await compare(password, user.password);
