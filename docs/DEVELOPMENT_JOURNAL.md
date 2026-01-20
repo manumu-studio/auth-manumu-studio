@@ -112,7 +112,6 @@ Implemented rate limiting across critical auth paths:
 - New env validation and security docs updates
 
 ---
-
 ### [Entry 8 — Security Headers (CSP + HSTS)](./journal/ENTRY-8.md)
 **Date:** January 20, 2026  
 **Type:** Security Hardening
@@ -123,7 +122,6 @@ Implemented baseline security headers:
 - Documentation updates
 
 ---
-
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)

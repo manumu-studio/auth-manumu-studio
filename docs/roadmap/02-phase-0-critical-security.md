@@ -4,7 +4,7 @@ This phase blocks any third‑party auth work. Ship in the order below.
 
 ---
 
-## 7) `feature/rate-limiting-auth`
+## 1) `feature/rate-limiting-auth`
 
 **Goal:** Prevent brute force and abuse on auth endpoints.
 
@@ -30,12 +30,11 @@ This phase blocks any third‑party auth work. Ship in the order below.
 
 ---
 
-## 8) `feature/security-headers`
+## 2) `feature/security-headers`
 
 **Goal:** Baseline HTTP security protections.
 
 **Status:** **✔** Complete
-
 **Scope (minimum):**
 - Content‑Security‑Policy (CSP)
 - HSTS
@@ -53,7 +52,7 @@ This phase blocks any third‑party auth work. Ship in the order below.
 
 ---
 
-## 9) `test/auth-critical-flows`
+## 3) `test/auth-critical-flows`
 
 **Goal:** Add tests for the most sensitive auth paths.
 
