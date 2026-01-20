@@ -139,6 +139,14 @@
 - **Identifiers**: IP + email when available
 - **Response**: 429 with generic message to avoid enumeration
 
+### Security Headers
+
+- **Content-Security-Policy (CSP)**: Restricts scripts, styles, and connections
+- **HSTS**: Enforced in production over HTTPS
+- **X-Frame-Options**: `DENY` to prevent clickjacking
+- **Referrer-Policy**: `strict-origin-when-cross-origin`
+- **X-Content-Type-Options**: `nosniff`
+
 ### Error Handling
 
 - **Generic Messages**: Error messages don't reveal if email exists
