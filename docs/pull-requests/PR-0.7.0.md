@@ -33,7 +33,7 @@ Adds rate limiting to critical authentication paths to prevent abuse and brute f
 
 ## Testing
 
-- Lint: **✔**
+- Lint: **Done**
 - Manual: pending (requires local env + Upstash for full validation)
 
 ---

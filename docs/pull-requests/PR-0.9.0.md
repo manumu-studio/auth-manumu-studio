@@ -31,6 +31,6 @@ Adds unit and integration tests for the most sensitive authentication flows, cov
 
 ## Testing
 
-- Lint: **✔**
-- Typecheck: **✔**
-- Tests: **✔** `pnpm test`
+- Lint: **Done**
+- Typecheck: **Done**
+- Tests: **Done** `pnpm test`

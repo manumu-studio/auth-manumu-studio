@@ -42,6 +42,6 @@ Added unit and integration tests for the most sensitive authentication flows to 
 
 ## Validation
 
-- Lint: **✔** No errors
-- Typecheck: **✔** No errors
-- Tests: **✔** `pnpm test`
+- Lint: **Done** No errors
+- Typecheck: **Done** No errors
+- Tests: **Done** `pnpm test`

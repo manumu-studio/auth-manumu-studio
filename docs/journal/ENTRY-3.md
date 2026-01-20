@@ -2,7 +2,7 @@
 
 **Date:** October 10, 2025  
 **Type:** Feature Implementation  
-**Status:** **✔** Complete
+**Status:** **Done** Complete
 
 ---
 
@@ -301,24 +301,24 @@ export default async function VerifyPage(props: {
 
 | Scenario | Expected Result | Status |
 |----------|----------------|--------|
-| Sign up new user | User created, email sent, banner shown | **✔** |
-| Click verify link (valid) | Redirect to success, user verified | **✔** |
-| Click verify link (expired) | Redirect to error page | **✔** |
-| Click verify link (invalid) | Redirect to error page | **✔** |
-| Sign in before verify | Error: "EMAIL_NOT_VERIFIED" | **✔** |
-| Sign in after verify | Session created, redirect to dashboard | **✔** |
-| Resend (within cooldown) | Shows cooldown message | **✔** |
-| Resend (after cooldown) | New email sent | **✔** |
-| Resend (already verified) | Shows "already verified" message | **✔** |
+| Sign up new user | User created, email sent, banner shown | **Done** |
+| Click verify link (valid) | Redirect to success, user verified | **Done** |
+| Click verify link (expired) | Redirect to error page | **Done** |
+| Click verify link (invalid) | Redirect to error page | **Done** |
+| Sign in before verify | Error: "EMAIL_NOT_VERIFIED" | **Done** |
+| Sign in after verify | Session created, redirect to dashboard | **Done** |
+| Resend (within cooldown) | Shows cooldown message | **Done** |
+| Resend (after cooldown) | New email sent | **Done** |
+| Resend (already verified) | Shows "already verified" message | **Done** |
 
 ### Edge Cases Handled
 
-- **✔** User clicks verify link twice → "already verified" message
-- **✔** Token expires before click → Friendly error + resend option
-- **✔** Network error during resend → Retry button remains functional
-- **✔** Resend not configured → Logs to console (dev mode)
-- **✔** Invalid email format → Zod validation catches it
-- **✔** User deleted between token creation and verification → "not found" error
+- **Done** User clicks verify link twice → "already verified" message
+- **Done** Token expires before click → Friendly error + resend option
+- **Done** Network error during resend → Retry button remains functional
+- **Done** Resend not configured → Logs to console (dev mode)
+- **Done** Invalid email format → Zod validation catches it
+- **Done** User deleted between token creation and verification → "not found" error
 
 ---
 
@@ -377,10 +377,10 @@ dig TXT send.yourdomain.com
 ## Impact
 
 This implementation provides:
-- **✔** **Security**: Eliminates fake/bot accounts
-- **✔** **Deliverability**: Professional emails improve sender reputation
-- **✔** **User Experience**: Clear, accessible verification flow
-- **✔** **Developer Experience**: Type-safe, observable, well-documented
+- **Done** **Security**: Eliminates fake/bot accounts
+- **Done** **Deliverability**: Professional emails improve sender reputation
+- **Done** **User Experience**: Clear, accessible verification flow
+- **Done** **Developer Experience**: Type-safe, observable, well-documented
 
 ---
 
@@ -394,5 +394,5 @@ With email verification complete, the next phase focuses on:
 
 ---
 
-**Email Verification Complete** **✔**  
+**Email Verification Complete** **Done**  
 *Users must now verify their email before signing in, improving security and data quality.*

@@ -2,7 +2,7 @@
 
 **Date:** October 11, 2025  
 **Type:** Feature Implementation  
-**Status:** **✔** Merged
+**Status:** **Done** Merged
 
 ---
 
@@ -147,14 +147,14 @@ APP_URL="http://localhost:3000"
 
 ### Manual Test Scenarios
 
-- **✔** Google OAuth sign-in completes successfully
-- **✔** User + Account records created in database
-- **✔** Session established after OAuth
-- **✔** Account linking works (same email = same user)
-- **✔** Email credentials login with unverified user → blocked (EMAIL_NOT_VERIFIED)
-- **✔** After verifying, credentials login succeeds
-- **✔** Button only appears when env vars are set
-- **✔** Sign-in hub UX is smooth and responsive
+- **Done** Google OAuth sign-in completes successfully
+- **Done** User + Account records created in database
+- **Done** Session established after OAuth
+- **Done** Account linking works (same email = same user)
+- **Done** Email credentials login with unverified user → blocked (EMAIL_NOT_VERIFIED)
+- **Done** After verifying, credentials login succeeds
+- **Done** Button only appears when env vars are set
+- **Done** Sign-in hub UX is smooth and responsive
 
 ### Database Verification
 
@@ -245,10 +245,10 @@ accounts: {
 ## Impact
 
 This implementation provides:
-- **✔** **Flexible Authentication** - Multiple sign-in options
-- **✔** **Better UX** - One-click OAuth for convenience
-- **✔** **Security** - OAuth providers verify email
-- **✔** **Scalability** - Easy to add more OAuth providers
+- **Done** **Flexible Authentication** - Multiple sign-in options
+- **Done** **Better UX** - One-click OAuth for convenience
+- **Done** **Security** - OAuth providers verify email
+- **Done** **Scalability** - Easy to add more OAuth providers
 
 ---
 

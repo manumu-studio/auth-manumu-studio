@@ -47,5 +47,5 @@ Introduced an OAuth client registry for third-party apps with strict redirect/or
 
 ## Validation
 
-- Lint: **✔** No errors
-- Typecheck: **✔** No errors
+- Lint: **Done** No errors
+- Typecheck: **Done** No errors

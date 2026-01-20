@@ -8,7 +8,7 @@ This phase turns ManuMu Auth into a real authorization server. Complete in order
 
 **Goal:** Register third‑party apps with strict redirect/origin controls.
 
-**Status:** **✔** Complete
+**Status:** **Done** Complete
 
 **Scope:**
 - New `OAuthClient` model (client_id, client_secret, redirect_uris, allowed_origins, scopes)

@@ -34,5 +34,5 @@ Adds a first-party OAuth client registry with strict redirect/origin allowlists,
 
 ## Testing
 
-- Lint: **✔**
-- Typecheck: **✔**
+- Lint: **Done**
+- Typecheck: **Done**

@@ -185,21 +185,21 @@ Client registry, account-origin split, and not-found redirect.
 
 ### Completed Features
 
-- **✔** User registration with validation
-- **✔** Credentials authentication
-- **✔** Email verification system
-- **✔** Google OAuth integration
-- **✔** GitHub OAuth integration
-- **✔** Multi-provider sign-in hub
-- **✔** SSR session hydration
-- **✔** Feature-based architecture
-- **✔** UI/UX implementation (Tailwind CSS + Framer Motion)
-- **✔** Codebase cleanup (100% functional code)
-- **✔** Rate limiting on auth endpoints
-- **✔** Security headers (CSP + HSTS)
-- **✔** Auth critical flow tests (hashing, verification, rate limiting)
-- **✔** OAuth client registry (redirect/origin allowlists)
-- **✔** Account origin separation (FIRST_PARTY vs PETSGRAM)
+- **Done** User registration with validation
+- **Done** Credentials authentication
+- **Done** Email verification system
+- **Done** Google OAuth integration
+- **Done** GitHub OAuth integration
+- **Done** Multi-provider sign-in hub
+- **Done** SSR session hydration
+- **Done** Feature-based architecture
+- **Done** UI/UX implementation (Tailwind CSS + Framer Motion)
+- **Done** Codebase cleanup (100% functional code)
+- **Done** Rate limiting on auth endpoints
+- **Done** Security headers (CSP + HSTS)
+- **Done** Auth critical flow tests (hashing, verification, rate limiting)
+- **Done** OAuth client registry (redirect/origin allowlists)
+- **Done** Account origin separation (FIRST_PARTY vs PETSGRAM)
 
 ### In Progress
 
