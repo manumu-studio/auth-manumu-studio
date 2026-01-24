@@ -145,6 +145,21 @@ sequenceDiagram
     AuthServer->>App: Redirect with code + state
 ```
 
+### OAuth Token Exchange Flow (Third-Party Apps)
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant AuthServer
+    participant DB
+
+    App->>AuthServer: POST /oauth/token (code + client auth + PKCE)
+    AuthServer->>DB: Load auth code + validate (TTL/used)
+    AuthServer->>AuthServer: Verify client secret or PKCE verifier
+    AuthServer->>DB: Mark auth code used
+    AuthServer->>App: JWT access token (iss/aud/sub/scope/exp)
+```
+
 ---
 
 ## Data Flow

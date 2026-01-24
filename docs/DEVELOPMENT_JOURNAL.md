@@ -154,6 +154,16 @@ OAuth authorization endpoint and consent flow:
 - Authorization codes stored with expiry and one-time use
 
 ---
+### [Entry 12 — OAuth Token Endpoint (JWT Exchange)](./journal/ENTRY-12.md)
+**Date:** January 24, 2026  
+**Type:** Auth Server Foundations
+
+OAuth token exchange and access token issuance:
+- `/oauth/token` with Basic auth or client secret validation
+- PKCE verifier validation for public clients
+- JWT access tokens with `iss`, `aud`, `sub`, `exp`, `scope`
+
+---
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -189,11 +199,14 @@ Client registry, account-origin split, and not-found redirect.
 ### [PR-1.1.0 — OAuth Authorization Endpoint (Consent + PKCE)](./pull-requests/PR-1.1.0.md)
 Authorization endpoint with consent, PKCE, and auth code persistence.
 
+### [PR-1.2.0 — OAuth Token Endpoint (JWT Exchange)](./pull-requests/PR-1.2.0.md)
+Token exchange for authorization codes with PKCE + client auth.
+
 ---
 
 ## Project Status
 
-**Current Version:** 1.1.0  
+**Current Version:** 1.2.0  
 **Last Updated:** January 24, 2026
 
 ### Completed Features
@@ -211,6 +224,7 @@ Authorization endpoint with consent, PKCE, and auth code persistence.
 - **Done** Rate limiting on auth endpoints
 - **Done** Security headers (CSP + HSTS)
 - **Done** OAuth authorization endpoint (consent + PKCE)
+- **Done** OAuth token endpoint (JWT exchange)
 - **Done** Auth critical flow tests (hashing, verification, rate limiting)
 - **Done** OAuth client registry (redirect/origin allowlists)
 - **Done** Account origin separation (FIRST_PARTY vs PETSGRAM)
