@@ -1,7 +1,8 @@
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
-import { env } from "@/lib/env";
 import { getOAuthClient, verifyClientSecret } from "./clientRegistry";
+import { resolveIssuer } from "./issuer";
+import { signAccessToken } from "./jwt";
 
 const ACCESS_TOKEN_TTL_MINUTES = 60;
 
@@ -34,26 +35,6 @@ function toBase64Url(input: Buffer | string): string {
   return buffer.toString("base64url");
 }
 
-function signJwt(payload: Record<string, unknown>, secret: string): string {
-  const header = { alg: "HS256", typ: "JWT" };
-  const encodedHeader = toBase64Url(JSON.stringify(header));
-  const encodedPayload = toBase64Url(JSON.stringify(payload));
-  const signingInput = `${encodedHeader}.${encodedPayload}`;
-  const signature = crypto
-    .createHmac("sha256", secret)
-    .update(signingInput)
-    .digest();
-  return `${signingInput}.${toBase64Url(signature)}`;
-}
-
-function resolveIssuer(): string {
-  return (
-    env.AUTH_URL ??
-    env.NEXTAUTH_URL ??
-    env.APP_URL ??
-    "http://localhost:3000"
-  );
-}
 
 function computePkceChallenge(verifier: string, method: string | null): string {
   if (method === "S256") {
@@ -145,7 +126,7 @@ export async function exchangeAuthorizationCode(
     iat: issuedAt,
     scope: codeRecord.scopes.join(" "),
   };
-  const accessToken = signJwt(payload, env.NEXTAUTH_SECRET);
+  const accessToken = signAccessToken(payload);
 
   return {
     ok: true,

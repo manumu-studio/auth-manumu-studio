@@ -166,6 +166,16 @@ Third-party authorization requests flow through `/oauth/authorize` with strict v
 - `exp` expiry (short-lived).
 - `scope` space-delimited scopes.
 
+**Signing + Verification:**
+- Access tokens are signed with RS256 using `OAUTH_JWT_PRIVATE_KEY`.
+- Public verification keys are exposed via `/jwks.json`.
+- OIDC discovery metadata is available at `/.well-known/openid-configuration`.
+
+**Verifier Instructions (Third-Party Apps):**
+1. Fetch `/.well-known/openid-configuration` to get `issuer` + `jwks_uri`.
+2. Cache the JWKS response (honor `Cache-Control`).
+3. Verify JWTs with RS256 using the published `kid` public key.
+
 ---
 
 ## Database Security
@@ -222,6 +232,8 @@ Third-party authorization requests flow through `/oauth/authorize` with strict v
 
 - `NEXTAUTH_SECRET`: Strong random string (32+ characters)
 - `DATABASE_URL`: PostgreSQL connection string with credentials
+- `OAUTH_JWT_PRIVATE_KEY`: PEM-encoded RSA private key for access tokens
+- `OAUTH_JWT_PUBLIC_KEY`: PEM-encoded RSA public key for JWKS verification
 - OAuth provider secrets (if using OAuth)
 
 ### Rate Limiting (Upstash)
@@ -238,6 +250,7 @@ Third-party authorization requests flow through `/oauth/authorize` with strict v
 ### Production Deployment
 
 - [ ] `NEXTAUTH_SECRET` is strong random string (32+ chars)
+- [ ] `OAUTH_JWT_PRIVATE_KEY` / `OAUTH_JWT_PUBLIC_KEY` configured for RS256
 - [ ] All environment variables configured
 - [ ] HTTPS enabled
 - [ ] Database uses SSL connections
