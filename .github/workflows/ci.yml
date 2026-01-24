@@ -80,6 +80,7 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: "1"
           CI: "1"
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          SKIP_ENV_VALIDATION: "true"
+          DATABASE_URL: "postgresql://user:password@localhost:5432/db?schema=public"
+          NEXTAUTH_SECRET: "development-secret-change-me-32chars"
         run: npx next build --no-lint
