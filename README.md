@@ -23,6 +23,7 @@
 - **UI/UX**: Tailwind CSS + Framer Motion (polished multi-step auth flow)
 - **Testing**: Critical auth flow coverage (hashing, verification, rate limits)
 - **OAuth Registry**: First-party client registry with redirect/origin allowlists
+- **OAuth Authorization**: `/oauth/authorize` with consent, PKCE, and short-lived auth codes
 - **Account Origin**: Strict separation for Petsgram vs ManuMu users
 - **Theme System**: Hybrid approach using Tailwind utilities + SCSS Module overrides with `@media (prefers-color-scheme: dark)` for consistent dark theme support
 - **Deploy**: Vercel-ready with environment validation

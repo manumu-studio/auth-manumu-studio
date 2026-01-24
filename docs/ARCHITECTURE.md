@@ -128,6 +128,23 @@ sequenceDiagram
     UI->>User: Authenticated
 ```
 
+### OAuth Authorization Code Flow (Third-Party Apps)
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant App
+    participant AuthServer
+    participant DB
+
+    App->>AuthServer: GET /oauth/authorize?client_id&redirect_uri&scope&state
+    AuthServer->>AuthServer: Validate client + redirect + scope + PKCE
+    AuthServer->>User: Consent screen
+    User->>AuthServer: Approve
+    AuthServer->>DB: Store auth code + PKCE challenge (TTL)
+    AuthServer->>App: Redirect with code + state
+```
+
 ---
 
 ## Data Flow
