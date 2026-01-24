@@ -1,5 +1,3 @@
-
-
 # PR-1.0.0 — OAuth Client Registry + Account Origin Split
 
 **Date:** January 20, 2026  
@@ -38,5 +36,3 @@ Adds a first-party OAuth client registry with strict redirect/origin allowlists,
 
 - Lint: **Done**
 - Typecheck: **Done**
-
-
