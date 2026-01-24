@@ -149,6 +149,23 @@ Third-party authorization requests flow through `/oauth/authorize` with strict v
 - Includes scopes, redirect URI, and PKCE challenge metadata.
 - Codes are one-time use and expire on a fixed TTL.
 
+### OAuth Token Endpoint
+
+`/oauth/token` exchanges valid authorization codes for JWT access tokens.
+
+**Guards:**
+- Client authentication via Basic auth or `client_secret` (confidential clients).
+- PKCE `code_verifier` required when a `code_challenge` is stored.
+- Redirect URI must match the original authorization code.
+- Authorization codes are rejected if expired or already used.
+
+**Issued JWT Claims:**
+- `iss` issuer (AUTH_URL/NEXTAUTH_URL).
+- `aud` client identifier.
+- `sub` user identifier.
+- `exp` expiry (short-lived).
+- `scope` space-delimited scopes.
+
 ---
 
 ## Database Security

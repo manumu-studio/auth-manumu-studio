@@ -11,3 +11,4 @@ export {
   verifyClientSecret,
 } from "./clientRegistry";
 export { createAuthorizationCode } from "./authorization";
+export { exchangeAuthorizationCode } from "./token";
