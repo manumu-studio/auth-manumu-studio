@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: process.cwd(),
   images: {
     // Prefer remotePatterns over deprecated images.domains
     remotePatterns: [

@@ -38,6 +38,6 @@ Implemented baseline HTTP security headers at the middleware layer to harden aut
 
 ## Validation
 
-- Lint: **✔** No errors
+- Lint: **Done** No errors
 - Manual testing: pending (validate OAuth flows against CSP)
 

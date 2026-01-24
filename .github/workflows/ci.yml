@@ -18,6 +18,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
+          version: 9.12.3
           run_install: false
 
       - name: Setup Node.js
@@ -33,7 +34,7 @@ jobs:
           which pnpm
 
       - name: Install deps
-        run: pnpm install --frozen-lockfile || pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma Client
         run: pnpm exec prisma generate

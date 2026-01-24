@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 export function middleware(req: NextRequest) {
   const response = NextResponse.next();
+  const isDev = process.env.NODE_ENV !== "production";
 
   // Baseline security headers for auth endpoints and public pages
   response.headers.set(
@@ -13,9 +14,9 @@ export function middleware(req: NextRequest) {
       "form-action 'self'",
       "frame-ancestors 'none'",
       "img-src 'self' data: https:",
-      "script-src 'self' 'unsafe-inline'",
+      isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
-      "connect-src 'self' https:",
+      isDev ? "connect-src 'self' https: ws:" : "connect-src 'self' https:",
       "font-src 'self' data:",
     ].join("; "),
   );

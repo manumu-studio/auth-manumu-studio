@@ -2,7 +2,7 @@
 
 **Date:** October 10, 2025  
 **Type:** Feature Implementation  
-**Status:** **✔** Merged
+**Status:** **Done** Merged
 
 ---
 
@@ -42,11 +42,11 @@ sequenceDiagram
 
 ### Security Features
 
-- **✔** Cryptographically secure tokens (32 bytes, base64url)
-- **✔** Configurable TTL (default 30 min)
-- **✔** Cooldown protection (default 2 min between resends)
-- **✔** Atomic transaction (verify + cleanup)
-- **✔** Type-safe error handling
+- **Done** Cryptographically secure tokens (32 bytes, base64url)
+- **Done** Configurable TTL (default 30 min)
+- **Done** Cooldown protection (default 2 min between resends)
+- **Done** Atomic transaction (verify + cleanup)
+- **Done** Type-safe error handling
 
 ---
 
@@ -235,27 +235,27 @@ export default async function VerifyPage(props: {
 
 ## Testing
 
-### Manual Smoke Tests **✔**
+### Manual Smoke Tests **Done**
 
 | Scenario | Expected Result | Status |
 |----------|----------------|--------|
-| Sign up new user | User created, email sent, banner shown | **✔** |
-| Click verify link (valid) | Redirect to success, user verified | **✔** |
-| Click verify link (expired) | Redirect to error page | **✔** |
-| Click verify link (invalid) | Redirect to error page | **✔** |
-| Sign in before verify | Error: "EMAIL_NOT_VERIFIED" | **✔** |
-| Sign in after verify | Session created, redirect to dashboard | **✔** |
-| Resend (within cooldown) | Shows cooldown message | **✔** |
-| Resend (after cooldown) | New email sent | **✔** |
-| Resend (already verified) | Shows "already verified" message | **✔** |
+| Sign up new user | User created, email sent, banner shown | **Done** |
+| Click verify link (valid) | Redirect to success, user verified | **Done** |
+| Click verify link (expired) | Redirect to error page | **Done** |
+| Click verify link (invalid) | Redirect to error page | **Done** |
+| Sign in before verify | Error: "EMAIL_NOT_VERIFIED" | **Done** |
+| Sign in after verify | Session created, redirect to dashboard | **Done** |
+| Resend (within cooldown) | Shows cooldown message | **Done** |
+| Resend (after cooldown) | New email sent | **Done** |
+| Resend (already verified) | Shows "already verified" message | **Done** |
 
 ### Edge Cases Handled
 
-- **✔** User clicks verify link twice → "already verified" message
-- **✔** Token expires before click → Friendly error + resend option
-- **✔** Network error during resend → Retry button remains functional
-- **✔** Resend not configured → Logs to console (dev mode)
-- **✔** Invalid email format → Zod validation catches it
+- **Done** User clicks verify link twice → "already verified" message
+- **Done** Token expires before click → Friendly error + resend option
+- **Done** Network error during resend → Retry button remains functional
+- **Done** Resend not configured → Logs to console (dev mode)
+- **Done** Invalid email format → Zod validation catches it
 
 ---
 
@@ -286,20 +286,20 @@ VERIFY_RESEND_COOLDOWN_MINUTES=2
 ## Impact Summary
 
 **Security:**
-- **✔** Eliminates fake/bot accounts
-- **✔** Validates email ownership
-- **✔** Improves data quality
+- **Done** Eliminates fake/bot accounts
+- **Done** Validates email ownership
+- **Done** Improves data quality
 
 **Deliverability:**
-- **✔** Better sender reputation
-- **✔** Reduced bounce rates
-- **✔** Professional branded emails
+- **Done** Better sender reputation
+- **Done** Reduced bounce rates
+- **Done** Professional branded emails
 
 **User Experience:**
-- **✔** Clear verification flow
-- **✔** Helpful error messages
-- **✔** Accessible UI components
-- **✔** Beautiful HTML emails
+- **Done** Clear verification flow
+- **Done** Helpful error messages
+- **Done** Accessible UI components
+- **Done** Beautiful HTML emails
 
 ---
 

@@ -21,6 +21,6 @@ Adds baseline HTTP security headers at the middleware layer for auth and public 
 
 ## Testing
 
-- Lint: **✔**
+- Lint: **Done**
 - Manual: pending (validate OAuth flows against CSP)
 

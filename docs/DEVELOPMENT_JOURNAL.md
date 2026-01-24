@@ -133,6 +133,17 @@ Added core test coverage for critical auth flows:
 - Rate limit enforcement on signup, resend, and sign-in
 
 ---
+### [Entry 10 — OAuth Client Registry + Account Origin Split](./journal/ENTRY-10.md)
+**Date:** January 20, 2026  
+**Type:** Auth Server Foundations
+
+OAuth client registry and account-origin separation:
+- OAuth client model, allowlists, and secret rotation utilities
+- Petsgram client seeded for local integration
+- PETSGRAM users blocked from ManuMu credentials sign-in
+- 404 redirect to `/`
+
+---
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -162,28 +173,33 @@ Baseline security headers enforced at middleware level.
 ### [PR-0.9.0 — Auth Critical Flow Tests](./pull-requests/PR-0.9.0.md)
 Unit/integration tests for critical authentication flows and rate limiting.
 
+### [PR-1.0.0 — OAuth Client Registry + Account Origin Split](./pull-requests/PR-1.0.0.md)
+Client registry, account-origin split, and not-found redirect.
+
 ---
 
 ## Project Status
 
-**Current Version:** 0.9.0  
+**Current Version:** 1.0.0  
 **Last Updated:** January 20, 2026
 
 ### Completed Features
 
-- **✔** User registration with validation
-- **✔** Credentials authentication
-- **✔** Email verification system
-- **✔** Google OAuth integration
-- **✔** GitHub OAuth integration
-- **✔** Multi-provider sign-in hub
-- **✔** SSR session hydration
-- **✔** Feature-based architecture
-- **✔** UI/UX implementation (Tailwind CSS + Framer Motion)
-- **✔** Codebase cleanup (100% functional code)
-- **✔** Rate limiting on auth endpoints
-- **✔** Security headers (CSP + HSTS)
-- **✔** Auth critical flow tests (hashing, verification, rate limiting)
+- **Done** User registration with validation
+- **Done** Credentials authentication
+- **Done** Email verification system
+- **Done** Google OAuth integration
+- **Done** GitHub OAuth integration
+- **Done** Multi-provider sign-in hub
+- **Done** SSR session hydration
+- **Done** Feature-based architecture
+- **Done** UI/UX implementation (Tailwind CSS + Framer Motion)
+- **Done** Codebase cleanup (100% functional code)
+- **Done** Rate limiting on auth endpoints
+- **Done** Security headers (CSP + HSTS)
+- **Done** Auth critical flow tests (hashing, verification, rate limiting)
+- **Done** OAuth client registry (redirect/origin allowlists)
+- **Done** Account origin separation (FIRST_PARTY vs PETSGRAM)
 
 ### In Progress
 

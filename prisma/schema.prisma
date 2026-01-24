@@ -13,6 +13,11 @@ enum Role {
   ADMIN
 }
 
+enum AccountOrigin {
+  FIRST_PARTY
+  PETSGRAM
+}
+
 /* -------- NextAuth core -------- */
 model User {
   id            String    @id @default(cuid())
@@ -22,10 +27,12 @@ model User {
   image         String?
   password      String?
   role          Role      @default(USER)
+  origin        AccountOrigin @default(FIRST_PARTY)
 
   accounts      Account[]
   sessions      Session[]
   profile       UserProfile?
+  oauthClients  OAuthClient[] @relation("UserOAuthClients")
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -84,4 +91,24 @@ model UserProfile {
 
   @@index([country, city])
   @@map("user_profiles")
+}
+
+model OAuthClient {
+  id               String   @id @default(cuid())
+  clientId         String   @unique
+  clientSecretHash String
+  name             String
+  description      String?
+  redirectUris     String[]
+  allowedOrigins   String[]
+  scopes           String[]
+  isActive         Boolean  @default(true)
+  createdById      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  createdBy User? @relation("UserOAuthClients", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@map("oauth_clients")
 }

@@ -100,6 +100,7 @@ export async function registerUser(formData: FormData): Promise<ActionResult> {
         email,
         name: [firstname, lastname].filter(Boolean).join(" ").trim() || null,
         password: hash,
+        origin: "FIRST_PARTY",
         profile: { create: { country, city, address } },
         // emailVerified stays null until they click the link
       },
