@@ -61,3 +61,25 @@ jobs:
           sleep 2
           curl -sI http://localhost:3000 | head -n1
           kill $DEV || true
+
+  vercel-like-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install deps (npm, Vercel-like)
+        run: npm install --legacy-peer-deps
+
+      - name: Build (Vercel-like)
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          CI: "1"
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+        run: npx next build --no-lint
