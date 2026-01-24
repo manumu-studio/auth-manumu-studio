@@ -56,6 +56,8 @@ This phase blocks any third‑party auth work. Ship in the order below.
 
 **Goal:** Add tests for the most sensitive auth pa ths.
 
+**Status:** **✔** Complete (merged PR-0.9.0)
+
 **Scope:**
 - Password hashing verification
 - Token generation + validation

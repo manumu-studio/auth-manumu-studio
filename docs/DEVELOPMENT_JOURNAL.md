@@ -144,6 +144,16 @@ OAuth client registry and account-origin separation:
 - 404 redirect to `/`
 
 ---
+### [Entry 11 — OAuth Authorization Endpoint (Consent + PKCE)](./journal/ENTRY-11.md)
+**Date:** January 24, 2026  
+**Type:** Auth Server Foundations
+
+OAuth authorization endpoint and consent flow:
+- `/oauth/authorize` with redirect + scope validation
+- PKCE challenge handling and persistence
+- Authorization codes stored with expiry and one-time use
+
+---
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -176,12 +186,15 @@ Unit/integration tests for critical authentication flows and rate limiting.
 ### [PR-1.0.0 — OAuth Client Registry + Account Origin Split](./pull-requests/PR-1.0.0.md)
 Client registry, account-origin split, and not-found redirect.
 
+### [PR-1.1.0 — OAuth Authorization Endpoint (Consent + PKCE)](./pull-requests/PR-1.1.0.md)
+Authorization endpoint with consent, PKCE, and auth code persistence.
+
 ---
 
 ## Project Status
 
-**Current Version:** 1.0.0  
-**Last Updated:** January 20, 2026
+**Current Version:** 1.1.0  
+**Last Updated:** January 24, 2026
 
 ### Completed Features
 
@@ -197,6 +210,7 @@ Client registry, account-origin split, and not-found redirect.
 - **Done** Codebase cleanup (100% functional code)
 - **Done** Rate limiting on auth endpoints
 - **Done** Security headers (CSP + HSTS)
+- **Done** OAuth authorization endpoint (consent + PKCE)
 - **Done** Auth critical flow tests (hashing, verification, rate limiting)
 - **Done** OAuth client registry (redirect/origin allowlists)
 - **Done** Account origin separation (FIRST_PARTY vs PETSGRAM)
@@ -235,4 +249,4 @@ Client registry, account-origin split, and not-found redirect.
 
 ---
 
-**Last Updated:** January 20, 2026
+**Last Updated:** January 24, 2026

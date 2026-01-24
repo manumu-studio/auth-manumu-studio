@@ -1,5 +1,7 @@
 # Phase 3: Platform Quality
 
+**Testing policy:** Every new `feature/*` or `fix/*` branch should include tests for the new work. These tests are recommended for confidence but are not required to merge into `main` unless explicitly called out.
+
 ## 16). `feature/account-lockout`
     - Failed login tracking and temporary lockouts
 

@@ -10,3 +10,4 @@ export {
   validateRedirectUri,
   verifyClientSecret,
 } from "./clientRegistry";
+export { createAuthorizationCode } from "./authorization";

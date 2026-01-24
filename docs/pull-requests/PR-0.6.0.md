@@ -190,7 +190,6 @@ If issues arise:
 **Ready to merge! 🚀**
 
 *This PR completes the UI/UX branch with a 100% clean, production-ready codebase. All dead code has been removed, and the codebase is ready for main branch migration.*
-<<<<<<< HEAD
 
 ---
 

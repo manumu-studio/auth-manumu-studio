@@ -79,3 +79,6 @@ docs/CV_PORTFOLIO_REPORT.md
 docs/README_OR_STUDIO.md
 docs/DEEP_RESEARCH_ARCHITECTURAL_PROJECTS.md
 extra_docs/*
+
+# agents
+tools/agents/

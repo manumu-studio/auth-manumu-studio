@@ -33,6 +33,7 @@ model User {
   sessions      Session[]
   profile       UserProfile?
   oauthClients  OAuthClient[] @relation("UserOAuthClients")
+  oauthAuthorizationCodes OAuthAuthorizationCode[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -108,7 +109,30 @@ model OAuthClient {
   updatedAt        DateTime @updatedAt
 
   createdBy User? @relation("UserOAuthClients", fields: [createdById], references: [id], onDelete: SetNull)
+  authorizationCodes OAuthAuthorizationCode[]
 
   @@index([clientId])
   @@map("oauth_clients")
+}
+
+model OAuthAuthorizationCode {
+  id                  String   @id @default(cuid())
+  code                String   @unique
+  clientId            String
+  userId              String
+  redirectUri         String
+  scopes              String[]
+  codeChallenge       String?
+  codeChallengeMethod String?
+  expiresAt           DateTime
+  usedAt              DateTime?
+  createdAt           DateTime @default(now())
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("oauth_authorization_codes")
 }

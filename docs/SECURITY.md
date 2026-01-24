@@ -134,6 +134,21 @@ Clients are stored in the `oauth_clients` table with strict redirect and origin 
 - **allowed_origin**: `http://localhost:5173`
 - Seed script prints the initial `client_secret` once on creation.
 
+### OAuth Authorization Endpoint
+
+Third-party authorization requests flow through `/oauth/authorize` with strict validation.
+
+**Guards:**
+- `client_id` must exist and be active.
+- `redirect_uri` must match the registered allowlist.
+- `scope` must be supported (`openid`, `email`, `profile`) and allowed per client.
+- PKCE `code_challenge` and `code_challenge_method` are validated when provided.
+
+**Authorization Codes:**
+- Short-lived codes stored in `oauth_authorization_codes`.
+- Includes scopes, redirect URI, and PKCE challenge metadata.
+- Codes are one-time use and expire on a fixed TTL.
+
 ---
 
 ## Database Security

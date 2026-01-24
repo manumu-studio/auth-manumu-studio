@@ -25,24 +25,30 @@ const EnvSchema = z.object({
 
 const shouldSkipValidation = process.env.SKIP_ENV_VALIDATION === "true";
 
+const normalizeEnvValue = (value: string | undefined) => {
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
 const rawEnv = {
-  DATABASE_URL: process.env.DATABASE_URL,
-  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-  AUTH_URL: process.env.AUTH_URL,
-  APP_URL: process.env.APP_URL,
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-  GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
-  GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
-  RESEND_API_KEY: process.env.RESEND_API_KEY,
-  RESEND_FROM: process.env.RESEND_FROM,
-  VERIFY_TOKEN_TTL_MINUTES: process.env.VERIFY_TOKEN_TTL_MINUTES,
-  VERIFY_RESEND_COOLDOWN_MINUTES: process.env.VERIFY_RESEND_COOLDOWN_MINUTES,
-  UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
-  UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
-  RATE_LIMIT_MAX: process.env.RATE_LIMIT_MAX,
-  RATE_LIMIT_WINDOW_MINUTES: process.env.RATE_LIMIT_WINDOW_MINUTES,
+  DATABASE_URL: normalizeEnvValue(process.env.DATABASE_URL),
+  NEXTAUTH_SECRET: normalizeEnvValue(process.env.NEXTAUTH_SECRET),
+  NEXTAUTH_URL: normalizeEnvValue(process.env.NEXTAUTH_URL),
+  AUTH_URL: normalizeEnvValue(process.env.AUTH_URL),
+  APP_URL: normalizeEnvValue(process.env.APP_URL),
+  GOOGLE_CLIENT_ID: normalizeEnvValue(process.env.GOOGLE_CLIENT_ID),
+  GOOGLE_CLIENT_SECRET: normalizeEnvValue(process.env.GOOGLE_CLIENT_SECRET),
+  GITHUB_CLIENT_ID: normalizeEnvValue(process.env.GITHUB_CLIENT_ID),
+  GITHUB_CLIENT_SECRET: normalizeEnvValue(process.env.GITHUB_CLIENT_SECRET),
+  RESEND_API_KEY: normalizeEnvValue(process.env.RESEND_API_KEY),
+  RESEND_FROM: normalizeEnvValue(process.env.RESEND_FROM),
+  VERIFY_TOKEN_TTL_MINUTES: normalizeEnvValue(process.env.VERIFY_TOKEN_TTL_MINUTES),
+  VERIFY_RESEND_COOLDOWN_MINUTES: normalizeEnvValue(process.env.VERIFY_RESEND_COOLDOWN_MINUTES),
+  UPSTASH_REDIS_REST_URL: normalizeEnvValue(process.env.UPSTASH_REDIS_REST_URL),
+  UPSTASH_REDIS_REST_TOKEN: normalizeEnvValue(process.env.UPSTASH_REDIS_REST_TOKEN),
+  RATE_LIMIT_MAX: normalizeEnvValue(process.env.RATE_LIMIT_MAX),
+  RATE_LIMIT_WINDOW_MINUTES: normalizeEnvValue(process.env.RATE_LIMIT_WINDOW_MINUTES),
 };
 
 const parsed = (shouldSkipValidation ? EnvSchema.partial() : EnvSchema).safeParse(rawEnv);
