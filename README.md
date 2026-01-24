@@ -25,6 +25,7 @@
 - **OAuth Registry**: First-party client registry with redirect/origin allowlists
 - **OAuth Authorization**: `/oauth/authorize` with consent, PKCE, and short-lived auth codes
 - **OAuth Token**: `/oauth/token` exchange for JWT access tokens with PKCE + client auth
+- **OIDC Discovery**: `/.well-known/openid-configuration` + JWKS for token verification
 - **Account Origin**: Strict separation for Petsgram vs ManuMu users
 - **Theme System**: Hybrid approach using Tailwind utilities + SCSS Module overrides with `@media (prefers-color-scheme: dark)` for consistent dark theme support
 - **Deploy**: Vercel-ready with environment validation
@@ -131,6 +132,10 @@ DATABASE_URL="postgresql://user:password@host:5432/db?sslmode=require"
 # NextAuth.js
 NEXTAUTH_SECRET="your-strong-random-secret-min-32-chars"
 NEXTAUTH_URL="http://localhost:3000"
+
+# OAuth access token signing (RS256)
+OAUTH_JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+OAUTH_JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
 ```
 
 ### Optional Variables
@@ -149,6 +154,9 @@ NEXTAUTH_URL="http://localhost:3000"
 - `APP_URL` - Fallback URL for callback assembly
 - `VERIFY_TOKEN_TTL_MINUTES` - Token expiration (default: 30)
 - `VERIFY_RESEND_COOLDOWN_MINUTES` - Resend cooldown (default: 2)
+
+**OAuth Server**:
+- `OAUTH_JWT_KID` - Optional key ID for JWKS publishing
 
 **Rate Limiting (Upstash)**:
 - `UPSTASH_REDIS_REST_URL` - Upstash REST URL

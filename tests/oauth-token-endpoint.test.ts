@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
 
 const ORIGINAL_ENV = { ...process.env };
@@ -26,6 +27,14 @@ beforeEach(() => {
   process.env.DATABASE_URL = process.env.DATABASE_URL ?? "postgres://localhost/test";
   process.env.NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET ?? "x".repeat(32);
   process.env.AUTH_URL = "http://localhost:3000";
+  const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+    publicKeyEncoding: { type: "spki", format: "pem" },
+    privateKeyEncoding: { type: "pkcs8", format: "pem" },
+  });
+  process.env.OAUTH_JWT_PRIVATE_KEY = privateKey;
+  process.env.OAUTH_JWT_PUBLIC_KEY = publicKey;
+  process.env.OAUTH_JWT_KID = "test-key-1";
 });
 
 afterEach(() => {

@@ -6,6 +6,9 @@ const EnvSchema = z.object({
   NEXTAUTH_SECRET: z
     .string()
     .min(32, "NEXTAUTH_SECRET must be at least 32 characters for production security"),
+  OAUTH_JWT_PRIVATE_KEY: z.string().min(1).optional(),
+  OAUTH_JWT_PUBLIC_KEY: z.string().min(1).optional(),
+  OAUTH_JWT_KID: z.string().optional(),
   NEXTAUTH_URL: z.string().url().optional(), // Vercel will set AUTH_URL/NEXTAUTH_URL
   AUTH_URL: z.string().url().optional(),
   APP_URL: z.string().url().optional(),
@@ -34,6 +37,9 @@ const normalizeEnvValue = (value: string | undefined) => {
 const rawEnv = {
   DATABASE_URL: normalizeEnvValue(process.env.DATABASE_URL),
   NEXTAUTH_SECRET: normalizeEnvValue(process.env.NEXTAUTH_SECRET),
+  OAUTH_JWT_PRIVATE_KEY: normalizeEnvValue(process.env.OAUTH_JWT_PRIVATE_KEY),
+  OAUTH_JWT_PUBLIC_KEY: normalizeEnvValue(process.env.OAUTH_JWT_PUBLIC_KEY),
+  OAUTH_JWT_KID: normalizeEnvValue(process.env.OAUTH_JWT_KID),
   NEXTAUTH_URL: normalizeEnvValue(process.env.NEXTAUTH_URL),
   AUTH_URL: normalizeEnvValue(process.env.AUTH_URL),
   APP_URL: normalizeEnvValue(process.env.APP_URL),
