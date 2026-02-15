@@ -17,6 +17,7 @@
 
 - **Auth methods**: Email/password (Credentials) + OAuth (Google, GitHub)
 - **Email verification**: Token-based verification with TTL + resend cooldown
+- **Password reset**: Secure token-based reset flow with email, rate limiting, and anti-enumeration
 - **Sessions**: JWT strategy (stateless) via NextAuth.js
 - **Type-safe**: TypeScript + Zod on client and server
 - **Database**: Prisma ORM + PostgreSQL (Neon-ready)
@@ -256,7 +257,7 @@ For comprehensive security documentation, see [`docs/SECURITY.md`](docs/SECURITY
 - **[Development Journal](docs/DEVELOPMENT_JOURNAL.md)** - Project development history
 - **[Architecture](docs/ARCHITECTURE.md)** - System architecture and flow diagrams
 - **[Security](docs/SECURITY.md)** - Security practices and considerations
-- **[Codebase Audit](docs/CODEBASE_AUDIT.md)** - Comprehensive codebase analysis
+- **[Codebase Audit](docs/SENIOR_CODEBASE_AUDIT_2026.md)** - Comprehensive codebase analysis
 
 ---
 
@@ -291,7 +292,7 @@ pnpm db:seed          # Seed demo users
 - [x] Auth critical flow tests (hashing, verification, rate limits)
 - [x] OAuth client registry (redirect/origin allowlists)
 - [x] Account origin separation (FIRST_PARTY vs PETSGRAM)
-- [ ] Password reset flow
+- [x] Password reset flow
 - [ ] Account lockout policy
 - [ ] MFA / 2FA
 - [ ] Expanded test coverage (integration + E2E)

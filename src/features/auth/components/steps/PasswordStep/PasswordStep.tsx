@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import InputField from '@/components/ui/InputField';
 import NextButton from '@/components/ui/NextButton';
 import type { PasswordStepProps } from './PasswordStep.types';
@@ -86,6 +87,15 @@ export default function PasswordStep({
           autoComplete="current-password"
           required
         />
+
+        <div className="flex justify-end mb-2">
+          <Link
+            href="/forgot-password"
+            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
 
         <div className="space-y-2">
           <NextButton
