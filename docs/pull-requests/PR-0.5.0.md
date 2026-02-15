@@ -1,6 +1,6 @@
 # PR-0.5.0 — GitHub OAuth Integration
 
-**Date:** January 27, 2025  
+**Date:** January 27, 2026
 **Type:** Feature Implementation  
 **Status:** **Done** Merged
 

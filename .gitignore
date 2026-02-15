@@ -74,7 +74,7 @@ verify-email-scaffold.sh
 # --- Private working docs (local only) ---
 docs/DOCUMENTATION_AUDIT_THEME_PARITY.md
 docs/REACT_VS_NEXTJS_ARCHITECTURE_REPORT.md
-docs/SENIOR_CODEBASE_AUDIT_2025.md
+docs/SENIOR_CODEBASE_AUDIT_2026.md
 docs/CV_PORTFOLIO_REPORT.md
 docs/README_OR_STUDIO.md
 docs/DEEP_RESEARCH_ARCHITECTURAL_PROJECTS.md
@@ -82,3 +82,7 @@ extra_docs/*
 
 # agents
 tools/agents/
+
+
+# Language
+language/
