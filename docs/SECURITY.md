@@ -308,7 +308,7 @@ If you discover a security vulnerability, please report it responsibly:
 
 ---
 
-**Last Updated**: January 30, 2025
+**Last Updated**: January 30, 2026
 
 ---
 

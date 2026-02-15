@@ -75,7 +75,7 @@ Added Google OAuth provider:
 ---
 
 ### [Entry 5 — GitHub OAuth Integration](./journal/ENTRY-5.md)
-**Date:** January 27, 2025  
+**Date:** January 27, 2026
 **Type:** Feature Implementation
 
 Added GitHub OAuth provider:
@@ -88,7 +88,7 @@ Added GitHub OAuth provider:
 ---
 
 ### [Entry 6 — UI/UX Completion & Final Codebase Cleanup](./journal/ENTRY-6.md)
-**Date:** January 30, 2025  
+**Date:** January 30, 2026
 **Type:** Cleanup + Finalization
 
 Final cleanup and polish phase:

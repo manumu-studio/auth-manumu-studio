@@ -45,7 +45,7 @@
 
 ## 🌐 Hosted Demo
 
-**Live Demo**: [https://auth.manumu.dev](https://auth.manumu.dev) *(or your custom domain)*
+**Live Demo**: [https://auth.manumustudio.com](https://auth.manumustudio.com)
 
 ### Testing the Authentication Flow
 
