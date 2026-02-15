@@ -160,6 +160,13 @@ sequenceDiagram
     AuthServer->>App: JWT access token (iss/aud/sub/scope/exp)
 ```
 
+### OIDC Discovery + JWKS (Third-Party Verification)
+
+Third-party apps can verify access tokens using the published metadata endpoints:
+
+- `/.well-known/openid-configuration` exposes issuer + endpoints.
+- `/jwks.json` publishes the RS256 public keys for token verification.
+
 ---
 
 ## Data Flow

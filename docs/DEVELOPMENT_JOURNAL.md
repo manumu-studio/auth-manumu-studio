@@ -7,6 +7,12 @@ This journal tracks the development progress of ManuMu Authentication, a product
 
 ---
 
+## Current Focus
+
+- Shipping JWKS + OIDC discovery endpoints for third-party token verification.
+
+---
+
 ## Journal Entries
 
 ### [Entry 0 — Bootstrap](./journal/ENTRY-0.md)
@@ -164,6 +170,16 @@ OAuth token exchange and access token issuance:
 - JWT access tokens with `iss`, `aud`, `sub`, `exp`, `scope`
 
 ---
+### [Entry 13 — JWKS + OIDC Discovery](./journal/ENTRY-13.md)
+**Date:** January 24, 2026  
+**Type:** Auth Server Foundations
+
+JWKS and OIDC discovery metadata for third-party token verification:
+- `/jwks.json` public key publishing
+- `/.well-known/openid-configuration` issuer + endpoints
+- RS256 access token signing via dedicated RSA keypair
+
+---
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -202,11 +218,14 @@ Authorization endpoint with consent, PKCE, and auth code persistence.
 ### [PR-1.2.0 — OAuth Token Endpoint (JWT Exchange)](./pull-requests/PR-1.2.0.md)
 Token exchange for authorization codes with PKCE + client auth.
 
+### [PR-1.3.0 — JWKS + OIDC Discovery](./pull-requests/PR-1.3.0.md)
+JWKS + discovery metadata for third-party access token verification.
+
 ---
 
 ## Project Status
 
-**Current Version:** 1.2.0  
+**Current Version:** 1.3.0  
 **Last Updated:** January 24, 2026
 
 ### Completed Features
@@ -225,6 +244,7 @@ Token exchange for authorization codes with PKCE + client auth.
 - **Done** Security headers (CSP + HSTS)
 - **Done** OAuth authorization endpoint (consent + PKCE)
 - **Done** OAuth token endpoint (JWT exchange)
+- **Done** JWKS + OIDC discovery endpoints
 - **Done** Auth critical flow tests (hashing, verification, rate limiting)
 - **Done** OAuth client registry (redirect/origin allowlists)
 - **Done** Account origin separation (FIRST_PARTY vs PETSGRAM)
