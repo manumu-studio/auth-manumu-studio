@@ -1,0 +1,45 @@
+// Dashboard shell layout — positions sidebar, top bar, and content area
+
+.shell {
+  min-height: 100vh;
+  background-color: #fff;
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", "Lucida Grande", "Roboto", sans-serif;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: #2d2d2d;
+  }
+}
+
+// Top bar positioning — offset by sidebar width on desktop
+.topBarWrapper {
+  transition: margin-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @media (min-width: 768px) {
+    &.topBarExpanded {
+      margin-left: 240px;
+    }
+
+    &.topBarCollapsed {
+      margin-left: 64px;
+    }
+  }
+}
+
+// Main content area — offset by sidebar on left, top bar on top
+.content {
+  padding: 64px 24px 32px;
+  max-width: 960px;
+  transition: margin-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @media (min-width: 768px) {
+    padding: 72px 40px 40px;
+
+    &.contentExpanded {
+      margin-left: 240px;
+    }
+
+    &.contentCollapsed {
+      margin-left: 64px;
+    }
+  }
+}
