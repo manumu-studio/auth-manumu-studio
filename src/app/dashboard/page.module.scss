@@ -1,0 +1,142 @@
+/**
+ * Dashboard home page styles — polished, animated design with dark mode support
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", "Lucida Grande", "Roboto", sans-serif;
+}
+
+/* Welcome section */
+.welcome {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.welcomeHeading {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1b1b1b;
+  margin: 0;
+
+  @media (prefers-color-scheme: dark) {
+    color: #fff;
+  }
+}
+
+.welcomeSubtitle {
+  font-size: 14px;
+  color: #605e5c;
+  margin: 0;
+
+  @media (prefers-color-scheme: dark) {
+    color: #c8c6c4;
+  }
+}
+
+/* Quick access cards grid */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Individual card */
+.card {
+  display: block;
+  padding: 1.5rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+
+    .chevron {
+      transform: translateX(4px);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    background: #323232;
+    border-color: #404040;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+  }
+}
+
+.cardContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+/* Icon circle */
+.iconCircle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 0.5rem;
+  background: rgba(0, 120, 212, 0.08);
+  flex-shrink: 0;
+
+  @media (prefers-color-scheme: dark) {
+    background: rgba(0, 120, 212, 0.2);
+  }
+}
+
+/* Card text content */
+.cardText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1b1b1b;
+  margin: 0;
+
+  @media (prefers-color-scheme: dark) {
+    color: #fff;
+  }
+}
+
+.cardDescription {
+  font-size: 13px;
+  color: #605e5c;
+  margin: 0;
+
+  @media (prefers-color-scheme: dark) {
+    color: #c8c6c4;
+  }
+}
+
+/* Chevron arrow */
+.chevron {
+  flex-shrink: 0;
+  color: #a19f9d;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @media (prefers-color-scheme: dark) {
+    color: #8a8886;
+  }
+}

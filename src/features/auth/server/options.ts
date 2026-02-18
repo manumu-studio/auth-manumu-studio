@@ -43,6 +43,11 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   secret: env.NEXTAUTH_SECRET,
 
+  // Route to custom branded sign-in page instead of NextAuth default
+  pages: {
+    signIn: "/",
+  },
+
   providers: [
     Credentials({
       name: "Credentials",
