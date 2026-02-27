@@ -61,3 +61,49 @@ export function signAccessToken(payload: Record<string, unknown>): string {
 
   return `${signingInput}.${toBase64Url(signature)}`;
 }
+
+export type AccessTokenPayload = {
+  iss: string;
+  aud: string;
+  sub: string;
+  exp: number;
+  iat: number;
+  scope: string;
+};
+
+function fromBase64Url(input: string): string {
+  return Buffer.from(input, "base64url").toString("utf-8");
+}
+
+export function verifyAccessToken(token: string): AccessTokenPayload | null {
+  const parts = token.split(".");
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const encodedHeader = parts[0];
+  const encodedPayload = parts[1];
+  const encodedSignature = parts[2];
+  if (!encodedHeader || !encodedPayload || !encodedSignature) {
+    return null;
+  }
+
+  const signingInput = `${encodedHeader}.${encodedPayload}`;
+  const signatureBuffer = Buffer.from(encodedSignature, "base64url");
+
+  const publicKeyPem = requireEnv(env.OAUTH_JWT_PUBLIC_KEY, "OAUTH_JWT_PUBLIC_KEY");
+  const isValid = crypto.verify("RSA-SHA256", Buffer.from(signingInput), publicKeyPem, signatureBuffer);
+
+  if (!isValid) {
+    return null;
+  }
+
+  const payload = JSON.parse(fromBase64Url(encodedPayload)) as AccessTokenPayload;
+  const nowInSeconds = Math.floor(Date.now() / 1000);
+
+  if (payload.exp <= nowInSeconds) {
+    return null;
+  }
+
+  return payload;
+}

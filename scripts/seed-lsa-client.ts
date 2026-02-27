@@ -9,9 +9,11 @@ const LSA_CLIENT = {
   description: "AI-powered speaking practice tool for English learners",
   redirectUris: [
     "http://localhost:3000/api/auth/callback/manumustudio",
+    "http://localhost:3001/api/auth/callback/manumustudio",
   ],
   allowedOrigins: [
     "http://localhost:3000",
+    "http://localhost:3001",
   ],
   scopes: ["openid", "email", "profile"],
 };

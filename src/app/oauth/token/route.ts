@@ -89,5 +89,6 @@ export async function POST(req: Request) {
     token_type: "Bearer",
     expires_in: result.expiresIn,
     scope: result.scope,
+    ...(result.idToken ? { id_token: result.idToken } : {}),
   });
 }

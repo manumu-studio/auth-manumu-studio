@@ -10,6 +10,9 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    user: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
@@ -51,7 +54,15 @@ describe("OAuth /oauth/token", () => {
     const { prisma } = await import("@/lib/prisma");
     const prismaMock = prisma as unknown as {
       oAuthAuthorizationCode: { findUnique: Mock; update: Mock };
+      user: { findUnique: Mock };
     };
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: "user-456",
+      email: "test@example.com",
+      emailVerified: new Date(),
+      name: "Test User",
+      image: null,
+    });
     prismaMock.oAuthAuthorizationCode.findUnique.mockResolvedValue({
       id: "code-1",
       code: "auth-code",

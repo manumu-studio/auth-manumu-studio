@@ -233,9 +233,16 @@ export default function MimicPage() {
   };
 
   // Redirect authenticated users — to callbackUrl (OAuth flow) or dashboard
+  // Full-page navigation for callbackUrl ensures server-side session is
+  // available when the OAuth authorize page loads (router.replace fails
+  // silently with long absolute URLs containing encoded query strings).
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
-      router.replace(callbackUrl ?? '/dashboard');
+      if (callbackUrl) {
+        window.location.href = callbackUrl;
+      } else {
+        router.replace('/dashboard');
+      }
     }
   }, [status, session, router, callbackUrl]);
 

@@ -28,6 +28,7 @@ function normalizeSearchParams(
     state: pickFirst(params.state),
     code_challenge: pickFirst(params.code_challenge),
     code_challenge_method: pickFirst(params.code_challenge_method),
+    nonce: pickFirst(params.nonce),
     error: pickFirst(params.error),
     error_description: pickFirst(params.error_description),
   };
@@ -44,6 +45,7 @@ function buildAuthorizeQuery(params: AuthorizeRequest): string {
   if (params.code_challenge_method) {
     search.set("code_challenge_method", params.code_challenge_method);
   }
+  if (params.nonce) search.set("nonce", params.nonce);
   return search.toString();
 }
 
@@ -66,6 +68,7 @@ async function authorizeAction(formData: FormData) {
     code_challenge: formData.get("code_challenge")?.toString() || undefined,
     code_challenge_method:
       formData.get("code_challenge_method")?.toString() || undefined,
+    nonce: formData.get("nonce")?.toString() || undefined,
   };
   const decision = formData.get("decision")?.toString() ?? "deny";
 
@@ -109,6 +112,7 @@ async function authorizeAction(formData: FormData) {
     scopes: validation.scopes,
     codeChallenge: validation.codeChallenge,
     codeChallengeMethod: validation.codeChallengeMethod,
+    nonce: validation.nonce,
   });
 
   redirect(
@@ -172,6 +176,9 @@ export default async function AuthorizePage(props: {
         <input type="hidden" name="scope" value={scopeLabel} />
         {validation.state ? (
           <input type="hidden" name="state" value={validation.state} />
+        ) : null}
+        {validation.nonce ? (
+          <input type="hidden" name="nonce" value={validation.nonce} />
         ) : null}
         {validation.codeChallenge ? (
           <input

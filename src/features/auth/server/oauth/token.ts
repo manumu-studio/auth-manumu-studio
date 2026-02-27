@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getOAuthClient, verifyClientSecret } from "./clientRegistry";
 import { resolveIssuer } from "./issuer";
 import { signAccessToken } from "./jwt";
+import { getUserClaims } from "./claims";
 
 const ACCESS_TOKEN_TTL_MINUTES = 60;
 
@@ -16,6 +17,7 @@ type TokenError = {
 type TokenSuccess = {
   ok: true;
   accessToken: string;
+  idToken?: string;
   expiresIn: number;
   scope: string;
 };
@@ -118,20 +120,43 @@ export async function exchangeAuthorizationCode(
 
   const expiresIn = ACCESS_TOKEN_TTL_MINUTES * 60;
   const issuedAt = Math.floor(now.getTime() / 1000);
-  const payload = {
-    iss: resolveIssuer(),
+  const issuer = resolveIssuer();
+  const scopeString = codeRecord.scopes.join(" ");
+
+  // Access token
+  const accessTokenPayload = {
+    iss: issuer,
     aud: codeRecord.clientId,
     sub: codeRecord.userId,
     exp: issuedAt + expiresIn,
     iat: issuedAt,
-    scope: codeRecord.scopes.join(" "),
+    scope: scopeString,
   };
-  const accessToken = signAccessToken(payload);
+  const accessToken = signAccessToken(accessTokenPayload);
+
+  // ID token (OIDC) — only when openid scope is granted
+  let idToken: string | undefined;
+  if (codeRecord.scopes.includes("openid")) {
+    const userClaims = await getUserClaims(codeRecord.userId, codeRecord.scopes);
+    const idTokenPayload: Record<string, unknown> = {
+      iss: issuer,
+      sub: codeRecord.userId,
+      aud: codeRecord.clientId,
+      exp: issuedAt + 3600,
+      iat: issuedAt,
+      ...userClaims,
+    };
+    if (codeRecord.nonce) {
+      idTokenPayload.nonce = codeRecord.nonce;
+    }
+    idToken = signAccessToken(idTokenPayload);
+  }
 
   return {
     ok: true,
     accessToken,
+    idToken,
     expiresIn,
-    scope: codeRecord.scopes.join(" "),
+    scope: scopeString,
   };
 }

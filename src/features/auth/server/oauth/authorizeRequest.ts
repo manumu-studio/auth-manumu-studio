@@ -8,6 +8,7 @@ export type AuthorizeRequest = {
   state?: string;
   code_challenge?: string;
   code_challenge_method?: string;
+  nonce?: string;
 };
 
 export type AuthorizationValidationResult =
@@ -19,6 +20,7 @@ export type AuthorizationValidationResult =
       state?: string;
       codeChallenge?: string;
       codeChallengeMethod?: "S256" | "plain";
+      nonce?: string;
     }
   | {
       ok: false;
@@ -150,5 +152,6 @@ export async function validateAuthorizeRequest(
     state: params.state,
     codeChallenge: params.code_challenge,
     codeChallengeMethod,
+    nonce: params.nonce,
   };
 }

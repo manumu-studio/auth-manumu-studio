@@ -10,6 +10,7 @@ type AuthorizationCodeInput = {
   scopes: string[];
   codeChallenge?: string;
   codeChallengeMethod?: string;
+  nonce?: string;
 };
 
 export type AuthorizationCodeResult = {
@@ -36,6 +37,7 @@ export async function createAuthorizationCode(
       scopes: input.scopes,
       codeChallenge: input.codeChallenge,
       codeChallengeMethod: input.codeChallengeMethod,
+      nonce: input.nonce,
       expiresAt,
     },
   });
