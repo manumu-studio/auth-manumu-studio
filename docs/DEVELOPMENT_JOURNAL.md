@@ -9,7 +9,7 @@ This journal tracks the development progress of ManuMu Authentication, a product
 
 ## Current Focus
 
-- Shipping JWKS + OIDC discovery endpoints for third-party token verification.
+- Completing OAuth/OIDC interoperability for third-party client sign-in and sign-out.
 
 ---
 
@@ -180,6 +180,28 @@ JWKS and OIDC discovery metadata for third-party token verification:
 - RS256 access token signing via dedicated RSA keypair
 
 ---
+### [Entry 14 — Protected Dashboard & Account Management](./journal/ENTRY-14.md)
+**Date:** February 15, 2026  
+**Type:** Feature Implementation
+
+Protected dashboard and account self-management:
+- Session-guarded dashboard routes
+- Profile/password/account management actions
+- Account deletion flow with confirmation
+- Branded OAuth sign-in handoff behavior
+
+---
+### [Entry 15 — Federated Sign-Out (RP-Initiated Logout)](./journal/ENTRY-15.md)
+**Date:** February 28, 2026  
+**Type:** Auth Server Foundations
+
+OIDC-compliant federated sign-out to terminate auth-server sessions:
+- `/oauth/logout` endpoint for RP-initiated logout
+- `id_token_hint` verification and client resolution
+- Allowlisted `post_logout_redirect_uri` validation
+- Discovery metadata now exposes `end_session_endpoint`
+
+---
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -221,12 +243,18 @@ Token exchange for authorization codes with PKCE + client auth.
 ### [PR-1.3.0 — JWKS + OIDC Discovery](./pull-requests/PR-1.3.0.md)
 JWKS + discovery metadata for third-party access token verification.
 
+### [PR-1.4.0 — Protected Dashboard & Account Management](./pull-requests/PR-1.4.0.md)
+Protected dashboard, account settings, and OAuth UX hardening.
+
+### [PR-1.5.0 — Federated Sign-Out (RP-Initiated Logout)](./pull-requests/PR-1.5.0.md)
+Federated logout endpoint and OIDC discovery `end_session_endpoint` support.
+
 ---
 
 ## Project Status
 
-**Current Version:** 1.3.0  
-**Last Updated:** January 24, 2026
+**Current Version:** 1.5.0  
+**Last Updated:** February 28, 2026
 
 ### Completed Features
 
@@ -248,6 +276,7 @@ JWKS + discovery metadata for third-party access token verification.
 - **Done** Auth critical flow tests (hashing, verification, rate limiting)
 - **Done** OAuth client registry (redirect/origin allowlists)
 - **Done** Account origin separation (FIRST_PARTY vs PETSGRAM)
+- **Done** Federated sign-out endpoint (`/oauth/logout`) with OIDC discovery exposure
 
 ### In Progress
 
@@ -283,4 +312,4 @@ JWKS + discovery metadata for third-party access token verification.
 
 ---
 
-**Last Updated:** January 24, 2026
+**Last Updated:** February 28, 2026

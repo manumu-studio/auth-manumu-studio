@@ -176,6 +176,23 @@ Third-party authorization requests flow through `/oauth/authorize` with strict v
 2. Cache the JWKS response (honor `Cache-Control`).
 3. Verify JWTs with RS256 using the published `kid` public key.
 
+### OAuth RP-Initiated Logout Endpoint
+
+`/oauth/logout` supports federated sign-out so third-party clients can clear the auth-server session.
+
+**Guards:**
+- `id_token_hint` is signature-verified (RS256) before audience/client extraction.
+- Expired ID token hints are accepted when signature is valid (OIDC logout compatible behavior).
+- `post_logout_redirect_uri` must exactly match the client's registered `redirectUris`.
+- Missing client context with `post_logout_redirect_uri` is rejected.
+
+**Session Termination:**
+- Clears both secure and non-secure NextAuth cookies:
+  - `next-auth.session-token` / `__Secure-next-auth.session-token`
+  - `next-auth.csrf-token` / `__Secure-next-auth.csrf-token`
+  - `next-auth.callback-url` / `__Secure-next-auth.callback-url`
+- Redirects to validated `post_logout_redirect_uri` (+ optional `state`) or `/`.
+
 ---
 
 ## Database Security
@@ -321,7 +338,7 @@ If you discover a security vulnerability, please report it responsibly:
 
 ---
 
-**Last Updated**: January 30, 2026
+**Last Updated**: February 28, 2026
 
 ---
 

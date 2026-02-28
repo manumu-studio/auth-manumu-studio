@@ -82,6 +82,28 @@ This phase turns ManuMu Auth into a real authorization server. Complete in order
 **Acceptance Criteria:**
 - JWT can be verified via JWKS
 - Discovery doc loads with correct issuer + endpoints
+
+---
+
+## 14) `feature/b1-federated-signout`
+
+**Goal:** Implement OIDC RP-Initiated Logout so third-party apps can end the auth-server session.
+
+**Scope:**
+- `GET /oauth/logout` endpoint
+- `id_token_hint` signature validation and client resolution
+- `post_logout_redirect_uri` validation against client allowlist
+- OIDC discovery update with `end_session_endpoint`
+
+**Tasks:**
+- Add logout route that clears NextAuth cookies and redirects safely
+- Add ID token decode helper that verifies signature without enforcing expiration
+- Publish logout endpoint in discovery metadata
+
+**Acceptance Criteria:**
+- Client-triggered logout clears auth-server session and redirects correctly
+- Invalid redirect URIs are rejected with `400`
+- Discovery metadata exposes `end_session_endpoint`
 After completing the feature scope for this branch/PR:
 a) Add proof tests for the feature (mandatory)
 Create/extend automated tests under tests/ that prove the feature works and prove the main failure modes are handled safely.

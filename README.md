@@ -27,6 +27,7 @@
 - **OAuth Authorization**: `/oauth/authorize` with consent, PKCE, and short-lived auth codes
 - **OAuth Token**: `/oauth/token` exchange for JWT access tokens with PKCE + client auth
 - **OIDC Discovery**: `/.well-known/openid-configuration` + JWKS for token verification
+- **Federated Sign-Out**: `/oauth/logout` with RP-initiated logout and allowlisted post-logout redirects
 - **Account Origin**: Strict separation for Petsgram vs ManuMu users
 - **Theme System**: Hybrid approach using Tailwind utilities + SCSS Module overrides with `@media (prefers-color-scheme: dark)` for consistent dark theme support
 - **Deploy**: Vercel-ready with environment validation
@@ -255,6 +256,7 @@ This project implements industry-standard security practices:
 - **Input Validation**: Zod schemas on client and server
 - **Email Verification**: Token-based with TTL and cooldown protection
 - **OAuth Security**: Provider-verified email addresses
+- **Federated Logout Security**: Signed `id_token_hint` handling + strict post-logout redirect validation
 
 For comprehensive security documentation, see [`docs/SECURITY.md`](docs/SECURITY.md).
 
