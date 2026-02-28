@@ -1,12 +1,13 @@
-export function getVerificationEmailText({ name, verifyUrl }: { name?: string; verifyUrl: string }) {
+// Plain-text template for email verification with a 6-digit OTP code.
+export function getVerificationEmailText({ name, code }: { name?: string; code: string }) {
   const greeting = name ? `Hi ${name},` : "Hi,";
   return `${greeting}
 
-Please confirm your email by clicking the link below:
+Your verification code is: ${code}
 
-${verifyUrl}
+This code expires in 10 minutes.
 
-If you didn’t request this, you can safely ignore this email.
+If you didn't request this, you can safely ignore this email.
 
 Thanks!`;
 }

@@ -18,7 +18,7 @@ const EnvSchema = z.object({
   GITHUB_CLIENT_SECRET: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM: z.string().optional(),
-  VERIFY_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(30),
+  VERIFY_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(10),
   VERIFY_RESEND_COOLDOWN_MINUTES: z.coerce.number().int().positive().default(2),
   RESET_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(30),
   RESET_RESEND_COOLDOWN_MINUTES: z.coerce.number().int().positive().default(2),

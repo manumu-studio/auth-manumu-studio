@@ -1,11 +1,11 @@
+// Resend flow for OTP-based email verification with cooldown protections.
 import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/features/auth/lib/email/provider";
-import crypto from "crypto";
 import { env } from "@/lib/env";
+import { createVerificationToken } from "./createToken";
 
 const TTL_MIN = env.VERIFY_TOKEN_TTL_MINUTES;
 const COOLDOWN_MIN = env.VERIFY_RESEND_COOLDOWN_MINUTES;
-const APP_URL = env.APP_URL || env.NEXTAUTH_URL || env.AUTH_URL || "http://localhost:3000";
 
 export async function resendVerificationToken(email: string) {
   const normalized = email.toLowerCase().trim();
@@ -19,19 +19,14 @@ export async function resendVerificationToken(email: string) {
   });
   if (recent) {
     const cooldownSince = new Date(Date.now() - COOLDOWN_MIN * 60 * 1000);
-    if (recent.expires > cooldownSince) {
+    const issuedAt = new Date(recent.expires.getTime() - TTL_MIN * 60 * 1000);
+    if (issuedAt > cooldownSince) {
       return { ok: false as const, reason: "cooldown" as const };
     }
   }
 
-  const token = crypto.randomBytes(32).toString("base64url");
-  const expires = new Date(Date.now() + TTL_MIN * 60 * 1000);
-  await prisma.verificationToken.create({
-    data: { identifier: normalized, token, expires },
-  });
-
-  const verifyUrl = `${APP_URL}/verify?token=${encodeURIComponent(token)}`;
-  await sendVerificationEmail({ to: normalized, verifyUrl });
+  const tokenResult = await createVerificationToken(normalized);
+  await sendVerificationEmail({ to: normalized, code: tokenResult.code, name: user.name ?? undefined });
 
   return { ok: true as const };
 }

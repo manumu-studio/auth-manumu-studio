@@ -14,7 +14,6 @@ export interface SignupData {
 export interface SignupStepProps {
   signupData: SignupData;
   signupErrors: Record<string, string>;
-  signupSuccess: boolean;
   error: string | null;
   isPending: boolean;
   emailInputRef: RefObject<HTMLInputElement | null>;

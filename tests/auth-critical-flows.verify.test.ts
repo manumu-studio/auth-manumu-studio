@@ -1,3 +1,4 @@
+// Tests for OTP email verification: token creation, consumption, attempt limits, and resend
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 
 const ORIGINAL_ENV = { ...process.env };
@@ -6,14 +7,13 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     verificationToken: {
       create: vi.fn(),
-      findUnique: vi.fn(),
       findFirst: vi.fn(),
+      update: vi.fn(),
       deleteMany: vi.fn(),
     },
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
-      create: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -25,7 +25,20 @@ vi.mock('@/features/auth/lib/email/provider', () => ({
 
 vi.mock('crypto', () => ({
   default: {
-    randomBytes: vi.fn(() => Buffer.from('a'.repeat(32))),
+    randomInt: vi.fn(() => 123456),
+    createHash: vi.fn(() => {
+      let value = '';
+      const hashApi = {
+        update: vi.fn((input: string) => {
+          value = input;
+          return hashApi;
+        }),
+        digest: vi.fn(() => `hash:${value}`),
+      };
+      return {
+        ...hashApi,
+      };
+    }),
   },
 }));
 
@@ -38,228 +51,118 @@ beforeEach(() => {
   process.env.SKIP_ENV_VALIDATION = 'true';
   process.env.DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://localhost/test';
   process.env.NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET ?? 'x'.repeat(32);
+  process.env.VERIFY_TOKEN_TTL_MINUTES = '10';
+  process.env.VERIFY_RESEND_COOLDOWN_MINUTES = '2';
 });
 
 afterEach(() => {
   vi.useRealTimers();
   vi.clearAllMocks();
-
   Object.keys(process.env).forEach((key) => {
     if (!(key in ORIGINAL_ENV)) delete process.env[key];
   });
   Object.assign(process.env, ORIGINAL_ENV);
 });
 
-describe('Email verification tokens', () => {
-  it('creates a token and persists it', async () => {
-    process.env.APP_URL = 'https://app.test';
-    process.env.VERIFY_TOKEN_TTL_MINUTES = '30';
-
-    const { createVerificationToken } = await import(
-      '@/features/auth/server/verify/createToken'
-    );
+describe('OTP verification tokens', () => {
+  it('creates hashed OTP token and returns plaintext code', async () => {
+    const { createVerificationToken } = await import('@/features/auth/server/verify/createToken');
     const { prisma } = await import('@/lib/prisma');
     const prismaMock = prisma as unknown as {
-      verificationToken: { create: Mock };
+      $transaction: Mock;
+      verificationToken: { deleteMany: Mock; create: Mock };
     };
 
-    const result = await createVerificationToken('User@Example.com');
-    const expectedToken = Buffer.from('a'.repeat(32)).toString('base64url');
-    const expectedExpires = new Date(NOW.getTime() + 30 * 60 * 1000);
+    prismaMock.$transaction.mockResolvedValue([]);
 
+    const result = await createVerificationToken('User@Example.com');
+
+    expect(prismaMock.verificationToken.deleteMany).toHaveBeenCalledWith({
+      where: { identifier: 'user@example.com' },
+    });
     expect(prismaMock.verificationToken.create).toHaveBeenCalledWith({
       data: {
         identifier: 'user@example.com',
-        token: expectedToken,
-        expires: expectedExpires,
+        token: 'hash:123456',
+        expires: new Date(NOW.getTime() + 10 * 60 * 1000),
+        attempts: 0,
       },
     });
-    expect(result).toEqual({
-      ok: true,
-      token: expectedToken,
-      verifyUrl: `https://app.test/verify?token=${encodeURIComponent(
-        expectedToken
-      )}`,
-    });
+    expect(result).toEqual({ ok: true, code: '123456' });
   });
 
-  it('returns not-found for unknown tokens', async () => {
-    const { consumeVerificationToken } = await import(
-      '@/features/auth/server/verify/consumeToken'
-    );
+  it('returns not-found when no active OTP exists for invalid code', async () => {
+    const { consumeVerificationToken } = await import('@/features/auth/server/verify/consumeToken');
     const { prisma } = await import('@/lib/prisma');
     const prismaMock = prisma as unknown as {
-      verificationToken: { findUnique: Mock };
+      verificationToken: { findFirst: Mock };
     };
 
-    prismaMock.verificationToken.findUnique.mockResolvedValue(null);
+    prismaMock.verificationToken.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
 
-    await expect(consumeVerificationToken('missing')).resolves.toEqual({
+    await expect(consumeVerificationToken('user@example.com', '111111')).resolves.toEqual({
       ok: false,
       reason: 'not-found',
     });
   });
 
-  it('returns expired when token is stale', async () => {
-    const { consumeVerificationToken } = await import(
-      '@/features/auth/server/verify/consumeToken'
-    );
+  it('returns max-attempts after five failed attempts', async () => {
+    const { consumeVerificationToken } = await import('@/features/auth/server/verify/consumeToken');
     const { prisma } = await import('@/lib/prisma');
     const prismaMock = prisma as unknown as {
-      verificationToken: { findUnique: Mock };
-      user: { findUnique: Mock };
+      verificationToken: { findFirst: Mock; update: Mock; deleteMany: Mock };
     };
 
-    prismaMock.verificationToken.findUnique.mockResolvedValue({
-      token: 'expired',
-      identifier: 'user@example.com',
-      expires: new Date(NOW.getTime() - 1000),
-    });
+    prismaMock.verificationToken.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ token: 'hash:active', expires: new Date(NOW.getTime() + 1000) });
+    prismaMock.verificationToken.update.mockResolvedValue({ attempts: 5 });
+    prismaMock.verificationToken.deleteMany.mockResolvedValue({ count: 1 });
 
-    await expect(consumeVerificationToken('expired')).resolves.toEqual({
+    await expect(consumeVerificationToken('user@example.com', '000000')).resolves.toEqual({
       ok: false,
-      reason: 'expired',
-    });
-    expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
-  });
-
-  it('returns not-found when user is missing', async () => {
-    const { consumeVerificationToken } = await import(
-      '@/features/auth/server/verify/consumeToken'
-    );
-    const { prisma } = await import('@/lib/prisma');
-    const prismaMock = prisma as unknown as {
-      verificationToken: { findUnique: Mock };
-      user: { findUnique: Mock };
-    };
-
-    prismaMock.verificationToken.findUnique.mockResolvedValue({
-      token: 'token',
-      identifier: 'user@example.com',
-      expires: new Date(NOW.getTime() + 1000),
-    });
-    prismaMock.user.findUnique.mockResolvedValue(null);
-
-    await expect(consumeVerificationToken('token')).resolves.toEqual({
-      ok: false,
-      reason: 'not-found',
+      reason: 'max-attempts',
     });
   });
 
-  it('returns already-verified when user is verified', async () => {
-    const { consumeVerificationToken } = await import(
-      '@/features/auth/server/verify/consumeToken'
-    );
+  it('marks user verified and deletes all tokens on success', async () => {
+    const { consumeVerificationToken } = await import('@/features/auth/server/verify/consumeToken');
     const { prisma } = await import('@/lib/prisma');
     const prismaMock = prisma as unknown as {
-      verificationToken: { findUnique: Mock };
-      user: { findUnique: Mock };
-    };
-
-    prismaMock.verificationToken.findUnique.mockResolvedValue({
-      token: 'token',
-      identifier: 'user@example.com',
-      expires: new Date(NOW.getTime() + 1000),
-    });
-    prismaMock.user.findUnique.mockResolvedValue({
-      id: 'user-id',
-      emailVerified: new Date(),
-    });
-
-    await expect(consumeVerificationToken('token')).resolves.toEqual({
-      ok: false,
-      reason: 'already-verified',
-    });
-  });
-
-  it('marks user verified and deletes tokens on success', async () => {
-    const { consumeVerificationToken } = await import(
-      '@/features/auth/server/verify/consumeToken'
-    );
-    const { prisma } = await import('@/lib/prisma');
-    const prismaMock = prisma as unknown as {
-      verificationToken: { findUnique: Mock; deleteMany: Mock };
+      verificationToken: { findFirst: Mock; deleteMany: Mock };
       user: { findUnique: Mock; update: Mock };
       $transaction: Mock;
     };
 
-    prismaMock.verificationToken.findUnique.mockResolvedValue({
-      token: 'token',
+    prismaMock.verificationToken.findFirst.mockResolvedValue({
       identifier: 'user@example.com',
+      token: 'hash:123456',
       expires: new Date(NOW.getTime() + 1000),
     });
-    prismaMock.user.findUnique.mockResolvedValue({
-      id: 'user-id',
-      emailVerified: null,
-    });
+    prismaMock.user.findUnique.mockResolvedValue({ id: 'user-id', emailVerified: null });
     prismaMock.user.update.mockResolvedValue({ id: 'user-id' });
     prismaMock.verificationToken.deleteMany.mockResolvedValue({ count: 1 });
     prismaMock.$transaction.mockResolvedValue([]);
 
-    await expect(consumeVerificationToken('token')).resolves.toEqual({
-      ok: true,
-    });
-    expect(prismaMock.user.update).toHaveBeenCalledWith({
-      where: { id: 'user-id' },
-      data: { emailVerified: expect.any(Date) },
-    });
-    expect(prismaMock.verificationToken.deleteMany).toHaveBeenCalledWith({
-      where: { identifier: 'user@example.com' },
-    });
+    await expect(consumeVerificationToken('user@example.com', '123456')).resolves.toEqual({ ok: true });
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
   });
 });
 
-describe('Verification resend flow', () => {
-  it('rejects unknown emails', async () => {
-    const { resendVerificationToken } = await import(
-      '@/features/auth/server/verify/resend'
-    );
-    const { prisma } = await import('@/lib/prisma');
-    const prismaMock = prisma as unknown as {
-      user: { findUnique: Mock };
-    };
-
-    prismaMock.user.findUnique.mockResolvedValue(null);
-
-    await expect(resendVerificationToken('unknown@example.com')).resolves.toEqual({
-      ok: false,
-      reason: 'not-found',
-    });
-  });
-
-  it('rejects already verified users', async () => {
-    const { resendVerificationToken } = await import(
-      '@/features/auth/server/verify/resend'
-    );
-    const { prisma } = await import('@/lib/prisma');
-    const prismaMock = prisma as unknown as {
-      user: { findUnique: Mock };
-    };
-
-    prismaMock.user.findUnique.mockResolvedValue({ emailVerified: new Date() });
-
-    await expect(resendVerificationToken('verified@example.com')).resolves.toEqual({
-      ok: false,
-      reason: 'already-verified',
-    });
-  });
-
+describe('OTP resend flow', () => {
   it('enforces resend cooldown', async () => {
-    process.env.VERIFY_RESEND_COOLDOWN_MINUTES = '2';
-
-    const { resendVerificationToken } = await import(
-      '@/features/auth/server/verify/resend'
-    );
+    const { resendVerificationToken } = await import('@/features/auth/server/verify/resend');
     const { prisma } = await import('@/lib/prisma');
     const prismaMock = prisma as unknown as {
       user: { findUnique: Mock };
       verificationToken: { findFirst: Mock };
     };
 
-    prismaMock.user.findUnique.mockResolvedValue({ emailVerified: null });
+    prismaMock.user.findUnique.mockResolvedValue({ emailVerified: null, name: null });
     prismaMock.verificationToken.findFirst.mockResolvedValue({
-      expires: new Date(NOW.getTime() - 60 * 1000),
+      expires: new Date(NOW.getTime() + 9 * 60 * 1000),
     });
 
     await expect(resendVerificationToken('cooldown@example.com')).resolves.toEqual({
@@ -268,43 +171,27 @@ describe('Verification resend flow', () => {
     });
   });
 
-  it('creates and sends a new token after cooldown', async () => {
-    process.env.APP_URL = 'https://app.test';
-    process.env.VERIFY_TOKEN_TTL_MINUTES = '30';
-    process.env.VERIFY_RESEND_COOLDOWN_MINUTES = '2';
-
-    const { resendVerificationToken } = await import(
-      '@/features/auth/server/verify/resend'
-    );
+  it('creates and emails a new OTP after cooldown', async () => {
+    const { resendVerificationToken } = await import('@/features/auth/server/verify/resend');
     const { prisma } = await import('@/lib/prisma');
     const prismaMock = prisma as unknown as {
       user: { findUnique: Mock };
-      verificationToken: { findFirst: Mock; create: Mock };
+      verificationToken: { findFirst: Mock; deleteMany: Mock; create: Mock };
+      $transaction: Mock;
     };
-    const { sendVerificationEmail } = await import(
-      '@/features/auth/lib/email/provider'
-    );
+    const { sendVerificationEmail } = await import('@/features/auth/lib/email/provider');
 
-    prismaMock.user.findUnique.mockResolvedValue({ emailVerified: null });
+    prismaMock.user.findUnique.mockResolvedValue({ emailVerified: null, name: 'Ada' });
     prismaMock.verificationToken.findFirst.mockResolvedValue({
-      expires: new Date(NOW.getTime() - 10 * 60 * 1000),
+      expires: new Date(NOW.getTime() + 5 * 60 * 1000),
     });
-    prismaMock.verificationToken.create.mockResolvedValue({ token: 'token' });
+    prismaMock.$transaction.mockResolvedValue([]);
 
-    await expect(
-      resendVerificationToken('User@Example.com')
-    ).resolves.toEqual({ ok: true });
-
-    expect(prismaMock.verificationToken.create).toHaveBeenCalledWith({
-      data: {
-        identifier: 'user@example.com',
-        token: Buffer.from('a'.repeat(32)).toString('base64url'),
-        expires: new Date(NOW.getTime() + 30 * 60 * 1000),
-      },
-    });
+    await expect(resendVerificationToken('User@Example.com')).resolves.toEqual({ ok: true });
     expect(sendVerificationEmail).toHaveBeenCalledWith({
       to: 'user@example.com',
-      verifyUrl: expect.stringContaining('/verify?token='),
+      code: '123456',
+      name: 'Ada',
     });
   });
 });

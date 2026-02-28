@@ -40,7 +40,6 @@ export default function MimicPage() {
     address: '',
   });
   const [signupErrors, setSignupErrors] = useState<Record<string, string>>({});
-  const [signupSuccess, setSignupSuccess] = useState(false);
   
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
@@ -95,7 +94,7 @@ export default function MimicPage() {
 
       if (res?.error) {
         if (res.error === 'EMAIL_NOT_VERIFIED') {
-          setError('Please verify your email address before signing in. Check your inbox for a verification link.');
+          setError('Please verify your email address before signing in. Check your inbox for a verification code.');
         } else if (res.error === 'RATE_LIMITED') {
           setError('Too many requests. Please try again later.');
         } else {
@@ -188,26 +187,13 @@ export default function MimicPage() {
         return;
       }
 
-      // Success - show success message
-      setSignupSuccess(true);
+      if (res.meta?.requiresEmailVerification && res.meta.email) {
+        router.push(`/verify?email=${encodeURIComponent(res.meta.email)}`);
+        return;
+      }
+
       setError(null);
       setSignupErrors({});
-      
-      // Reset form after a delay
-      setTimeout(() => {
-        setSignupData({
-          firstname: '',
-          lastname: '',
-          email: '',
-          password: '',
-          repeatpassword: '',
-          country: '',
-          city: '',
-          address: '',
-        });
-        setSignupSuccess(false);
-        handleSignupBack();
-      }, 3000);
     });
   };
 
@@ -300,7 +286,6 @@ export default function MimicPage() {
           <SignupStep
             signupData={signupData}
             signupErrors={signupErrors}
-            signupSuccess={signupSuccess}
             error={error}
             isPending={isPending}
             emailInputRef={emailInputRef}

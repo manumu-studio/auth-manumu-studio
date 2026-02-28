@@ -107,8 +107,8 @@ export async function registerUser(formData: FormData): Promise<ActionResult> {
     });
 
     // 2) Issue verification token + email
-    const { verifyUrl } = await createVerificationToken(email);
-    await sendVerificationEmail({ to: email, verifyUrl, name: [firstname, lastname].filter(Boolean).join(" ").trim() });
+    const { code } = await createVerificationToken(email);
+    await sendVerificationEmail({ to: email, code, name: [firstname, lastname].filter(Boolean).join(" ").trim() });
 
     // 3) Tell the client to show "check your email"
     return {

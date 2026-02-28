@@ -20,7 +20,7 @@ const from = env.RESEND_FROM || "Acme <onboarding@resend.dev>";
 // Initialize Resend client only if API key is provided
 const resend = resendKey ? new Resend(resendKey) : null;
 
-type SendArgs = { to: string; verifyUrl: string; name?: string };
+type SendArgs = { to: string; code: string; name?: string };
 
 /**
  * Sends a verification email to the user
@@ -30,7 +30,7 @@ type SendArgs = { to: string; verifyUrl: string; name?: string };
  * 
  * @param {SendArgs} args - Email parameters
  * @param {string} args.to - Recipient email address
- * @param {string} args.verifyUrl - Verification link URL
+ * @param {string} args.code - 6-digit verification code
  * @param {string} [args.name] - Optional recipient name
  * @throws {Error} "EMAIL_SEND_FAILED" if Resend returns an error
  * 
@@ -38,16 +38,16 @@ type SendArgs = { to: string; verifyUrl: string; name?: string };
  * ```ts
  * await sendVerificationEmail({
  *   to: "user@example.com",
- *   verifyUrl: "https://app.com/verify?token=...",
+ *   code: "123456",
  *   name: "John Doe"
  * });
  * ```
  */
-export async function sendVerificationEmail({ to, verifyUrl, name }: SendArgs) {
+export async function sendVerificationEmail({ to, code, name }: SendArgs) {
   // Generate email content (subject, plain text, HTML)
   const subject = getVerificationEmailSubject();
-  const text = getVerificationEmailText({ name, verifyUrl });
-  const html = verifyEmailHtml({ name, verifyUrl });
+  const text = getVerificationEmailText({ name, code });
+  const html = verifyEmailHtml({ name, code });
 
   // Environment-aware logging (only in development)
   const isDevelopment = process.env.NODE_ENV === 'development';
