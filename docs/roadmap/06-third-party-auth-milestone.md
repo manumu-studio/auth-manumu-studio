@@ -7,4 +7,5 @@ Completion criteria for “third‑party auth” readiness:
 - OAuth2/OIDC authorization + token endpoints
 - PKCE for SPAs
 - JWKS + OIDC discovery
+- Federated sign-out via RP-initiated logout endpoint
 - External token handoff to Petsgram-compatible flow

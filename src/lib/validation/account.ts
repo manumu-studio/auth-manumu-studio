@@ -1,5 +1,6 @@
 // Validation schemas for account management operations
 import { z } from 'zod';
+import { isValidCountryCode } from '@/lib/data/countries';
 import { emailSchema, passwordSchema } from './fields';
 
 // Profile update schema
@@ -11,6 +12,18 @@ export const UpdateProfileSchema = z.object({
 });
 
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
+
+// OAuth onboarding schema
+export const OnboardingSchema = z.object({
+  displayName: z.string().min(1, 'Name is required').max(100).trim(),
+  country: z.string()
+    .min(2, 'Country is required')
+    .max(2)
+    .refine(isValidCountryCode, 'Invalid country code'),
+  nickname: z.string().trim().max(30, 'Nickname must be 30 characters or less').optional(),
+});
+
+export type OnboardingInput = z.infer<typeof OnboardingSchema>;
 
 // Password change schema with validation
 export const ChangePasswordSchema = z.object({

@@ -78,11 +78,22 @@ docs/SENIOR_CODEBASE_AUDIT_2026.md
 docs/CV_PORTFOLIO_REPORT.md
 docs/README_OR_STUDIO.md
 docs/DEEP_RESEARCH_ARCHITECTURAL_PROJECTS.md
-extra_docs/*
+extra_docs/
 
 # agents
 tools/agents/
 
+# AI/IDE local artifacts
+.cursorrules
+CONTINUATION_PROMPT_NEXT_SESSION.md
+PROJECT_MAP.md
+docs/CLAUDE.md
+docs/DEVELOPMENT_PLAYBOOK.md
+docs/build-packets/
+docs/build-packet-reports/
+docs/cursor-tasks/
+docs/cursor-task-reports/
+docs/cursor-specs/
 
 # Language
 language/

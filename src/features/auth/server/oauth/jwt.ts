@@ -71,8 +71,50 @@ export type AccessTokenPayload = {
   scope: string;
 };
 
+export type IdTokenPayload = {
+  iss: string;
+  sub: string;
+  aud: string;
+  exp: number;
+  iat: number;
+  nonce?: string;
+};
+
 function fromBase64Url(input: string): string {
   return Buffer.from(input, "base64url").toString("utf-8");
+}
+
+/**
+ * Verifies an ID token signature and extracts claims for logout.
+ * Deliberately does not enforce exp because id_token_hint may be expired.
+ */
+export function decodeIdToken(token: string): IdTokenPayload | null {
+  const parts = token.split(".");
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const encodedHeader = parts[0];
+  const encodedPayload = parts[1];
+  const encodedSignature = parts[2];
+  if (!encodedHeader || !encodedPayload || !encodedSignature) {
+    return null;
+  }
+
+  const signingInput = `${encodedHeader}.${encodedPayload}`;
+  const signatureBuffer = Buffer.from(encodedSignature, "base64url");
+
+  const publicKeyPem = requireEnv(env.OAUTH_JWT_PUBLIC_KEY, "OAUTH_JWT_PUBLIC_KEY");
+  const isValid = crypto.verify("RSA-SHA256", Buffer.from(signingInput), publicKeyPem, signatureBuffer);
+  if (!isValid) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(fromBase64Url(encodedPayload)) as IdTokenPayload;
+  } catch {
+    return null;
+  }
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload | null {

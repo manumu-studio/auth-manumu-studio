@@ -2,7 +2,7 @@
 
 **Purpose:** Split roadmap into focused files showing project evolution and ordered next branches  
 **Scope:** Completed branches + next movements + third‑party milestone  
-**Last Updated:** January 2026
+**Last Updated:** February 2026
 
 ---
 

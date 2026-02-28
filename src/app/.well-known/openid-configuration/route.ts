@@ -9,6 +9,7 @@ export async function GET() {
     authorization_endpoint: resolveIssuerEndpoint("/oauth/authorize"),
     token_endpoint: resolveIssuerEndpoint("/oauth/token"),
     userinfo_endpoint: resolveIssuerEndpoint("/oauth/userinfo"),
+    end_session_endpoint: resolveIssuerEndpoint("/oauth/logout"),
     response_types_supported: ["code"],
     subject_types_supported: ["public"],
     id_token_signing_alg_values_supported: ["RS256"],

@@ -166,6 +166,24 @@ Third-party apps can verify access tokens using the published metadata endpoints
 
 - `/.well-known/openid-configuration` exposes issuer + endpoints.
 - `/jwks.json` publishes the RS256 public keys for token verification.
+- Discovery also exposes `end_session_endpoint` for RP-initiated logout.
+
+### OIDC RP-Initiated Logout Flow (Federated Sign-Out)
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant Browser
+    participant AuthServer
+    participant DB
+
+    App->>Browser: Redirect to /oauth/logout?id_token_hint&post_logout_redirect_uri&state
+    Browser->>AuthServer: GET /oauth/logout
+    AuthServer->>AuthServer: Verify id_token_hint signature (RS256)
+    AuthServer->>DB: Resolve OAuth client and validate redirect URI allowlist
+    AuthServer->>Browser: Clear NextAuth cookies (session + csrf + callback)
+    AuthServer->>Browser: Redirect to post_logout_redirect_uri(+state) or /
+```
 
 ---
 
@@ -486,5 +504,5 @@ graph TB
 
 ---
 
-**Last Updated**: January 27, 2026
+**Last Updated**: February 28, 2026
 
