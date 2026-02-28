@@ -9,7 +9,7 @@ This journal tracks the development progress of ManuMu Authentication, a product
 
 ## Current Focus
 
-- Stabilizing OTP verification UX and documenting auth-server verification guarantees.
+- Finalizing federated sign-out reliability and cross-origin session teardown behavior.
 
 ---
 
@@ -213,6 +213,16 @@ Replaced link-based verification with OTP code verification:
 - Signup redirect to `/verify?email=...` and updated email templates
 
 ---
+### [Entry 17 — Logout Cookie Clearing Hotfix (Federated Sign-Out)](./journal/ENTRY-17.md)
+**Date:** February 28, 2026  
+**Type:** Hotfix
+
+Fixed logout cookie deletion reliability for redirect responses:
+- Moved cookie clearing to `NextResponse.redirect()` response object
+- Ensured expired auth cookies are sent with redirect response
+- Prevented stale auth-server session reuse after federated sign-out
+
+---
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -263,11 +273,14 @@ Federated logout endpoint and OIDC discovery `end_session_endpoint` support.
 ### [PR-1.6.0 — OTP Email Verification (6-Digit Code)](./pull-requests/PR-1.6.0.md)
 Full replacement of verify-link flow with hashed OTP code flow and OTP UI/API.
 
+### [PR-1.6.1 — Federated Sign-Out Cookie Clearing Hotfix](./pull-requests/PR-1.6.1.md)
+Fixes redirect-response cookie clearing so auth session is actually terminated on logout.
+
 ---
 
 ## Project Status
 
-**Current Version:** 1.6.0  
+**Current Version:** 1.6.1  
 **Last Updated:** February 28, 2026
 
 ### Completed Features
@@ -292,6 +305,7 @@ Full replacement of verify-link flow with hashed OTP code flow and OTP UI/API.
 - **Done** Account origin separation (FIRST_PARTY vs PETSGRAM)
 - **Done** Federated sign-out endpoint (`/oauth/logout`) with OIDC discovery exposure
 - **Done** OTP email verification (`/verify?email=...`) with hashed code storage and attempt caps
+- **Done** Federated logout cookie-clearing hotfix on redirect responses
 
 ### In Progress
 

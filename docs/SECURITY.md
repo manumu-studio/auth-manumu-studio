@@ -192,6 +192,7 @@ Third-party authorization requests flow through `/oauth/authorize` with strict v
   - `next-auth.session-token` / `__Secure-next-auth.session-token`
   - `next-auth.csrf-token` / `__Secure-next-auth.csrf-token`
   - `next-auth.callback-url` / `__Secure-next-auth.callback-url`
+- Cookie expiry is written on the `NextResponse.redirect()` response object to ensure browser deletion is applied on redirect.
 - Redirects to validated `post_logout_redirect_uri` (+ optional `state`) or `/`.
 
 **Current LSA Redirect Registration:**
