@@ -45,7 +45,7 @@ graph TB
 
 ## Authentication Flow
 
-### Email/Password Sign-Up Flow
+### Email/Password Sign-Up Flow (OTP Verification)
 
 ```mermaid
 sequenceDiagram
@@ -61,15 +61,15 @@ sequenceDiagram
     Server->>DB: Check duplicate email
     Server->>Server: Hash password (bcrypt)
     Server->>DB: Create user (unverified)
-    Server->>Server: Generate verification token
-    Server->>DB: Store token
+    Server->>Server: Generate 6-digit OTP + hash
+    Server->>DB: Store hashed OTP token
     Server->>Email: Send verification email
-    Email->>User: Verification link
-    User->>UI: Click verification link
-    UI->>Server: consumeVerificationToken(token)
-    Server->>DB: Validate token
+    Email->>User: Verification code
+    User->>UI: Enter OTP code on /verify?email=...
+    UI->>Server: consumeVerificationToken(email, code)
+    Server->>DB: Validate hashed token + attempts
     Server->>DB: Mark email verified
-    Server->>DB: Delete token
+    Server->>DB: Delete tokens for email
     Server->>UI: Success
     UI->>User: Can now sign in
 ```
@@ -209,10 +209,13 @@ graph LR
 ```mermaid
 stateDiagram-v2
     [*] --> Unverified: User Signs Up
-    Unverified --> TokenCreated: Generate Token
+    Unverified --> TokenCreated: Generate OTP + Hash
     TokenCreated --> EmailSent: Send Email
     EmailSent --> TokenExpired: TTL Exceeded
-    EmailSent --> TokenConsumed: User Clicks Link
+    EmailSent --> InvalidAttempt: Wrong Code
+    InvalidAttempt --> EmailSent: attempts < 5
+    InvalidAttempt --> TokenExpired: attempts >= 5 (invalidated)
+    EmailSent --> TokenConsumed: User Enters Correct OTP
     TokenConsumed --> Verified: Update User
     TokenExpired --> [*]: Token Deleted
     Verified --> [*]: Can Sign In
@@ -309,6 +312,7 @@ erDiagram
         string identifier
         string token UK
         datetime expires
+        int attempts
     }
 
     UserProfile {
@@ -444,7 +448,7 @@ graph TD
 1. **Input Validation**: Zod schemas on client and server
 2. **Password Security**: bcrypt hashing (10 salt rounds)
 3. **Session Security**: JWT signed with strong secret
-4. **Email Verification**: Token-based with TTL
+4. **Email Verification**: OTP code (hashed in DB) with TTL + attempt caps
 5. **OAuth Security**: Provider-verified email addresses
 6. **Rate Limiting**: IP + email limits on sensitive auth endpoints
 7. **Security Headers**: CSP, HSTS, X-Frame-Options, Referrer-Policy
@@ -462,8 +466,8 @@ graph TB
     B --> G[Zod Schema]
     C --> G
     D --> H[bcrypt Hash]
-    D --> I[Token Generation]
-    I --> J[crypto.randomBytes]
+    D --> I[OTP Generation]
+    I --> J[crypto.randomInt + sha256]
 ```
 
 ---

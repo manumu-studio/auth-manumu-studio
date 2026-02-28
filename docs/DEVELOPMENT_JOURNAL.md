@@ -9,7 +9,7 @@ This journal tracks the development progress of ManuMu Authentication, a product
 
 ## Current Focus
 
-- Completing OAuth/OIDC interoperability for third-party client sign-in and sign-out.
+- Stabilizing OTP verification UX and documenting auth-server verification guarantees.
 
 ---
 
@@ -202,6 +202,17 @@ OIDC-compliant federated sign-out to terminate auth-server sessions:
 - Discovery metadata now exposes `end_session_endpoint`
 
 ---
+### [Entry 16 — OTP Email Verification (6-Digit Code)](./journal/ENTRY-16.md)
+**Date:** February 28, 2026  
+**Type:** Feature Implementation
+
+Replaced link-based verification with OTP code verification:
+- 6-digit OTP generation + SHA-256 hash persistence
+- Verification attempt tracking with max-attempt invalidation
+- New `/api/auth/verify` endpoint and OTP verification UI
+- Signup redirect to `/verify?email=...` and updated email templates
+
+---
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -249,11 +260,14 @@ Protected dashboard, account settings, and OAuth UX hardening.
 ### [PR-1.5.0 — Federated Sign-Out (RP-Initiated Logout)](./pull-requests/PR-1.5.0.md)
 Federated logout endpoint and OIDC discovery `end_session_endpoint` support.
 
+### [PR-1.6.0 — OTP Email Verification (6-Digit Code)](./pull-requests/PR-1.6.0.md)
+Full replacement of verify-link flow with hashed OTP code flow and OTP UI/API.
+
 ---
 
 ## Project Status
 
-**Current Version:** 1.5.0  
+**Current Version:** 1.6.0  
 **Last Updated:** February 28, 2026
 
 ### Completed Features
@@ -277,6 +291,7 @@ Federated logout endpoint and OIDC discovery `end_session_endpoint` support.
 - **Done** OAuth client registry (redirect/origin allowlists)
 - **Done** Account origin separation (FIRST_PARTY vs PETSGRAM)
 - **Done** Federated sign-out endpoint (`/oauth/logout`) with OIDC discovery exposure
+- **Done** OTP email verification (`/verify?email=...`) with hashed code storage and attempt caps
 
 ### In Progress
 

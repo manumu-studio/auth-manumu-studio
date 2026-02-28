@@ -26,7 +26,6 @@ const stepVariants = {
 export default function SignupStep({
   signupData,
   signupErrors,
-  signupSuccess,
   error,
   isPending,
   emailInputRef,
@@ -44,7 +43,7 @@ export default function SignupStep({
 
   // Auto-focus first input (firstname) after step transition completes
   useEffect(() => {
-    if (mounted && !signupSuccess) {
+    if (mounted) {
       // Delay to ensure animation completes
       const timer = setTimeout(() => {
         const firstInput = document.getElementById('firstname') as HTMLInputElement;
@@ -55,7 +54,7 @@ export default function SignupStep({
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [mounted, signupSuccess]);
+  }, [mounted]);
 
   return (
     <motion.div
@@ -70,17 +69,12 @@ export default function SignupStep({
         ease: [0.16, 1, 0.3, 1]
       }}
     >
-      {signupSuccess ? (
-        <div className={styles.signupSuccess}>
-          <p>Account created successfully! Please check your email to verify your account.</p>
-        </div>
-      ) : (
-        <form
-          onSubmit={onSubmit}
-          noValidate
-          aria-label="Create account"
-        >
-          <div className={styles.signupForm}>
+      <form
+        onSubmit={onSubmit}
+        noValidate
+        aria-label="Create account"
+      >
+        <div className={styles.signupForm}>
             <div className={styles.signupRow}>
               <InputField
                 id="firstname"
@@ -230,9 +224,8 @@ export default function SignupStep({
                 Back
               </NextButton>
             </div>
-          </div>
-        </form>
-      )}
+        </div>
+      </form>
     </motion.div>
   );
 }

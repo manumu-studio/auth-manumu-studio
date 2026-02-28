@@ -151,3 +151,30 @@ the list of commands run,
 a short summary of results,
 the test file(s) added/changed. 
 If the everything goes green, create the new documentation in pull-requets and journal folder. take a look to `SECURITY.md` `ARCHITECTURE.md` `DEVELOPMENT_JOURNAL.md` ADN `README.md` MUST NEED UPDATED
+
+---
+
+## 15) `feature/c-otp-verification`
+
+**Goal:** Replace verification-link flow with a 6-digit OTP code flow.
+
+**Scope:**
+- OTP generation with secure randomness (`crypto.randomInt`)
+- SHA-256 hash storage in `verification_tokens`
+- Verification attempt tracking and max-attempt lockout
+- OTP verify API and OTP UI page
+- Signup redirect to `/verify?email=...`
+
+**Tasks:**
+- Add `attempts` to `VerificationToken` and run migration
+- Replace token create/consume/resend internals with OTP logic
+- Rewrite verify page to OTP input experience
+- Update templates/provider/signup to send OTP code (not URL)
+- Add/refresh tests for OTP flow and abuse guard behavior
+
+**Acceptance Criteria:**
+- Signup sends a 6-digit code email
+- Verify page uses OTP form and supports paste + auto-submit
+- Invalid attempts are capped and token is invalidated after max attempts
+- Resend issues a new code with cooldown
+- Typecheck/build/lint pass

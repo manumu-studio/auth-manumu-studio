@@ -1,8 +1,14 @@
+// Success page shown after a user verifies their email with OTP.
+import Link from "next/link";
+import AuthShell from "@/components/ui/AuthShell";
+import NextButton from "@/components/ui/NextButton";
+
 export default function SuccessPage() {
   return (
-    <main style={{ padding: 24 }}>
-      <h1>**Done** Email verified!</h1>
-      <p>Your account is now active. You can sign in to continue.</p>
-    </main>
+    <AuthShell title="Email verified!" subtitle="Your account is now active.">
+      <Link href="/">
+        <NextButton>Sign in</NextButton>
+      </Link>
+    </AuthShell>
   );
 }

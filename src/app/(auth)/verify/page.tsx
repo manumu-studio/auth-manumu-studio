@@ -1,12 +1,18 @@
-// src/app/(auth)/verify/page.tsx
+// Email OTP verification page where users enter a 6-digit code from email.
 import { redirect } from "next/navigation";
-import { consumeVerificationToken } from "@/features/auth/server/verify/consumeToken";
+import AuthShell from "@/components/ui/AuthShell";
+import OtpVerificationForm from "@/features/auth/components/OtpVerificationForm";
 
-export default async function VerifyPage(props: { searchParams: Promise<{ token?: string }> }) {
-  const { token } = await props.searchParams; // ← MUST await in Next 15
-  if (!token) redirect("/verify/error?reason=not-found");
+export default async function VerifyPage(props: { searchParams: Promise<{ email?: string }> }) {
+  const { email } = await props.searchParams;
+  if (!email) redirect("/");
 
-  const res = await consumeVerificationToken(token);
-  if (res.ok) redirect("/verify/success");
-  redirect(`/verify/error?reason=${res.reason}`);
+  return (
+    <AuthShell
+      title="Check your email"
+      subtitle={`We sent a 6-digit code to ${email}`}
+    >
+      <OtpVerificationForm email={email} />
+    </AuthShell>
+  );
 }

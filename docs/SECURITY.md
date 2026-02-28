@@ -22,7 +22,7 @@
 
 - **Required for Credentials**: Users cannot sign in with email/password until email is verified
 - **Optional for OAuth**: OAuth providers verify email ownership, so verification is trusted
-- **Token-Based**: Cryptographically secure tokens with configurable TTL
+- **OTP-Based**: 6-digit verification codes with server-side hash storage and attempt limits
 
 ---
 
@@ -61,18 +61,19 @@
 
 ## Email Verification Flow
 
-### Token Generation
+### OTP Generation
 
-- **Algorithm**: `crypto.randomBytes(32)` - 256-bit cryptographically secure random tokens
-- **Encoding**: base64url (URL-safe)
-- **Storage**: Tokens stored in database with expiration timestamp
+- **Algorithm**: `crypto.randomInt(0, 1_000_000)` for uniform 6-digit OTP generation
+- **Format**: 6-digit numeric code (`000000` to `999999`)
+- **Storage**: OTP values are hashed with SHA-256 and only the hash is stored
 
-### Token Security
+### OTP Security
 
-- **TTL**: Configurable expiration (default: 30 minutes)
+- **TTL**: Configurable expiration (default: 10 minutes)
 - **Cooldown**: Prevents abuse with resend cooldown (default: 2 minutes)
 - **One-Time Use**: Tokens are deleted after successful verification
-- **Atomic Operations**: Verification and cleanup in single database transaction
+- **Attempt Cap**: Failed submissions increment per-token attempts and invalidate after 5 attempts
+- **Atomic Operations**: Verification + cleanup are executed transactionally on success
 
 ---
 
@@ -192,6 +193,10 @@ Third-party authorization requests flow through `/oauth/authorize` with strict v
   - `next-auth.csrf-token` / `__Secure-next-auth.csrf-token`
   - `next-auth.callback-url` / `__Secure-next-auth.callback-url`
 - Redirects to validated `post_logout_redirect_uri` (+ optional `state`) or `/`.
+
+**Current LSA Redirect Registration:**
+- `http://localhost:3000`
+- `https://lsa.manumustudio.com`
 
 ---
 
