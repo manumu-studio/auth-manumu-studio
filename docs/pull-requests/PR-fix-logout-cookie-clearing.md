@@ -1,7 +1,7 @@
-# PR-1.6.1 — Federated Sign-Out Cookie Clearing Hotfix
-**Branch:** `fix/logout-cookie-clearing` → `main`
-**Version:** `1.6.1`
-**Date:** 2026-02-28
+# PR-1.8.1 — Federated Sign-Out Cookie Clearing Hotfix
+**Branch:** `fix/logout-cookie-clearing-v2` → `main`
+**Version:** `1.8.1`
+**Date:** 2026-03-03
 **Status:** ✅ Ready to merge
 
 ---
