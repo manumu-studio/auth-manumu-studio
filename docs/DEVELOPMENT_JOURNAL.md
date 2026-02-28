@@ -9,7 +9,7 @@ This journal tracks the development progress of ManuMu Authentication, a product
 
 ## Current Focus
 
-- Finalizing federated sign-out reliability and cross-origin session teardown behavior.
+- Stabilizing OTP verification UX while finalizing federated sign-out reliability and cross-origin session teardown behavior.
 
 ---
 
@@ -273,9 +273,8 @@ Federated logout endpoint and OIDC discovery `end_session_endpoint` support.
 ### [PR-1.6.0 — OTP Email Verification (6-Digit Code)](./pull-requests/PR-1.6.0.md)
 Full replacement of verify-link flow with hashed OTP code flow and OTP UI/API.
 
-### [PR-1.6.1 — Federated Sign-Out Cookie Clearing Hotfix](./pull-requests/PR-1.6.1.md)
+### [PR-1.6.1 — Federated Sign-Out Cookie Clearing Hotfix](./pull-requests/PR-fix-logout-cookie-clearing.md)
 Fixes redirect-response cookie clearing so auth session is actually terminated on logout.
-
 ---
 
 ## Project Status
