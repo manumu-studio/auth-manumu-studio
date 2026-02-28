@@ -181,7 +181,7 @@ sequenceDiagram
     Browser->>AuthServer: GET /oauth/logout
     AuthServer->>AuthServer: Verify id_token_hint signature (RS256)
     AuthServer->>DB: Resolve OAuth client and validate redirect URI allowlist
-    AuthServer->>Browser: Clear NextAuth cookies (session + csrf + callback)
+    AuthServer->>Browser: Set expired NextAuth cookies on redirect response
     AuthServer->>Browser: Redirect to post_logout_redirect_uri(+state) or /
 ```
 

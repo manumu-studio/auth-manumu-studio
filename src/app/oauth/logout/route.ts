@@ -1,20 +1,31 @@
 // OIDC RP-initiated logout endpoint that clears local NextAuth cookies.
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getOAuthClient } from "@/features/auth/server/oauth/clientRegistry";
 import { decodeIdToken } from "@/features/auth/server/oauth/jwt";
+
+const AUTH_COOKIE_NAMES = [
+  "next-auth.session-token",
+  "__Secure-next-auth.session-token",
+  "next-auth.csrf-token",
+  "__Secure-next-auth.csrf-token",
+  "next-auth.callback-url",
+  "__Secure-next-auth.callback-url",
+];
 
 function badRequest(error: string, code: string): NextResponse {
   return NextResponse.json({ error, code }, { status: 400 });
 }
 
-function clearAuthCookies(cookieStore: Awaited<ReturnType<typeof cookies>>): void {
-  cookieStore.delete("next-auth.session-token");
-  cookieStore.delete("__Secure-next-auth.session-token");
-  cookieStore.delete("next-auth.csrf-token");
-  cookieStore.delete("__Secure-next-auth.csrf-token");
-  cookieStore.delete("next-auth.callback-url");
-  cookieStore.delete("__Secure-next-auth.callback-url");
+function clearAuthCookies(response: NextResponse): void {
+  for (const name of AUTH_COOKIE_NAMES) {
+    response.cookies.set(name, "", {
+      expires: new Date(0),
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: name.startsWith("__Secure-"),
+    });
+  }
 }
 
 export async function GET(req: Request) {
@@ -65,16 +76,17 @@ export async function GET(req: Request) {
     }
   }
 
-  const cookieStore = await cookies();
-  clearAuthCookies(cookieStore);
-
+  let redirectTarget: URL;
   if (postLogoutRedirectUri) {
-    const redirectTarget = new URL(postLogoutRedirectUri);
+    redirectTarget = new URL(postLogoutRedirectUri);
     if (state) {
       redirectTarget.searchParams.set("state", state);
     }
-    return NextResponse.redirect(redirectTarget);
+  } else {
+    redirectTarget = new URL("/", req.url);
   }
 
-  return NextResponse.redirect(new URL("/", req.url));
+  const response = NextResponse.redirect(redirectTarget);
+  clearAuthCookies(response);
+  return response;
 }
