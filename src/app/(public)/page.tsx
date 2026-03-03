@@ -187,8 +187,11 @@ export default function MimicPage() {
         return;
       }
 
+      // Preserve callbackUrl through the verify flow so the originating app gets the redirect after sign-in
       if (res.meta?.requiresEmailVerification && res.meta.email) {
-        router.push(`/verify?email=${encodeURIComponent(res.meta.email)}`);
+        const verifyParams = new URLSearchParams({ email: res.meta.email });
+        if (callbackUrl) verifyParams.set('callbackUrl', callbackUrl);
+        router.push(`/verify?${verifyParams.toString()}`);
         return;
       }
 
