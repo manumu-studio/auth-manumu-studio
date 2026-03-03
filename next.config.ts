@@ -2,6 +2,8 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: process.cwd(),
+  // Workaround for Next.js 15 devtools "SegmentViewNode" React Client Manifest bug
+  devIndicators: false,
   images: {
     // Prefer remotePatterns over deprecated images.domains
     remotePatterns: [

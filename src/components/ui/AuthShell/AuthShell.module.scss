@@ -1,9 +1,14 @@
 .root {
+  // Background fit — cover viewport, no tiling, consistent across local/production
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
   // Light mode background image only on desktop
   @media (min-width: 768px) {
     background-image: url('https://aadcdn.msauth.net/shared/1.0/content/images/backgrounds/4_eae2dd7eb3a55636dc2d74f4fa4c386e.svg');
   }
-  
+
   @media (prefers-color-scheme: dark) {
     background-color: #2d2d2d;
     // Dark mode background image only on desktop

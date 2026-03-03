@@ -2,9 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-root {
+/* Theme transition — fast, subtle, sophisticated (0.12s ease-out) */
+:root {
   color-scheme: light;
+  --theme-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --theme-duration: 0.12s;
 }
+
+/* Smooth transition when system dark/light preference changes */
+html,
+body,
+[class*='root']:not([class*='dropdown']),
+[class*='Shell'],
+[class*='signInBox'],
+[class*='card'],
+[class*='input'],
+[class*='label'],
+[class*='option'],
+[class*='button'],
+input,
+button,
+label,
+select,
+a {
+  transition:
+    background-color var(--theme-duration) var(--theme-ease),
+    color var(--theme-duration) var(--theme-ease),
+    border-color var(--theme-duration) var(--theme-ease),
+    box-shadow var(--theme-duration) var(--theme-ease);
+}
+
 html,
 body {
   padding: 0;

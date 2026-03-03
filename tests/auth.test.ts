@@ -51,13 +51,13 @@ describe('Input Validation', () => {
   });
 
   describe('Password Validation', () => {
-    it('should accept passwords with 8+ characters', () => {
+    it('should accept passwords meeting enterprise rules (8–128 chars, upper, lower, number, special)', () => {
       const validPasswords = [
-        'password123',
-        'SecureP@ss',
-        '12345678',
-        'a'.repeat(8),
-        'very-long-password-with-many-characters',
+        'MyP@ss123',
+        'SecureP@ss1',
+        'Password1!',
+        'A1b@cdef',
+        'Very-long-password-with-many-characters1!',
       ];
 
       validPasswords.forEach((password) => {

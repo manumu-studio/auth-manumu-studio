@@ -9,7 +9,7 @@ export const requestResetSchema = z.object({
 export const resetPasswordSchema = z.object({
   token: z.string().min(10, 'Invalid token'),
   password: passwordSchema,
-  confirmPassword: z.string(),
+  confirmPassword: passwordSchema,
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords must match',
   path: ['confirmPassword'],

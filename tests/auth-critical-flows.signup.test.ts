@@ -89,8 +89,8 @@ describe('Signup hashing flow', () => {
     formData.set('firstname', 'Test');
     formData.set('lastname', 'User');
     formData.set('email', 'User@Example.com');
-    formData.set('password', 'password123');
-    formData.set('repeatpassword', 'password123');
+    formData.set('password', 'MyP@ss123');
+    formData.set('repeatpassword', 'MyP@ss123');
     formData.set('country', 'us');
     formData.set('city', 'NYC');
     formData.set('address', '123 Test St');
@@ -98,7 +98,7 @@ describe('Signup hashing flow', () => {
     const result = await registerUser(formData);
 
     expect(result.ok).toBe(true);
-    expect(bcryptHash).toHaveBeenCalledWith('password123', 10);
+    expect(bcryptHash).toHaveBeenCalledWith('MyP@ss123', 10);
     expect(prismaMock.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

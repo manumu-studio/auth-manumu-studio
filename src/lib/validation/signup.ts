@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { emailSchema, passwordSchema } from './fields';
+import { isValidCountryCode } from '@/lib/data/countries';
 
 export const SignUpSchema = z
   .object({
@@ -7,8 +8,11 @@ export const SignUpSchema = z
     lastname: z.string().trim().optional(),
     email: emailSchema,
     password: passwordSchema,
-    repeatpassword: z.string().min(8),
-    country: z.string().length(2).optional(),
+    repeatpassword: passwordSchema,
+    country: z
+      .string()
+      .length(2, 'Country is required')
+      .refine((v) => isValidCountryCode(v), 'Invalid country'),
     city: z.string().min(2).max(120).optional(),
     address: z.string().min(3).max(500).optional(),
   })
