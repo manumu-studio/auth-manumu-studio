@@ -19,7 +19,7 @@ const reasonToMessage: Record<string, string> = {
   cooldown: 'Please wait before requesting another code.',
 };
 
-export function useOtpVerificationForm(email: string) {
+export function useOtpVerificationForm(email: string, callbackUrl?: string | null) {
   const router = useRouter();
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +74,10 @@ export function useOtpVerificationForm(email: string) {
       };
 
       if (result.ok) {
-        router.push('/verify/success');
+        const successParams = new URLSearchParams();
+        if (callbackUrl) successParams.set('callbackUrl', callbackUrl);
+        const query = successParams.toString();
+        router.push(`/verify/success${query ? `?${query}` : ''}`);
         return;
       }
 

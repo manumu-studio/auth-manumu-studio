@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import AuthShell from "@/components/ui/AuthShell";
 import OtpVerificationForm from "@/features/auth/components/OtpVerificationForm";
 
-export default async function VerifyPage(props: { searchParams: Promise<{ email?: string }> }) {
-  const { email } = await props.searchParams;
+export default async function VerifyPage(props: {
+  searchParams: Promise<{ email?: string; callbackUrl?: string }>;
+}) {
+  const { email, callbackUrl } = await props.searchParams;
   if (!email) redirect("/");
 
   return (
@@ -12,7 +14,7 @@ export default async function VerifyPage(props: { searchParams: Promise<{ email?
       title="Check your email"
       subtitle={`We sent a 6-digit code to ${email}`}
     >
-      <OtpVerificationForm email={email} />
+      <OtpVerificationForm email={email} callbackUrl={callbackUrl} />
     </AuthShell>
   );
 }

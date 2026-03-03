@@ -3,10 +3,16 @@ import Link from "next/link";
 import AuthShell from "@/components/ui/AuthShell";
 import NextButton from "@/components/ui/NextButton";
 
-export default function SuccessPage() {
+export default async function SuccessPage(props: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
+  const { callbackUrl } = await props.searchParams;
+  // Redirect to login with callbackUrl so the originating app flow resumes after sign-in
+  const signInHref = callbackUrl ? `/?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/";
+
   return (
     <AuthShell title="Email verified!" subtitle="Your account is now active.">
-      <Link href="/">
+      <Link href={signInHref}>
         <NextButton>Sign in</NextButton>
       </Link>
     </AuthShell>
