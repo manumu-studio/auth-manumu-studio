@@ -3,6 +3,9 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import InputField from '@/components/ui/InputField';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { COUNTRIES } from '@/lib/data/countries';
+import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import NextButton from '@/components/ui/NextButton';
 import type { SignupStepProps } from './SignupStep.types';
 import styles from './SignupStep.module.scss';
@@ -73,6 +76,7 @@ export default function SignupStep({
         onSubmit={onSubmit}
         noValidate
         aria-label="Create account"
+        autoComplete="off"
       >
         <div className={styles.signupForm}>
             <div className={styles.signupRow}>
@@ -124,22 +128,24 @@ export default function SignupStep({
             />
 
             <div className={styles.signupRow}>
-              <InputField
-                id="signup-password"
-                name="password"
-                type="password"
-                label="Password"
-                value={signupData.password}
-                onChange={(e) => {
-                  onSignupDataChange('password', e.target.value);
-                  onSignupErrorClear('password');
-                  onSignupErrorClear('repeatpassword');
-                }}
-                error={signupErrors.password}
-                disabled={isPending}
-                autoComplete="new-password"
-                required
-              />
+              <PasswordStrength value={signupData.password}>
+                <InputField
+                  id="signup-password"
+                  name="password"
+                  type="password"
+                  label="Password"
+                  value={signupData.password}
+                  onChange={(e) => {
+                    onSignupDataChange('password', e.target.value);
+                    onSignupErrorClear('password');
+                    onSignupErrorClear('repeatpassword');
+                  }}
+                  error={signupErrors.password}
+                  disabled={isPending}
+                  autoComplete="new-password"
+                  required
+                />
+              </PasswordStrength>
               <InputField
                 id="repeatpassword"
                 name="repeatpassword"
@@ -158,20 +164,19 @@ export default function SignupStep({
             </div>
 
             <div className={styles.signupRow}>
-              <InputField
+              <SearchableSelect
                 id="country"
                 name="country"
-                type="text"
-                label="Country (ISO-2)"
+                label="Country"
+                options={COUNTRIES.map((c) => ({ value: c.code, label: c.name }))}
                 value={signupData.country}
-                onChange={(e) => {
-                  const value = e.target.value.toUpperCase().slice(0, 2);
-                  onSignupDataChange('country', value);
+                onChange={(v) => {
+                  onSignupDataChange('country', v);
                   onSignupErrorClear('country');
                 }}
                 error={signupErrors.country}
                 disabled={isPending}
-                autoComplete="country"
+                required
               />
               <InputField
                 id="city"

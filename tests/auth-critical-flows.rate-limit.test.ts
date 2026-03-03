@@ -69,8 +69,8 @@ describe('Rate-limit enforcement', () => {
     formData.set('firstname', 'Test');
     formData.set('lastname', 'User');
     formData.set('email', 'user@example.com');
-    formData.set('password', 'password123');
-    formData.set('repeatpassword', 'password123');
+    formData.set('password', 'MyP@ss123');
+    formData.set('repeatpassword', 'MyP@ss123');
     formData.set('country', 'us');
     formData.set('city', 'NYC');
     formData.set('address', '123 Test St');
