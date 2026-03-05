@@ -26,6 +26,12 @@ const EnvSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(3),
   RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(60),
+  // Security hardening
+  ACCOUNT_LOCKOUT_THRESHOLD: z.coerce.number().int().positive().default(5),
+  ACCOUNT_LOCKOUT_MINUTES: z.coerce.number().int().positive().default(30),
+  SESSION_IDLE_TIMEOUT_MINUTES: z.coerce.number().int().positive().default(30),
+  MFA_ISSUER: z.string().default("ManuMu Studio"),
+  HIBP_ENABLED: z.enum(["true", "false"]).default("false").transform(v => v === "true"),
 });
 
 const shouldSkipValidation = process.env.SKIP_ENV_VALIDATION === "true";
@@ -59,6 +65,12 @@ const rawEnv = {
   UPSTASH_REDIS_REST_TOKEN: normalizeEnvValue(process.env.UPSTASH_REDIS_REST_TOKEN),
   RATE_LIMIT_MAX: normalizeEnvValue(process.env.RATE_LIMIT_MAX),
   RATE_LIMIT_WINDOW_MINUTES: normalizeEnvValue(process.env.RATE_LIMIT_WINDOW_MINUTES),
+  // Security hardening
+  ACCOUNT_LOCKOUT_THRESHOLD: normalizeEnvValue(process.env.ACCOUNT_LOCKOUT_THRESHOLD),
+  ACCOUNT_LOCKOUT_MINUTES: normalizeEnvValue(process.env.ACCOUNT_LOCKOUT_MINUTES),
+  SESSION_IDLE_TIMEOUT_MINUTES: normalizeEnvValue(process.env.SESSION_IDLE_TIMEOUT_MINUTES),
+  MFA_ISSUER: normalizeEnvValue(process.env.MFA_ISSUER),
+  HIBP_ENABLED: normalizeEnvValue(process.env.HIBP_ENABLED),
 };
 
 const parsed = (shouldSkipValidation ? EnvSchema.partial() : EnvSchema).safeParse(rawEnv);

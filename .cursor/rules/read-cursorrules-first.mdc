@@ -1,0 +1,12 @@
+---
+description: Read .cursorrules at the start of every session before any other action
+alwaysApply: true
+---
+
+# Mandatory First Action — Every Session
+
+**Before responding to any user request**, you MUST read the project rules file using the Read tool:
+
+- **File:** `.cursorrules` (project root)
+
+Do not proceed with code, edits, or answers until you have loaded and applied the rules from that file. This applies to every chat and every prompt in this workspace.

@@ -1,0 +1,31 @@
+---
+description: Standard commit message format for this project
+alwaysApply: true
+---
+
+# Standard Commit Message Format
+
+When suggesting commit messages for this project, use this format:
+
+```
+feat(vX.Y.Z): brief description
+
+- Bullet point summarizing change 1
+- Bullet point summarizing change 2
+- Bullet point summarizing change 3
+```
+
+**Structure:**
+- **Subject:** `feat(version): brief description` — type (feat/fix/chore), version in parens, short summary
+- **Body:** Bullet points (one per significant change), concise and scoped
+
+**Example:**
+```
+feat(v0.3.0): auth M2 OIDC integration
+
+- NextAuth v5 with custom M2 Auth OIDC provider (PKCE + state)
+- Route groups: (public) landing page, (app) auth-gated pages
+- UserBar component with federated sign-out
+- Server-only env validation via Zod (env.server.ts)
+- Auth error page with NextAuth error code mapping
+```

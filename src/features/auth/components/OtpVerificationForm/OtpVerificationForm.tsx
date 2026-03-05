@@ -11,7 +11,7 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-export default function OtpVerificationForm({ email }: OtpVerificationFormProps) {
+export default function OtpVerificationForm({ email, callbackUrl }: OtpVerificationFormProps) {
   const {
     digits,
     error,
@@ -24,7 +24,7 @@ export default function OtpVerificationForm({ email }: OtpVerificationFormProps)
     handlePaste,
     handleSubmit,
     handleResend,
-  } = useOtpVerificationForm(email);
+  } = useOtpVerificationForm(email, callbackUrl);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" aria-label="Verify email with one-time code">

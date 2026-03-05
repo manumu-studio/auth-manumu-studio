@@ -83,10 +83,18 @@ extra_docs/
 # agents
 tools/agents/
 
-# AI/IDE local artifacts
+# ============================================
+# AI/IDE Development System (PRIVATE — local only)
+# ============================================
+
+# Cursor rules
 .cursorrules
+
+# Session continuity
 CONTINUATION_PROMPT_NEXT_SESSION.md
 PROJECT_MAP.md
+
+# Internal process docs
 docs/CLAUDE.md
 docs/DEVELOPMENT_PLAYBOOK.md
 docs/build-packets/
@@ -94,6 +102,15 @@ docs/build-packet-reports/
 docs/cursor-tasks/
 docs/cursor-task-reports/
 docs/cursor-specs/
+docs/session-prompts/
+
+# Claude Code config
+.claude/
+
+# ============================================
+# End of system section
+# ============================================
 
 # Language
 language/
+_docs/
