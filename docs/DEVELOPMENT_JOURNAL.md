@@ -233,6 +233,16 @@ Auto-login after OTP verification:
 - No manual sign-in required
 
 ---
+
+### [Entry 21 — Fix OAuth Signup Redirect](./journal/ENTRY-21.md)
+**Date:** March 5, 2025  
+**Type:** Fix
+
+OAuth signup redirect fix:
+- callbackUrl preserved through signup → verify → success → sign-in chain
+- Users from federated clients (LSA, Careerkit) return to originating app after verification
+
+---
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -288,6 +298,10 @@ Fixes redirect-response cookie clearing so auth session is actually terminated o
 
 ### [PR-1.7.0 — Auto-Login After Email Verification](./pull-requests/PR-1.7.0.md)
 Auto-login after OTP verification; no manual sign-in required.
+
+### [PR — Fix OAuth Signup Redirect](./pull-requests/PR-fix-oauth-signup-redirect.md)
+OAuth signup flow fix; users return to originating app after verification.
+
 ---
 
 ## Project Status
@@ -319,6 +333,7 @@ Auto-login after OTP verification; no manual sign-in required.
 - **Done** OTP email verification (`/verify?email=...`) with hashed code storage and attempt caps
 - **Done** Federated logout cookie-clearing hotfix on redirect responses
 - **Done** Auto-login after OTP verification (session + direct redirect)
+- **Done** OAuth signup redirect fix (callbackUrl preserved through verify chain)
 
 ### In Progress
 
