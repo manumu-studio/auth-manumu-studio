@@ -16,7 +16,7 @@
 ### Key Features
 
 - **Auth methods**: Email/password (Credentials) + OAuth (Google, GitHub)
-- **Email verification**: Token-based verification with TTL + resend cooldown
+- **Email verification**: OTP-based verification with TTL + resend cooldown; auto-login after verification
 - **Password reset**: Secure token-based reset flow with email, rate limiting, and anti-enumeration
 - **Sessions**: JWT strategy (stateless) via NextAuth.js
 - **Type-safe**: TypeScript + Zod on client and server
@@ -54,9 +54,11 @@
 
 To test the authentication system:
 
-1. **Sign up with email**: Enter your email address and create a password. You'll receive a verification email with a one-time login link.
+1. **Sign up with email**: Enter your email address and create a password. You'll receive a verification email with a 6-digit code.
+
 2. **Use OAuth**: Click "Log In With GitHub" or "Log In With Google" for instant authentication (no email verification required).
-3. **Email verification**: After signing up with email, check your inbox and click the verification link to activate your account.
+
+3. **Email verification**: After signing up with email, check your inbox and enter the 6-digit code to verify and activate your account (you're logged in automatically).
 
 > **Note**: The demo uses a development database. Accounts may be reset periodically.
 

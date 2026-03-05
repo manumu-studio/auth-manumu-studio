@@ -1,7 +1,6 @@
 // Custom hook for OTP input behavior, verification submit, and resend cooldown.
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, useTransition, type ClipboardEvent, type FormEvent, type KeyboardEvent } from 'react';
 
 const CODE_LENGTH = 6;
@@ -20,7 +19,6 @@ const reasonToMessage: Record<string, string> = {
 };
 
 export function useOtpVerificationForm(email: string, callbackUrl?: string | null) {
-  const router = useRouter();
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [error, setError] = useState<string | null>(null);
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(RESEND_COOLDOWN_SECONDS);
@@ -74,10 +72,8 @@ export function useOtpVerificationForm(email: string, callbackUrl?: string | nul
       };
 
       if (result.ok) {
-        const successParams = new URLSearchParams();
-        if (callbackUrl) successParams.set('callbackUrl', callbackUrl);
-        const query = successParams.toString();
-        router.push(`/verify/success${query ? `?${query}` : ''}`);
+        // Session is created server-side during verification — redirect directly
+        window.location.href = callbackUrl || '/dashboard';
         return;
       }
 

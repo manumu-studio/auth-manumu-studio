@@ -223,6 +223,16 @@ Fixed logout cookie deletion reliability for redirect responses:
 - Prevented stale auth-server session reuse after federated sign-out
 
 ---
+### [Entry 20 — Auto-Login After Email Verification](./journal/ENTRY-20.md)
+**Date:** March 5, 2025  
+**Type:** Feature Implementation
+
+Auto-login after OTP verification:
+- Verify API creates NextAuth session and sets session cookie
+- Client redirects directly to callbackUrl (OAuth) or /dashboard (direct signup)
+- No manual sign-in required
+
+---
 ## Pull Requests
 
 ### [PR-0.1.0 — Project Bootstrap](./pull-requests/PR-0.1.0.md)
@@ -275,12 +285,15 @@ Full replacement of verify-link flow with hashed OTP code flow and OTP UI/API.
 
 ### [PR-1.6.1 — Federated Sign-Out Cookie Clearing Hotfix](./pull-requests/PR-fix-logout-cookie-clearing.md)
 Fixes redirect-response cookie clearing so auth session is actually terminated on logout.
+
+### [PR-1.7.0 — Auto-Login After Email Verification](./pull-requests/PR-1.7.0.md)
+Auto-login after OTP verification; no manual sign-in required.
 ---
 
 ## Project Status
 
-**Current Version:** 1.6.1  
-**Last Updated:** February 28, 2026
+**Current Version:** 1.7.0  
+**Last Updated:** March 5, 2025
 
 ### Completed Features
 
@@ -305,6 +318,7 @@ Fixes redirect-response cookie clearing so auth session is actually terminated o
 - **Done** Federated sign-out endpoint (`/oauth/logout`) with OIDC discovery exposure
 - **Done** OTP email verification (`/verify?email=...`) with hashed code storage and attempt caps
 - **Done** Federated logout cookie-clearing hotfix on redirect responses
+- **Done** Auto-login after OTP verification (session + direct redirect)
 
 ### In Progress
 
