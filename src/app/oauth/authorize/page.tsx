@@ -8,6 +8,7 @@ import {
 } from "@/features/auth/server/oauth/authorizeRequest";
 
 type AuthorizeQueryParams = AuthorizeRequest & {
+  mode?: string;
   error?: string;
   error_description?: string;
 };
@@ -29,6 +30,7 @@ function normalizeSearchParams(
     code_challenge: pickFirst(params.code_challenge),
     code_challenge_method: pickFirst(params.code_challenge_method),
     nonce: pickFirst(params.nonce),
+    mode: pickFirst(params.mode),
     error: pickFirst(params.error),
     error_description: pickFirst(params.error_description),
   };
@@ -152,7 +154,10 @@ export default async function AuthorizePage(props: {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     const callbackUrl = `/oauth/authorize?${buildAuthorizeQuery(params)}`;
-    redirect(`/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+    const signInParams = new URLSearchParams();
+    signInParams.set('callbackUrl', callbackUrl);
+    if (params.mode) signInParams.set('mode', params.mode);
+    redirect(`/?${signInParams.toString()}`);
   }
 
   const scopeLabel = validation.scopes.join(" ");
