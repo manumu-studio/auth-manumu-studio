@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useTransition, type ClipboardEvent, type FormEvent, type KeyboardEvent } from 'react';
-import { useRouter } from 'next/navigation';
 
 const CODE_LENGTH = 6;
 const RESEND_COOLDOWN_SECONDS = 120;
@@ -19,8 +18,7 @@ const reasonToMessage: Record<string, string> = {
   cooldown: 'Please wait before requesting another code.',
 };
 
-export function useOtpVerificationForm(email: string, callbackUrl?: string) {
-  const router = useRouter();
+export function useOtpVerificationForm(email: string, callbackUrl?: string | null) {
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [error, setError] = useState<string | null>(null);
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(RESEND_COOLDOWN_SECONDS);
