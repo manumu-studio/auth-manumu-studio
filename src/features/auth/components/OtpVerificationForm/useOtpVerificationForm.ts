@@ -18,7 +18,7 @@ const reasonToMessage: Record<string, string> = {
   cooldown: 'Please wait before requesting another code.',
 };
 
-export function useOtpVerificationForm(email: string, callbackUrl?: string) {
+export function useOtpVerificationForm(email: string, callbackUrl?: string | null) {
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [error, setError] = useState<string | null>(null);
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(RESEND_COOLDOWN_SECONDS);
