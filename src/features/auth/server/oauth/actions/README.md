@@ -1,6 +1,7 @@
-# Auth Server Actions
-All server actions exposed to the client.
+# Legacy OAuth Action Copies
 
-- `signin.ts` → validates credentials and logs in user.
-- `signup.ts` → registers new users (calls `registerUser`).
-- Exports are re-exported via `index.ts`.
+This folder duplicates the primary sign-in/signup actions under
+`src/features/auth/server/actions/`.
+
+No runtime import currently targets this folder. Consolidation is an
+architecture cleanup item; do not add new behavior here.

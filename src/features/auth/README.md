@@ -1,19 +1,21 @@
 # Auth Feature
 
-Vertical slice for authentication. Everything auth-related lives here.
+Authentication and OAuth/OIDC vertical slice.
 
 ## Structure
-- **components/** – UI pieces (AuthModal, AuthLayout, SignInForm, SignupForm, UserCard)
-- **server/** – server actions, NextAuth options, queries, and future email-verify handlers
-- **lib/** – client/server helpers (kept minimal; prefer NextAuth’s APIs)
-- **types/** – NextAuth type augmentation (Session/User fields)
 
-## Conventions
-- Components are client/server as needed. Prefer server actions for mutations.
-- Zod validation in `src/lib/validation/*`.
-- Import using path alias: `@/features/auth/...`.
+- `components/` — forgot/reset/OTP forms, social buttons, auth steps.
+- `server/actions/` — signup, sign-in, password-reset actions.
+- `server/providers/` — Google and GitHub provider factories.
+- `server/verify/` — OTP issue, resend, and consumption.
+- `server/reset/` — password-reset token lifecycle and email templates.
+- `server/oauth/` — client registry, authorize validation, code exchange,
+  signing, claims, issuer resolution.
+- `server/options.ts` — NextAuth configuration.
+- `server/createSessionToken.ts` — post-verification session JWT.
+- `lib/email/` — Resend verification delivery.
+- `types/` — NextAuth session/JWT augmentation.
 
-## Extending
-- **OAuth**: add providers in `server/options.ts`.
-- **Email verification**: implement `server/verify/{createTokens,consumeTokens,resend}.ts`.
-- **Protected routes**: use `(dashboard)` route group + `auth()` on layouts.
+External inputs must be Zod-validated. Security changes must update
+`docs/SECURITY.md`, `docs/api/openapi.yaml`, tests, and Incident P001 when
+applicable.

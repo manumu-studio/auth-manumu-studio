@@ -1,6 +1,8 @@
 # Auth Server Actions
-All server actions exposed to the client.
 
-- `signin.ts` → validates credentials and logs in user.
-- `signup.ts` → registers new users (calls `registerUser`).
-- Exports are re-exported via `index.ts`.
+- `signin.ts` — credentials sign-in orchestration.
+- `signup.ts` — rate-limited user/profile creation and OTP issuance.
+- `requestPasswordReset.ts` — enumeration-resistant reset request.
+- `resetPassword.ts` — rate-limited reset-token consumption.
+- `types.ts` — shared action result contract.
+- `index.ts` — public exports.

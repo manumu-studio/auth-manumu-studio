@@ -1,7 +1,11 @@
 # Auth Components
-All UI components used for authentication.
 
-- **AuthModal**: Main modal container.
-- **AuthLayout**: Wrapper with tabs for sign-in/sign-up.
-- **SignInForm / SignupForm**: Credential-based forms with Zod validation.
-- **SessionBadge / UserCard**: Logged-in state components.
+- `steps/EmailStep` — email-first entry.
+- `steps/PasswordStep` — credentials sign-in.
+- `steps/SignupStep` — registration fields.
+- `ProviderButtons/` — Google and GitHub sign-in.
+- `OtpVerificationForm/` — OTP entry, resend, and post-verify redirect.
+- `ForgotPasswordForm/` — reset request.
+- `ResetPasswordForm/` — new-password submission.
+
+Shared layout and account-state UI lives in `src/components/ui/`.

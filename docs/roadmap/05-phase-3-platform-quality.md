@@ -1,15 +1,27 @@
-# Phase 3: Platform Quality
+# Phase 3 — Identity Platform Model
 
-**Testing policy:** Every new `feature/*` or `fix/*` branch should include tests for the new work. These tests are recommended for confidence but are not required to merge into `main` unless explicitly called out.
+**Status:** Deferred until Phases 0–2 pass verification
 
-## 16). `feature/account-lockout`
-    - Failed login tracking and temporary lockouts
+## Goal
 
-## 17). `feature/refresh-tokens-rotation`
-    - Refresh tokens with rotation strategy
+Support multiple applications without duplicating credentials or implicitly
+granting every user access to every app.
 
-## 18). `feature/token-revocation-introspection`
-    - Revocation + introspection endpoints
+## Scope
 
-## 19). `feature/admin-app-management`
-    - Internal admin UI for client registration + secrets
+- Promote the OAuth client registry into an `App` model.
+- Add `AppMembership(userId, appId, role, metadata)`.
+- Add `AppSubject(userId, appId, sub)`.
+- Backfill existing LSA, Career Kit, and FixtureLog relationships.
+- Preserve public `sub` for existing clients.
+- Default new clients to pairwise subjects.
+- Add an admin app/client management surface.
+
+## Deferred Security Work
+
+- Refresh-token rotation.
+- Token revocation and introspection.
+- Key rotation.
+- Session idle and absolute timeouts.
+- MFA and recovery.
+- Security/audit event log.

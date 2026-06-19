@@ -1,368 +1,224 @@
-# Security Documentation
+# Security
 
-**ManuMu Studio Authentication** implements industry-standard security practices to protect user data and prevent common authentication vulnerabilities.
+**Version:** 1.8.4
+**Last Updated:** 2026-06-19
+**Current Status:** Incident P001 is active; hardening is not complete.
 
----
+## Security Posture
 
-## Authentication Strategy
+The service has working security controls, but it must not currently be
+described as attack-proof or fully production-hardened.
 
-### Multi-Provider Authentication
+Authoritative point-in-time records:
 
-- **Credentials (Email/Password)**: Traditional email/password authentication with email verification
-- **OAuth Providers**: GitHub, Google (with more providers easily added)
-- **Account Linking**: Automatic linking by email address when emails match
+- [Security audit](audits/SECURITY-AUDIT-2026-06-17.md)
+- [Full engineering audit](audits/AUDIT-V1-AUTH-MANUMU-STUDIO.md)
+- [Incident P001](incidents/INCIDENT-P001-auth-security-exposure.md)
 
-### Account Origin Separation
+## Implemented Controls
 
-- **First-Party Users**: Standard ManuMu accounts created via sign-up or OAuth providers.
-- **Petsgram Users**: Third-party application users are marked as `PETSGRAM` and cannot sign in to ManuMu with the same email.
-- **Isolation Rule**: A Petsgram account must use a different email to create a ManuMu first-party account.
+### Credentials
+
+- Zod validation for credentials, signup, OTP, reset, and account actions.
+- Normalized lowercase emails.
+- bcrypt password hashing with cost factor 10.
+- Credentials login requires `emailVerified`.
+- PETSGRAM-origin accounts cannot use first-party credentials login.
+- Generic duplicate-signup and password-reset responses reduce enumeration.
+
+### Sessions
+
+- NextAuth JWT session strategy.
+- `NEXTAUTH_SECRET` requires at least 32 characters.
+- Session cookies are HTTP-only and secure in production.
+- OTP verification can create a session without another password submission.
 
 ### Email Verification
 
-- **Required for Credentials**: Users cannot sign in with email/password until email is verified
-- **Optional for OAuth**: OAuth providers verify email ownership, so verification is trusted
-- **OTP-Based**: 6-digit verification codes with server-side hash storage and attempt limits
+- Six-digit OTPs generated with `crypto.randomInt`.
+- Configurable 10-minute default TTL and two-minute resend cooldown.
+- Maximum five failed attempts per active token.
+- Successful verification updates the user and deletes tokens transactionally.
+
+### Password Reset
+
+- Cryptographically random 256-bit reset tokens.
+- Enumeration-resistant reset requests.
+- Rate limits on request and token-consumption actions.
+- Password update, token deletion, and database-session deletion occur in one
+  transaction.
+
+### OAuth/OIDC
+
+- Exact registered redirect URI matching.
+- HTTPS required outside localhost.
+- Fragments rejected from redirect URIs.
+- Scope validation against global and client allowlists.
+- Client secrets stored as SHA-256 hashes and compared timing-safely.
+- Authorization codes are random, short-lived, client-bound, redirect-bound,
+  scope-bound, and optionally PKCE/nonce-bound.
+- RS256 access and ID tokens.
+- Public-key-only JWKS endpoint.
+- Signed `id_token_hint` verification for logout.
+- Allowlisted post-logout redirects.
+
+### HTTP and Data Layer
+
+- CSP with `frame-ancestors 'none'`.
+- HSTS in production.
+- `X-Frame-Options: DENY`.
+- `X-Content-Type-Options: nosniff`.
+- Strict-origin Referrer Policy.
+- Prisma parameterized queries; no application raw SQL found.
+- Environment files are ignored by Git.
+
+## Active Risks
+
+### Release-Blocking
+
+1. **Open registration:** any valid email can create an account.
+2. **Production rate-limit fallback:** missing Upstash credentials silently
+   enable a process-local limiter.
+3. **Dependency exposure:** the current dependency baseline includes recorded
+   high/critical advisories and no blocking audit gate.
+
+### High Priority
+
+- `/oauth/token` and `/oauth/userinfo` are not rate-limited.
+- `X-Forwarded-For` is trusted before platform-owned IP headers.
+- PKCE `plain` is accepted and S256 is not mandatory.
+- Authorization-code consumption is not atomic.
+- OTPs use bare SHA-256, which is crackable after a database leak.
+- bcrypt cost 10 is below the intended hardening target.
+- Seed data contains known demo passwords and prints secrets.
+- Vercel/CI builds bypass environment validation.
+- Social providers use `allowDangerousEmailAccountLinking`.
+- Password-reset tokens are stored directly.
+- JWT decoding does not fully validate header algorithm, issuer, audience, and
+  runtime payload shape on every verification path.
+
+### Operational Gaps
+
+- No structured application logger.
+- No Sentry/error-tracking integration.
+- No request correlation IDs or alerting.
+- No secret-scanning CI job.
+- No coverage, E2E, or bundle-size release gates.
+- No health endpoint despite the existing smoke-script reference.
+
+## Control Matrix
+
+| Area | Current | Required Next State |
+|------|---------|---------------------|
+| Registration | Public signup | Invite/allowlist/admin gate + bot defense |
+| Rate limits | Upstash or local Map | Upstash mandatory in production |
+| PKCE | Optional, `plain` or S256 | S256 required |
+| Auth code use | Read then update | Atomic conditional update |
+| OTP storage | SHA-256 | HMAC-SHA256 with server secret |
+| Password hashing | bcrypt 10 | bcrypt 12+ and migration strategy |
+| Dependencies | Manual | High/critical audit gate |
+| Secrets | No CI scan | Full-history gitleaks |
+| Observability | Console logs | Pino + request IDs + Sentry |
+| Testing | Seven Vitest files | Coverage thresholds + Playwright |
+
+## Account Linking
+
+Google and GitHub currently set:
+
+```text
+allowDangerousEmailAccountLinking: true
+```
+
+This improves user experience but creates risk if provider email-verification
+semantics, provider trust, or account ownership assumptions change. It is not
+documented as “no account takeover risk.” The setting requires a dedicated
+review and explicit provider policy before broader use.
+
+## Subjects and Privacy
+
+The OIDC subject is currently `User.id` for all clients. It is stable, but it
+allows relying parties to correlate the same user.
 
----
+Planned policy:
 
-## Password Security
+- existing LSA, Career Kit, and FixtureLog integrations retain public subjects;
+- new clients default to pairwise subjects;
+- credentials remain central and are never duplicated per app;
+- per-app access is modeled with membership records.
 
-### Hashing Algorithm
+Email remains a separate correlation vector whenever the `email` scope is
+granted.
 
-- **Algorithm**: bcryptjs
-- **Salt Rounds**: 10 (balanced security and performance)
-- **Storage**: Only hashed passwords stored in database (never plaintext)
+## Rate-Limited Paths
 
-### Password Policy
+Currently rate-limited:
 
-- **Minimum Length**: 8 characters (enforced by Zod validation)
-- **Validation**: Client-side and server-side validation
-- **Future Enhancement**: Password strength requirements (complexity, common password checks)
+- credentials sign-in;
+- signup;
+- OTP verification;
+- OTP resend;
+- password-reset request;
+- password-reset consumption;
+- account mutation actions.
 
----
+Not currently rate-limited:
 
-## Session Management
+- OAuth token exchange;
+- UserInfo;
+- logout.
 
-### JWT Strategy
+The generic limiter uses IP plus email where available. Some flows also need
+independent per-IP and per-email caps to resist distributed abuse.
 
-- **Type**: Stateless JWT tokens
-- **Signing**: Tokens signed with `NEXTAUTH_SECRET`
-- **Storage**: Client-side (httpOnly cookies managed by NextAuth)
-- **Expiration**: Managed by NextAuth.js (configurable)
+## Environment and Secrets
 
-### Session Security
+The runtime schema is `src/lib/env.ts`; `.env.example` mirrors its keys.
 
-- **Secret Strength**: `NEXTAUTH_SECRET` must be at least 32 characters in production
-- **HTTPS Required**: Production deployments must use HTTPS
-- **Custom Fields**: User ID and role stored in JWT token
+Production-critical values:
 
----
+- `DATABASE_URL`
+- `NEXTAUTH_SECRET`
+- `NEXTAUTH_URL` or `AUTH_URL`
+- `OAUTH_JWT_PRIVATE_KEY`
+- `OAUTH_JWT_PUBLIC_KEY`
+- `RESEND_API_KEY`
+- `RESEND_FROM`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
 
-## Email Verification Flow
+The OAuth key variables and Upstash variables are still optional in the schema.
+The hardening packet will enforce production requirements.
 
-### OTP Generation
+Never store or log:
 
-- **Algorithm**: `crypto.randomInt(0, 1_000_000)` for uniform 6-digit OTP generation
-- **Format**: 6-digit numeric code (`000000` to `999999`)
-- **Storage**: OTP values are hashed with SHA-256 and only the hash is stored
+- plaintext passwords;
+- OTP codes in production;
+- reset tokens;
+- authorization codes;
+- access/ID tokens;
+- OAuth client secrets;
+- private signing keys.
 
-### OTP Security
+## Incident and Release Process
 
-- **TTL**: Configurable expiration (default: 10 minutes)
-- **Cooldown**: Prevents abuse with resend cooldown (default: 2 minutes)
-- **One-Time Use**: Tokens are deleted after successful verification
-- **Attempt Cap**: Failed submissions increment per-token attempts and invalidate after 5 attempts
-- **Atomic Operations**: Verification + cleanup are executed transactionally on success
+Security regressions, test regressions, build failures, and production auth
+exposure require an incident file before fixes begin.
 
----
+Incident P001 closes only after:
 
-## Input Validation
+1. security-hardening changes are merged;
+2. gated registration is merged;
+3. CI passes;
+4. production deployment succeeds;
+5. credentials, OTP, OAuth, UserInfo, and logout golden paths are verified.
 
-### Validation Strategy
+## Reporting a Vulnerability
 
-- **Client-Side**: Zod schemas validate input before submission
-- **Server-Side**: All server actions validate input with Zod
-- **Type Safety**: TypeScript + Zod ensures type-safe validation
+Do not open a public issue containing exploit details or secrets. Contact the
+repository owner privately with:
 
-### Validated Inputs
-
-- **Email**: Valid email format, normalized (lowercase, trimmed)
-- **Password**: Minimum length, format validation
-- **Form Data**: All form fields validated before processing
-
----
-
-## OAuth Security
-
-### Account Linking
-
-**Configuration**: `allowDangerousEmailAccountLinking: true`
-
-**Rationale**:
-- OAuth providers (Google, GitHub) verify email ownership before issuing tokens
-- Email addresses from OAuth providers are trusted
-- Seamless user experience - no manual account linking step
-- Same email = same user account (automatic linking)
-
-**Security Considerations**:
-- Only enabled for trusted OAuth providers
-- Email must be verified by OAuth provider
-- No account takeover risk (email is verified by provider)
-- Credentials still require email verification
-
-### OAuth Best Practices
-
-- **Separate Apps**: Use different OAuth apps for development and production
-- **Callback URLs**: Validate callback URLs in OAuth app settings
-- **Secret Rotation**: Rotate OAuth secrets regularly
-- **HTTPS**: Always use HTTPS in production
-
-### OAuth Client Registry (Third-Party Apps)
-
-To support third-party applications, this service maintains an internal OAuth client registry.
-Clients are stored in the `oauth_clients` table with strict redirect and origin allowlists.
-
-**Rules:**
-- Redirect URIs must be exact matches and use HTTPS (HTTP only allowed for localhost).
-- Origins must be bare origins (no path/query/hash) and HTTPS outside localhost.
-- Client secrets are stored as SHA-256 hashes; plaintext is shown only at creation/rotation.
-- Secrets can be rotated without changing client identifiers.
-
-**Petsgram Integration (Local):**
-- **client_id**: `petsgram-web`
-- **redirect_uri**: `http://localhost:5173/auth/callback`
-- **allowed_origin**: `http://localhost:5173`
-- Seed script prints the initial `client_secret` once on creation.
-
-### OAuth Authorization Endpoint
-
-Third-party authorization requests flow through `/oauth/authorize` with strict validation.
-
-**Guards:**
-- `client_id` must exist and be active.
-- `redirect_uri` must match the registered allowlist.
-- `scope` must be supported (`openid`, `email`, `profile`) and allowed per client.
-- PKCE `code_challenge` and `code_challenge_method` are validated when provided.
-
-**Authorization Codes:**
-- Short-lived codes stored in `oauth_authorization_codes`.
-- Includes scopes, redirect URI, and PKCE challenge metadata.
-- Codes are one-time use and expire on a fixed TTL.
-
-### OAuth Token Endpoint
-
-`/oauth/token` exchanges valid authorization codes for JWT access tokens.
-
-**Guards:**
-- Client authentication via Basic auth or `client_secret` (confidential clients).
-- PKCE `code_verifier` required when a `code_challenge` is stored.
-- Redirect URI must match the original authorization code.
-- Authorization codes are rejected if expired or already used.
-
-**Issued JWT Claims:**
-- `iss` issuer (AUTH_URL/NEXTAUTH_URL).
-- `aud` client identifier.
-- `sub` user identifier.
-- `exp` expiry (short-lived).
-- `scope` space-delimited scopes.
-
-**Signing + Verification:**
-- Access tokens are signed with RS256 using `OAUTH_JWT_PRIVATE_KEY`.
-- Public verification keys are exposed via `/jwks.json`.
-- OIDC discovery metadata is available at `/.well-known/openid-configuration`.
-
-**Verifier Instructions (Third-Party Apps):**
-1. Fetch `/.well-known/openid-configuration` to get `issuer` + `jwks_uri`.
-2. Cache the JWKS response (honor `Cache-Control`).
-3. Verify JWTs with RS256 using the published `kid` public key.
-
-### OAuth RP-Initiated Logout Endpoint
-
-`/oauth/logout` supports federated sign-out so third-party clients can clear the auth-server session.
-
-**Guards:**
-- `id_token_hint` is signature-verified (RS256) before audience/client extraction.
-- Expired ID token hints are accepted when signature is valid (OIDC logout compatible behavior).
-- `post_logout_redirect_uri` must exactly match the client's registered `redirectUris`.
-- Missing client context with `post_logout_redirect_uri` is rejected.
-
-**Session Termination:**
-- Clears both secure and non-secure NextAuth cookies:
-  - `next-auth.session-token` / `__Secure-next-auth.session-token`
-  - `next-auth.csrf-token` / `__Secure-next-auth.csrf-token`
-  - `next-auth.callback-url` / `__Secure-next-auth.callback-url`
-- Cookie expiry is written on the `NextResponse.redirect()` response object to ensure browser deletion is applied on redirect.
-- Redirects to validated `post_logout_redirect_uri` (+ optional `state`) or `/`.
-
-**Current LSA Redirect Registration:**
-- `http://localhost:3000`
-- `https://lsa.manumustudio.com`
-
----
-
-## Database Security
-
-### Connection Security
-
-- **SSL Required**: Database connections use SSL (`sslmode=require`)
-- **Connection String**: Stored in environment variables (never committed)
-- **Prisma ORM**: Parameterized queries prevent SQL injection
-
-### Data Protection
-
-- **Password Hashing**: Passwords never stored in plaintext
-- **Email Normalization**: Emails normalized to prevent duplicate accounts
-- **Transaction Safety**: Critical operations use database transactions
-
----
-
-## API Security
-
-### Rate Limiting
-
-- **Email Resend**: `/api/auth/verify/resend` is rate limited
-- **Credentials Sign-in**: Rate limited inside NextAuth credentials authorize
-- **Sign-up**: Rate limited in the registration server action
-- **Identifiers**: IP + email when available
-- **Response**: 429 with generic message to avoid enumeration
-
-### Security Headers
-
-- **Content-Security-Policy (CSP)**: Restricts scripts, styles, and connections
-- **HSTS**: Enforced in production over HTTPS
-- **X-Frame-Options**: `DENY` to prevent clickjacking
-- **Referrer-Policy**: `strict-origin-when-cross-origin`
-- **X-Content-Type-Options**: `nosniff`
-
-### Error Handling
-
-- **Generic Messages**: Error messages don't reveal if email exists
-- **No Information Disclosure**: Sensitive errors logged server-side only
-- **Consistent Format**: Unified error response format
-
----
-
-## Environment Variables
-
-### Secret Management
-
-- **Never Committed**: `.env` and `.env.local` in `.gitignore`
-- **Example File**: `.env.example` documents all variables (no secrets)
-- **Validation**: Environment variables validated with Zod on startup
-
-### Required Secrets
-
-- `NEXTAUTH_SECRET`: Strong random string (32+ characters)
-- `DATABASE_URL`: PostgreSQL connection string with credentials
-- `OAUTH_JWT_PRIVATE_KEY`: PEM-encoded RSA private key for access tokens
-- `OAUTH_JWT_PUBLIC_KEY`: PEM-encoded RSA public key for JWKS verification
-- OAuth provider secrets (if using OAuth)
-
-### Rate Limiting (Upstash)
-
-- `UPSTASH_REDIS_REST_URL`: Upstash REST URL
-- `UPSTASH_REDIS_REST_TOKEN`: Upstash REST token
-- `RATE_LIMIT_MAX`: Max requests per window (default: 3)
-- `RATE_LIMIT_WINDOW_MINUTES`: Window length in minutes (default: 60)
-
----
-
-## Security Checklist
-
-### Production Deployment
-
-- [ ] `NEXTAUTH_SECRET` is strong random string (32+ chars)
-- [ ] `OAUTH_JWT_PRIVATE_KEY` / `OAUTH_JWT_PUBLIC_KEY` configured for RS256
-- [ ] All environment variables configured
-- [ ] HTTPS enabled
-- [ ] Database uses SSL connections
-- [ ] OAuth callback URLs configured correctly
-- [ ] Debug endpoints disabled (or protected)
-- [ ] Email provider configured and verified
-- [ ] DNS records configured (SPF, DKIM for email)
-
-### Development
-
-- [ ] `.env.local` not committed to Git
-- [ ] Strong `NEXTAUTH_SECRET` even in development
-- [ ] Test OAuth apps use separate credentials
-- [ ] Database backups configured
-
----
-
-## Threat Mitigation
-
-### Common Vulnerabilities
-
-| Threat | Mitigation |
-|--------|-----------|
-| SQL Injection | Prisma ORM (parameterized queries) |
-| XSS | React automatic escaping, no `dangerouslySetInnerHTML` |
-| CSRF | NextAuth.js built-in protection |
-| Session Hijacking | JWT with strong secret, HTTPS required |
-| Brute Force | Email verification, future rate limiting |
-| Account Enumeration | Generic error messages |
-| Password Attacks | bcrypt hashing, minimum length requirements |
-
----
-
-## Compliance Considerations
-
-### Data Protection
-
-- **Password Storage**: Industry-standard hashing (bcrypt)
-- **Email Verification**: Confirms email ownership
-- **Session Security**: Secure token management
-
-### Audit Logging
-
-- **Future Enhancement**: Comprehensive audit logging
-- **Current**: Basic error logging for debugging
-
----
-
-## Security Best Practices
-
-1. **Never commit secrets** to version control
-2. **Use strong secrets** (32+ characters, random)
-3. **Enable HTTPS** in production
-4. **Keep dependencies updated** (regular security audits)
-5. **Monitor for suspicious activity** (future enhancement)
-6. **Regular security reviews** of authentication flows
-
----
-
-## Reporting Security Issues
-
-If you discover a security vulnerability, please report it responsibly:
-
-1. **Do not** open a public issue
-2. Contact the maintainers directly
-3. Provide detailed information about the vulnerability
-4. Allow time for the issue to be addressed before public disclosure
-
----
-
-**Last Updated**: February 28, 2026
-
----
-
-## Code Quality & Security
-
-### Dead Code Removal
-
-**Status**: **Done** **Complete** - All unused code has been removed from the codebase.
-
-**Recent Cleanup (Branch 6):**
-- **Done** Removed unused `shared/` folder components
-- **Done** Eliminated broken component references
-- **Done** Cleaned up unused type aliases
-- **Done** Codebase is now 100% functional
-
-**Impact:**
-- Better security posture (no hidden code paths)
-- Easier code audits
-- Reduced attack surface
-- Improved maintainability
-
+- affected endpoint or flow;
+- reproduction steps;
+- expected and actual behavior;
+- impact assessment;
+- suggested mitigation when available.

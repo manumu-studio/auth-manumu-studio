@@ -1,73 +1,36 @@
-# Phase 0: Critical Security (Must Ship First)
+# Phase 0 — Critical Security
 
-This phase blocks any third‑party auth work. Ship in the order below.
+**Status:** Next
+**Branch:** `fix/security-hardening-now`
+**Incident:** `INCIDENT-P001`
 
----
+## Goal
 
-## 7) `feature/rate-limiting-auth`
+Remove immediate production-facing security exposure without changing the
+subject-identifier contract used by existing relying parties.
 
-**Goal:** Prevent brute force and abuse on auth endpoints.
+## Scope
 
-**Scope:**
-- `/api/auth/verify/resend`
-- Sign‑in attempts (NextAuth credentials)
-- Sign‑up server action
+- Patch Next.js and vulnerable dependencies.
+- Add high/critical dependency and secret-scanning CI gates.
+- Require Upstash in production and trust platform-owned IP headers.
+- Rate-limit `/oauth/token` and `/oauth/userinfo`.
+- Return non-cacheable token responses.
+- Require PKCE S256.
+- Consume authorization codes atomically.
+- HMAC OTP hashes.
+- Remove production environment-validation bypasses.
+- Remove known seed credentials.
 
-**Tasks:**
-- Add shared rate‑limit utility (Upstash or equivalent)
-- Identify requester by IP + email when possible
-- Return 429 with generic error message
-- Add cooldown logic for resend (if not already enforced)
+## Completion Gates
 
-**Acceptance Criteria:**
-- Requests above limit return 429 consistently
-- No user enumeration in error messages
-- Limits documented in `docs/SECURITY.md`
-
-**Notes:**
-- Prefer sliding window limits (e.g., 3 per hour)
-- Apply same identifiers in test cases
-
----
-
-## 8) `feature/security-headers`
-
-**Goal:** Baseline HTTP security protections.
-
-**Status:** **Done** Complete
-**Scope (minimum):**
-- Content‑Security‑Policy (CSP)
-- HSTS
-- X‑Frame‑Options
-- Referrer‑Policy
-
-**Tasks:**
-- Implement headers in middleware or Next.js config
-- Ensure CSP supports NextAuth + OAuth redirects
-- Document header policy in `docs/SECURITY.md`
-
-**Acceptance Criteria:**
-- Headers present on auth routes and public pages
-- CSP does not break OAuth provider callbacks
-
----
-
-## 9) `test/auth-critical-flows`
-
-**Goal:** Add tests for the most sensitive auth pa ths.
-
-**Status:** **✔** Complete (merged PR-0.9.0)
-
-**Scope:**
-- Password hashing verification
-- Token generation + validation
-- Email verification flow
-
-**Tasks:**
-- Add unit tests for hashing and token utilities
-- Add integration tests for verification resend + verify
-- Add tests for rate‑limit behavior where feasible
-
-**Acceptance Criteria:**
-- Tests run in CI and pass
-- Coverage expanded beyond validation‑only tests
+- Relevant unit/integration regression tests.
+- `pnpm typecheck`
+- read-only lint gate
+- `pnpm test`
+- `pnpm build`
+- dependency audit
+- secret scan
+- Incident P001 resolution section updated after deployment verification.
+- README, CHANGELOG, architecture, security, API, deployment, testing, journal,
+  PR documentation, and version synchronized.
