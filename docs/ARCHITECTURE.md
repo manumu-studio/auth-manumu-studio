@@ -1,512 +1,275 @@
-# Architecture Documentation
+# Architecture
 
-**ManuMu Studio Authentication** - System Architecture and Design
+**Version:** 1.8.4
+**Last Updated:** 2026-06-19
 
----
+## System Role
 
-## Overview
+ManuMu Authentication is a central identity provider for ManuMu Studio
+applications. It combines:
 
-This document describes the high-level architecture, data flows, and design decisions for ManuMu Studio Authentication.
+- first-party credentials and social sign-in;
+- account/profile management;
+- an OAuth 2.0 Authorization Code server;
+- OIDC discovery, ID tokens, UserInfo, JWKS, and logout.
 
----
-
-## System Architecture
-
-### High-Level Components
-
-```mermaid
-graph TB
-    A[Next.js App Router] --> B[NextAuth.js]
-    B --> C[Prisma ORM]
-    C --> D[PostgreSQL Database]
-    B --> E[OAuth Providers]
-    B --> F[Email Provider]
-    
-    A --> G[Server Components]
-    A --> H[Client Components]
-    G --> I[Server Actions]
-    I --> C
-    
-    F --> J[Resend API]
-    E --> K[Google OAuth]
-    E --> L[GitHub OAuth]
-```
-
-### Technology Stack
-
-- **Frontend**: Next.js 15 App Router, React 18, Tailwind CSS + Framer Motion
-- **Authentication**: NextAuth.js v4 (Auth.js)
-- **Database**: Prisma ORM + PostgreSQL (Neon Serverless)
-- **Email**: Resend API (with SMTP fallback)
-- **Validation**: Zod schemas
-- **Language**: TypeScript (strict mode)
-
----
-
-## Authentication Flow
-
-### Email/Password Sign-Up Flow (OTP Verification)
+The service is deployed as a Next.js App Router application on Vercel, with
+Prisma and PostgreSQL/Neon for persistence.
 
 ```mermaid
-sequenceDiagram
-    participant User
-    participant UI
-    participant Server
-    participant DB
-    participant Email
-
-    User->>UI: Fill sign-up form
-    UI->>Server: registerUser(formData)
-    Server->>Server: Validate with Zod
-    Server->>DB: Check duplicate email
-    Server->>Server: Hash password (bcrypt)
-    Server->>DB: Create user (unverified)
-    Server->>Server: Generate 6-digit OTP + hash
-    Server->>DB: Store hashed OTP token
-    Server->>Email: Send verification email
-    Email->>User: Verification code
-    User->>UI: Enter OTP code on /verify?email=...
-    UI->>Server: consumeVerificationToken(email, code)
-    Server->>DB: Validate hashed token + attempts
-    Server->>DB: Mark email verified
-    Server->>DB: Delete tokens for email
-    Server->>UI: Success
-    UI->>User: Can now sign in
+flowchart LR
+    RP[Relying-party app] -->|authorize redirect| AUTH[ManuMu Auth]
+    AUTH --> NA[NextAuth session]
+    AUTH --> DB[(PostgreSQL)]
+    AUTH --> EMAIL[Resend]
+    AUTH --> SOCIAL[Google / GitHub]
+    AUTH -->|authorization code| RP
+    RP -->|code + client auth / PKCE| TOKEN[/oauth/token]
+    TOKEN -->|RS256 access + ID tokens| RP
+    RP --> JWKS[/jwks.json]
+    RP --> INFO[/oauth/userinfo]
 ```
 
-### Email/Password Sign-In Flow
+## Runtime Layers
+
+| Layer | Location | Responsibility |
+|-------|----------|----------------|
+| App Router | `src/app/` | Pages, route handlers, layouts |
+| Authentication domain | `src/features/auth/` | Auth UI, actions, verification, reset, OAuth/OIDC |
+| Account domain | `src/features/account/` | Profile, onboarding, password, providers, deletion |
+| Shared UI | `src/components/ui/` | Reusable application components |
+| Shared runtime | `src/lib/` | Prisma, environment, rate limiting, validation, data |
+| Persistence | `prisma/` | Schema, migrations, seed |
+
+Route handlers generally delegate to feature/server modules. A known exception
+is OTP verification, which performs the post-verification user lookup and
+session creation in the route.
+
+## Authentication Flows
+
+### Credentials Signup and OTP Verification
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant UI
-    participant NextAuth
-    participant DB
+    participant U as User
+    participant A as Auth UI
+    participant S as Signup action
+    participant D as Database
+    participant E as Resend
+    participant V as Verify API
 
-    User->>UI: Enter email/password
-    UI->>NextAuth: signIn('credentials')
-    NextAuth->>NextAuth: Validate input (Zod)
-    NextAuth->>DB: Fetch user by email
-    NextAuth->>NextAuth: Compare password (bcrypt)
-    NextAuth->>NextAuth: Check emailVerified
-    alt Email not verified
-        NextAuth->>UI: Error: EMAIL_NOT_VERIFIED
-    else Email verified
-        NextAuth->>NextAuth: Create JWT token
-        NextAuth->>NextAuth: Add custom fields (id, role)
-        NextAuth->>UI: Session established
-        UI->>User: Authenticated
-    end
+    U->>A: Submit signup form
+    A->>S: FormData
+    S->>S: Zod validation + rate limit
+    S->>D: Create unverified User + UserProfile
+    S->>D: Store SHA-256 OTP hash
+    S->>E: Send six-digit OTP
+    U->>V: Submit email + code
+    V->>D: Validate code / attempts / expiry
+    V->>D: Mark email verified + delete tokens
+    V->>V: Create NextAuth JWT session cookie
+    V-->>U: Redirect to callbackUrl or dashboard
 ```
 
-### OAuth Sign-In Flow
+Current behavior:
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant UI
-    participant NextAuth
-    participant OAuthProvider
-    participant DB
+- OTPs use `crypto.randomInt`.
+- OTP hashes use bare SHA-256; HMAC hardening is pending.
+- Maximum attempts are enforced, but failed-attempt updates are not fully
+  atomic.
+- Successful verification automatically creates a 30-day JWT session.
+- Signup is currently public; invite gating is pending.
 
-    User->>UI: Click "Log In With GitHub/Google"
-    UI->>NextAuth: signIn('github'|'google')
-    NextAuth->>OAuthProvider: Redirect to OAuth
-    OAuthProvider->>User: Authorization prompt
-    User->>OAuthProvider: Grant permission
-    OAuthProvider->>NextAuth: Callback with code
-    NextAuth->>OAuthProvider: Exchange code for token
-    OAuthProvider->>NextAuth: User profile + email
-    NextAuth->>DB: Check existing user by email
-    alt User exists
-        NextAuth->>DB: Link OAuth account
-    else New user
-        NextAuth->>DB: Create user + account
-    end
-    NextAuth->>NextAuth: Create JWT token
-    NextAuth->>UI: Session established
-    UI->>User: Authenticated
-```
+### Credentials Sign-In
 
-### OAuth Authorization Code Flow (Third-Party Apps)
+1. NextAuth Credentials provider Zod-validates email/password.
+2. The request is rate-limited by IP and normalized email.
+3. Prisma loads the user.
+4. PETSGRAM-origin accounts are rejected from first-party credentials login.
+5. bcrypt compares the password.
+6. Unverified accounts are rejected.
+7. NextAuth issues a JWT session containing user ID and role.
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant App
-    participant AuthServer
-    participant DB
+### Social Sign-In
 
-    App->>AuthServer: GET /oauth/authorize?client_id&redirect_uri&scope&state
-    AuthServer->>AuthServer: Validate client + redirect + scope + PKCE
-    AuthServer->>User: Consent screen
-    User->>AuthServer: Approve
-    AuthServer->>DB: Store auth code + PKCE challenge (TTL)
-    AuthServer->>App: Redirect with code + state
-```
+Google and GitHub providers are enabled only when both provider environment
+variables exist. NextAuth's `allowDangerousEmailAccountLinking` option is
+currently enabled. That is a documented hardening target, not a guarantee that
+email-based linking is risk-free.
 
-### OAuth Token Exchange Flow (Third-Party Apps)
+### Password Reset
 
-```mermaid
-sequenceDiagram
-    participant App
-    participant AuthServer
-    participant DB
+1. A server action validates and rate-limits the request.
+2. Unknown and OAuth-only accounts receive the same success response.
+3. A random 256-bit token is stored in `PasswordResetToken`.
+4. Resend delivers a URL containing the token.
+5. Token consumption updates the password, deletes reset tokens, and deletes
+   database sessions in one transaction.
 
-    App->>AuthServer: POST /oauth/token (code + client auth + PKCE)
-    AuthServer->>DB: Load auth code + validate (TTL/used)
-    AuthServer->>AuthServer: Verify client secret or PKCE verifier
-    AuthServer->>DB: Mark auth code used
-    AuthServer->>App: JWT access token (iss/aud/sub/scope/exp)
-```
+The token is currently stored directly rather than hashed; hardening is
+planned.
 
-### OIDC Discovery + JWKS (Third-Party Verification)
+## OAuth/OIDC Flow
 
-Third-party apps can verify access tokens using the published metadata endpoints:
+### Authorization
 
-- `/.well-known/openid-configuration` exposes issuer + endpoints.
-- `/jwks.json` publishes the RS256 public keys for token verification.
-- Discovery also exposes `end_session_endpoint` for RP-initiated logout.
+`src/app/oauth/authorize/page.tsx`:
 
-### OIDC RP-Initiated Logout Flow (Federated Sign-Out)
+- reads browser authorization parameters;
+- requires an authenticated NextAuth session;
+- calls `validateAuthorizeRequest`;
+- displays consent;
+- creates a short-lived authorization code;
+- redirects to the exact registered redirect URI with `code` and `state`.
 
-```mermaid
-sequenceDiagram
-    participant App
-    participant Browser
-    participant AuthServer
-    participant DB
+Validation includes client status, exact redirect URI matching, supported and
+client-allowed scopes, response type, PKCE fields, and optional nonce.
 
-    App->>Browser: Redirect to /oauth/logout?id_token_hint&post_logout_redirect_uri&state
-    Browser->>AuthServer: GET /oauth/logout
-    AuthServer->>AuthServer: Verify id_token_hint signature (RS256)
-    AuthServer->>DB: Resolve OAuth client and validate redirect URI allowlist
-    AuthServer->>Browser: Set expired NextAuth cookies on redirect response
-    AuthServer->>Browser: Redirect to post_logout_redirect_uri(+state) or /
-```
+### Token Exchange
 
----
+`POST /oauth/token` accepts form or JSON input and supports
+`authorization_code` only.
 
-## Data Flow
+The exchange:
 
-### Session Management
+- binds the code to `client_id`;
+- verifies a confidential client secret or the stored PKCE challenge;
+- checks redirect URI, expiry, and `usedAt`;
+- marks the code used;
+- issues a one-hour RS256 access token;
+- issues an ID token when `openid` was granted.
 
-```mermaid
-graph LR
-    A[User Sign-In] --> B[NextAuth authorize]
-    B --> C[Create JWT Token]
-    C --> D[Store in HTTP-only Cookie]
-    D --> E[Client Request]
-    E --> F[Server Component]
-    F --> G[getServerSession]
-    G --> H[Verify JWT]
-    H --> I[Hydrate Session]
-    I --> J[Render with Session]
-```
+Known limitations:
 
-### Email Verification Flow
+- PKCE `plain` is accepted and PKCE is not mandatory for every client.
+- Authorization-code consumption is read-then-update rather than atomic.
+- The token endpoint is not rate-limited.
+- Token request JSON is asserted rather than Zod-parsed.
 
-```mermaid
-stateDiagram-v2
-    [*] --> Unverified: User Signs Up
-    Unverified --> TokenCreated: Generate OTP + Hash
-    TokenCreated --> EmailSent: Send Email
-    EmailSent --> TokenExpired: TTL Exceeded
-    EmailSent --> InvalidAttempt: Wrong Code
-    InvalidAttempt --> EmailSent: attempts < 5
-    InvalidAttempt --> TokenExpired: attempts >= 5 (invalidated)
-    EmailSent --> TokenConsumed: User Enters Correct OTP
-    TokenConsumed --> Verified: Update User
-    TokenExpired --> [*]: Token Deleted
-    Verified --> [*]: Can Sign In
-```
+### Claims and Subjects
 
----
+Access tokens contain:
 
-## Project Structure
+- `iss`
+- `aud`
+- `sub`
+- `iat`
+- `exp`
+- `scope`
 
-### Feature-Based Architecture
+The current `sub` is the canonical `User.id`, so it is public and correlatable
+across clients. Existing relying parties depend on this behavior. Pairwise
+subjects are planned for new clients only.
 
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── (public)/          # Public routes
-│   ├── (auth)/            # Auth pages
-│   ├── (dashboard)/       # Protected routes
-│   └── api/               # API routes
-│
-├── features/
-│   └── auth/              # Authentication feature
-│       ├── components/    # UI components
-│       ├── server/        # Server logic
-│       ├── lib/           # Utilities
-│       └── types/         # TypeScript types
-│
-└── lib/                   # Shared utilities
-    ├── validation/        # Zod schemas
-    ├── prisma.ts          # Database client
-    └── env.ts             # Environment validation
-```
+Email and profile claims are returned only when their scopes are granted.
 
-### Component Hierarchy
+### Discovery and Verification
 
-```mermaid
-graph TD
-    A[Root Layout] --> B[Providers]
-    B --> C[SessionProvider]
-    C --> E[App Pages]
-    E --> F[Public Page]
-    E --> G[Auth Pages]
-    F --> H[AuthShell]
-    H --> I[EmailStep]
-    H --> J[PasswordStep]
-    H --> K[SignupStep]
-    H --> L[GoogleButton]
-    H --> M[GitHubButton]
-    H --> N[UserCard]
-    H --> O[Sign Out Button]
-```
+- `/.well-known/openid-configuration`
+- `/jwks.json`
+- `/oauth/userinfo`
+- `/oauth/logout`
 
----
+JWKS publishes a single RS256 public key with a derived or configured `kid`.
+Key rotation is not automated.
 
-## Database Schema
+### RP-Initiated Logout
 
-### Core Models
+`/oauth/logout`:
+
+- accepts `client_id` or a signature-verified `id_token_hint`;
+- validates `post_logout_redirect_uri` against `redirectUris`;
+- clears secure and non-secure NextAuth cookie names;
+- returns a redirect with optional `state`.
+
+Expired ID token hints are accepted after signature verification. Maximum-age
+hardening is pending.
+
+## Data Model
 
 ```mermaid
 erDiagram
-    User ||--o{ Account : has
+    User ||--o{ Account : owns
+    User ||--o{ Session : owns
     User ||--o| UserProfile : has
-    User ||--o{ Session : has
-    User ||--o{ VerificationToken : "receives"
+    User ||--o{ OAuthClient : creates
+    User ||--o{ OAuthAuthorizationCode : authorizes
+    OAuthClient ||--o{ OAuthAuthorizationCode : issues_for
 
     User {
-        string id PK
-        string email UK
-        string password
-        string name
-        datetime emailVerified
-        enum role
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    Account {
-        string id PK
-        string userId FK
-        string provider
-        string providerAccountId
-        string access_token
-        string refresh_token
-        int expires_at
-    }
-
-    Session {
-        string id PK
-        string sessionToken UK
-        string userId FK
-        datetime expires
+      string id
+      string email
+      string password
+      datetime emailVerified
+      Role role
+      AccountOrigin origin
     }
 
     VerificationToken {
-        string identifier
-        string token UK
-        datetime expires
-        int attempts
+      string identifier
+      string token
+      datetime expires
+      int attempts
     }
 
-    UserProfile {
-        string id PK
-        string userId FK
-        string country
-        string city
-        string address
+    PasswordResetToken {
+      string identifier
+      string token
+      datetime expires
+    }
+
+    OAuthClient {
+      string clientId
+      string clientSecretHash
+      string[] redirectUris
+      string[] allowedOrigins
+      string[] scopes
+      boolean isActive
+    }
+
+    OAuthAuthorizationCode {
+      string code
+      string clientId
+      string userId
+      string redirectUri
+      string[] scopes
+      string codeChallenge
+      string codeChallengeMethod
+      string nonce
+      datetime expiresAt
+      datetime usedAt
     }
 ```
 
----
+`VerificationToken` and `PasswordResetToken` are keyed by normalized email
+identifier but do not have Prisma relations to `User`.
 
-## Design Decisions
-
-### Why JWT Strategy?
-
-**Decision**: Use JWT sessions instead of database sessions
-
-**Rationale**:
-- Works with both Credentials and OAuth providers
-- Stateless - no database queries for session validation
-- Better performance for serverless deployments
-- Scales horizontally without session storage
-
-**Trade-offs**:
-- Token size limits (mitigated by storing minimal data)
-- Cannot revoke sessions server-side (future: token blacklist)
-
-### Why Feature-Based Architecture?
-
-**Decision**: Organize code by feature rather than by type
-
-**Rationale**:
-- Related code lives together
-- Easier to understand and maintain
-- Clear boundaries between features
-- Scalable for team collaboration
-
-### Why Email Verification for Credentials?
-
-**Decision**: Require email verification before credentials sign-in
-
-**Rationale**:
-- Prevents fake/bot accounts
-- Confirms email ownership
-- Improves data quality
-- Foundation for password reset
-
-**Trade-off**:
-- Additional step for users (mitigated by clear UX)
-
-### Why Account Linking?
-
-**Decision**: Enable automatic account linking by email
-
-**Rationale**:
-- Better user experience (no manual linking)
-- OAuth providers verify email ownership
-- Same email = same user (intuitive)
-
-**Security**:
-- Only for trusted OAuth providers
-- Email verified by provider
-- No account takeover risk
-
-### Theme System Implementation
-
-**Decision**: Hybrid Tailwind CSS + SCSS Module overrides for dark theme
-
-**Rationale**:
-- Tailwind `dark:` classes work with class-based dark mode
-- SCSS `@media (prefers-color-scheme: dark)` works with system preferences
-- Hybrid approach ensures consistent theming across components
-- Components use SCSS overrides for precise dark theme matching (e.g., `#2d2d2d` background, `#404040` borders)
-
-**Implementation**:
-- **Tailwind**: Used for utility classes and component styling
-- **SCSS Modules**: Used for dark theme overrides in `*.module.scss` files
-- **Media Queries**: `@media (prefers-color-scheme: dark)` for system preference support
-- **Components**: AuthShell, UserCard, NextButton use SCSS overrides for theme parity
-
-### UX Enhancements
-
-**Autofocus Behavior**:
-- PasswordStep: Auto-focuses password input after step transition (350ms delay)
-- SignupStep: Auto-focuses first input (firstname) after step transition (350ms delay)
-- Improves keyboard navigation and reduces clicks/taps
-- Delay ensures animations complete before focus
-
-**Component Separation**:
-- UserCard is presentational (displays user information only)
-- Sign Out button rendered at page level (`app/(public)/page.tsx`)
-- Clear separation of concerns: UserCard can be reused without Sign Out dependency
-
----
-
-## API Architecture
-
-### NextAuth.js Integration
+## Deployment
 
 ```mermaid
-graph LR
-    A[Client] --> B[/api/auth/[...nextauth]]
-    B --> C[NextAuth Handler]
-    C --> D[Auth Options]
-    D --> E[Providers]
-    D --> F[Callbacks]
-    D --> G[Adapter]
-    G --> H[Prisma]
-    H --> I[PostgreSQL]
+flowchart TB
+    DNS[auth.manumustudio.com] --> V[Vercel]
+    V --> N[Next.js serverless runtime]
+    N --> P[(Neon PostgreSQL)]
+    N --> R[Resend]
+    N --> U[Upstash Redis]
+    N --> G[Google / GitHub]
 ```
 
-### Server Actions
+Upstash is optional in the current environment schema. Without it, the app
+falls back to process-local memory, which is unsuitable for production
+serverless rate limiting. The hardening packet makes Upstash mandatory in
+production.
 
-```mermaid
-graph TD
-    A[Client Form] --> B[Server Action]
-    B --> C[Zod Validation]
-    C --> D{Valid?}
-    D -->|No| E[Return Errors]
-    D -->|Yes| F[Business Logic]
-    F --> G[Database Operation]
-    G --> H[Return Result]
-```
+See [Deployment](DEPLOYMENT.md).
 
----
+## Current Direction
 
-## Security Architecture
-
-### Authentication Layers
-
-1. **Input Validation**: Zod schemas on client and server
-2. **Password Security**: bcrypt hashing (10 salt rounds)
-3. **Session Security**: JWT signed with strong secret
-4. **Email Verification**: OTP code (hashed in DB) with TTL + attempt caps
-5. **OAuth Security**: Provider-verified email addresses
-6. **Rate Limiting**: IP + email limits on sensitive auth endpoints
-7. **Security Headers**: CSP, HSTS, X-Frame-Options, Referrer-Policy
-
-### Security Flow
-
-```mermaid
-graph TB
-    A[User Input] --> B[Client Validation]
-    B --> C[Server Validation]
-    C --> D[Business Logic]
-    D --> E[Database]
-    E --> F[Response]
-    
-    B --> G[Zod Schema]
-    C --> G
-    D --> H[bcrypt Hash]
-    D --> I[OTP Generation]
-    I --> J[crypto.randomInt + sha256]
-```
-
----
-
-## Deployment Architecture
-
-### Production Infrastructure
-
-```mermaid
-graph TB
-    A[User] --> B[Vercel Edge]
-    B --> C[Next.js App]
-    C --> D[Serverless Functions]
-    D --> E[Neon Serverless]
-    D --> F[Resend API]
-    D --> G[OAuth Providers]
-    
-    H[GoDaddy DNS] --> B
-```
-
-### Environment Configuration
-
-- **Vercel**: Application hosting and serverless functions
-- **Neon Serverless**: PostgreSQL database with automatic scaling
-- **Resend**: Email delivery service
-- **GoDaddy**: Custom domain management
-
----
-
-## Future Enhancements
-
-### Planned Architecture Improvements
-
-- **Caching**: Redis cache for session validation
-- **Monitoring**: Application performance monitoring
-- **Analytics**: User authentication analytics
-- **Testing**: Comprehensive test suite (unit, integration, E2E)
-
----
-
-**Last Updated**: February 28, 2026
-
+1. Resolve Incident P001 through security hardening.
+2. Remove open signup through gated registration.
+3. Reach the LSA engineering baseline for strict TypeScript, CI, tests,
+   observability, documentation, and accessibility.
+4. Add `App`, `AppMembership`, and `AppSubject`.
+5. Keep existing clients on public subjects and default new clients to
+   pairwise subjects.
+6. Publish a thin redirect-based SDK after the server contract stabilizes.

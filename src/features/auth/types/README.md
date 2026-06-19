@@ -1,15 +1,9 @@
 # Auth Types
-Reserved for extending NextAuth types.
 
-Example (to be implemented):
-```ts
-declare module 'next-auth' {
-  interface Session {
-    user: {
-      id: string;
-      email: string;
-      name?: string;
-      role?: string;
-    };
-  }
-}
+`next-auth.d.ts` augments:
+
+- `Session.user` with `id` and optional `role`;
+- `User` with `id` and optional `role`;
+- JWT with `uid` and optional `role`.
+
+Roles are constrained to `USER | ADMIN`.

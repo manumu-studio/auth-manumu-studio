@@ -1,6 +1,15 @@
-# (auth) Route Group
-Reserved for authentication-only pages.
+# Auth Route Group
 
-- Used for pages like `/verify`, `/reset-password`, etc.
-- Server layout can remain public; each page decides whether to show a form or a message.
-- Will be used in **feature/email-verification**.
+Public authentication-support pages:
+
+- `/verify`
+- `/verify/error`
+- `/verify/success`
+- `/forgot-password`
+- `/reset-password`
+- `/reset-password/error`
+- `/reset-password/success`
+- `/onboarding`
+
+These pages do not define the NextAuth handler; that lives under
+`src/app/api/auth/[...nextauth]/`.

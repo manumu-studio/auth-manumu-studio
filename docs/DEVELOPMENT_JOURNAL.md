@@ -1,22 +1,25 @@
 # Development Journal
 
-**Project:** ManuMu Authentication  
+**Project:** ManuMu Authentication
 **Status:** Active Development
 
-This journal tracks the development progress of ManuMu Authentication, a production-ready authentication starter built with Next.js, Prisma, and Tailwind CSS.
+This journal tracks the evolution of ManuMu Authentication from a NextAuth
+starter into a shared OAuth/OIDC identity provider. Production security
+hardening is currently tracked by Incident P001.
 
 ---
 
 ## Current Focus
 
-- Stabilizing OTP verification UX while finalizing federated sign-out reliability and cross-origin session teardown behavior.
+- Closing the documentation baseline and preparing the isolated
+  `fix/security-hardening-now` branch for Incident P001.
 
 ---
 
 ## Journal Entries
 
 ### [Entry 0 — Bootstrap](./journal/ENTRY-0.md)
-**Date:** October 3, 2025  
+**Date:** October 3, 2025
 **Type:** Initial Setup
 
 Established the foundational architecture and development environment:
@@ -29,7 +32,7 @@ Established the foundational architecture and development environment:
 ---
 
 ### [Entry 1 — User Registration (Signup UI + Server Action)](./journal/ENTRY-1.md)
-**Date:** October 4, 2025  
+**Date:** October 4, 2025
 **Type:** Feature Implementation
 
 Implemented complete user registration flow:
@@ -42,7 +45,7 @@ Implemented complete user registration flow:
 ---
 
 ### [Entry 2 — Authentication UX Polish & Feature-Based Refactor](./journal/ENTRY-2.md)
-**Date:** October 8, 2025  
+**Date:** October 8, 2025
 **Type:** Refactor + Feature Enhancement
 
 Major architectural improvements:
@@ -55,7 +58,7 @@ Major architectural improvements:
 ---
 
 ### [Entry 3 — Production-Grade Email Verification](./journal/ENTRY-3.md)
-**Date:** October 10, 2025  
+**Date:** October 10, 2025
 **Type:** Feature Implementation
 
 Complete email verification system:
@@ -68,7 +71,7 @@ Complete email verification system:
 ---
 
 ### [Entry 4 — Google OAuth Integration + Multi-Provider Sign-In Hub](./journal/ENTRY-4.md)
-**Date:** October 11, 2025  
+**Date:** October 11, 2025
 **Type:** Feature Implementation
 
 Added Google OAuth provider:
@@ -107,7 +110,7 @@ Final cleanup and polish phase:
 ---
 
 ### [Entry 7 — Rate Limiting (Critical Security)](./journal/ENTRY-7.md)
-**Date:** January 20, 2026  
+**Date:** January 20, 2026
 **Type:** Security Hardening
 
 Implemented rate limiting across critical auth paths:
@@ -119,7 +122,7 @@ Implemented rate limiting across critical auth paths:
 
 ---
 ### [Entry 8 — Security Headers (CSP + HSTS)](./journal/ENTRY-8.md)
-**Date:** January 20, 2026  
+**Date:** January 20, 2026
 **Type:** Security Hardening
 
 Implemented baseline security headers:
@@ -129,7 +132,7 @@ Implemented baseline security headers:
 
 ---
 ### [Entry 9 — Auth Critical Flow Tests](./journal/ENTRY-9.md)
-**Date:** January 20, 2026  
+**Date:** January 20, 2026
 **Type:** Testing + Quality
 
 Added core test coverage for critical auth flows:
@@ -140,7 +143,7 @@ Added core test coverage for critical auth flows:
 
 ---
 ### [Entry 10 — OAuth Client Registry + Account Origin Split](./journal/ENTRY-10.md)
-**Date:** January 20, 2026  
+**Date:** January 20, 2026
 **Type:** Auth Server Foundations
 
 OAuth client registry and account-origin separation:
@@ -151,7 +154,7 @@ OAuth client registry and account-origin separation:
 
 ---
 ### [Entry 11 — OAuth Authorization Endpoint (Consent + PKCE)](./journal/ENTRY-11.md)
-**Date:** January 24, 2026  
+**Date:** January 24, 2026
 **Type:** Auth Server Foundations
 
 OAuth authorization endpoint and consent flow:
@@ -161,7 +164,7 @@ OAuth authorization endpoint and consent flow:
 
 ---
 ### [Entry 12 — OAuth Token Endpoint (JWT Exchange)](./journal/ENTRY-12.md)
-**Date:** January 24, 2026  
+**Date:** January 24, 2026
 **Type:** Auth Server Foundations
 
 OAuth token exchange and access token issuance:
@@ -171,7 +174,7 @@ OAuth token exchange and access token issuance:
 
 ---
 ### [Entry 13 — JWKS + OIDC Discovery](./journal/ENTRY-13.md)
-**Date:** January 24, 2026  
+**Date:** January 24, 2026
 **Type:** Auth Server Foundations
 
 JWKS and OIDC discovery metadata for third-party token verification:
@@ -181,7 +184,7 @@ JWKS and OIDC discovery metadata for third-party token verification:
 
 ---
 ### [Entry 14 — Protected Dashboard & Account Management](./journal/ENTRY-14.md)
-**Date:** February 15, 2026  
+**Date:** February 15, 2026
 **Type:** Feature Implementation
 
 Protected dashboard and account self-management:
@@ -192,7 +195,7 @@ Protected dashboard and account self-management:
 
 ---
 ### [Entry 15 — Federated Sign-Out (RP-Initiated Logout)](./journal/ENTRY-15.md)
-**Date:** February 28, 2026  
+**Date:** February 28, 2026
 **Type:** Auth Server Foundations
 
 OIDC-compliant federated sign-out to terminate auth-server sessions:
@@ -203,7 +206,7 @@ OIDC-compliant federated sign-out to terminate auth-server sessions:
 
 ---
 ### [Entry 16 — OTP Email Verification (6-Digit Code)](./journal/ENTRY-16.md)
-**Date:** February 28, 2026  
+**Date:** February 28, 2026
 **Type:** Feature Implementation
 
 Replaced link-based verification with OTP code verification:
@@ -214,7 +217,7 @@ Replaced link-based verification with OTP code verification:
 
 ---
 ### [Entry 17 — Logout Cookie Clearing Hotfix (Federated Sign-Out)](./journal/ENTRY-17.md)
-**Date:** February 28, 2026  
+**Date:** February 28, 2026
 **Type:** Hotfix
 
 Fixed logout cookie deletion reliability for redirect responses:
@@ -223,24 +226,25 @@ Fixed logout cookie deletion reliability for redirect responses:
 - Prevented stale auth-server session reuse after federated sign-out
 
 ---
-### [Entry 20 — Auto-Login After Email Verification](./journal/ENTRY-20.md)
-**Date:** March 5, 2025  
-**Type:** Feature Implementation
+### [Entry 19 — OAuth Post-Verification Redirect + Auto-Login](./journal/ENTRY-19.md)
+**Date:** March 5, 2026
+**Type:** Feature + Fix
 
-Auto-login after OTP verification:
-- Verify API creates NextAuth session and sets session cookie
-- Client redirects directly to callbackUrl (OAuth) or /dashboard (direct signup)
-- No manual sign-in required
+Consolidated: callbackUrl threading + auto-login after OTP verification. Users from federated clients return to originating app; no manual sign-in step.
+
+---
+
+### [Entry 20 — (Superseded)](./journal/ENTRY-20.md)
+**Date:** March 5, 2026
+**Type:** Merged into ENTRY-19
 
 ---
 
 ### [Entry 21 — Fix OAuth Signup Redirect](./journal/ENTRY-21.md)
-**Date:** March 5, 2025  
+**Date:** March 5, 2026
 **Type:** Fix
 
-OAuth signup redirect fix:
-- callbackUrl preserved through signup → verify → success → sign-in chain
-- Users from federated clients (LSA, Careerkit) return to originating app after verification
+OAuth signup redirect fix (fix/oauth-signup-redirect branch): redirect via success page so callbackUrl survives full chain.
 
 ---
 ## Pull Requests
@@ -297,17 +301,24 @@ Full replacement of verify-link flow with hashed OTP code flow and OTP UI/API.
 Fixes redirect-response cookie clearing so auth session is actually terminated on logout.
 
 ### [PR-1.7.0 — Auto-Login After Email Verification](./pull-requests/PR-1.7.0.md)
-Auto-login after OTP verification; no manual sign-in required.
+Auto-login after OTP verification with a NextAuth JWT session.
+
+### [PR — Verify Callback Redirect](./pull-requests/PR-fix-verify-callback-redirect.md)
+Preserved callback context through the verification flow.
 
 ### [PR — Fix OAuth Signup Redirect](./pull-requests/PR-fix-oauth-signup-redirect.md)
-OAuth signup flow fix; users return to originating app after verification.
+OAuth signup flow fix (fix/oauth-signup-redirect branch); redirect via success page.
+
+### [PR-1.8.4 — Documentation and Security Baseline](./pull-requests/PR-docs-methodology-scaffold.md)
+Synchronizes living documentation, audits, incidents, research, and the
+LSA-style project methodology.
 
 ---
 
 ## Project Status
 
-**Current Version:** 1.7.0  
-**Last Updated:** March 5, 2025
+**Current Version:** 1.8.4
+**Last Updated:** June 19, 2026
 
 ### Completed Features
 
@@ -334,19 +345,23 @@ OAuth signup flow fix; users return to originating app after verification.
 - **Done** Federated logout cookie-clearing hotfix on redirect responses
 - **Done** Auto-login after OTP verification (session + direct redirect)
 - **Done** OAuth signup redirect fix (callbackUrl preserved through verify chain)
+- **Done** Password reset flow with token-based reset email
+- **Done** Documentation methodology scaffold for packet-based development
 
 ### In Progress
 
-- 📝 Documentation improvements
-- 📝 Code quality enhancements
+- 🔴 Incident P001 security hardening
+- 🔴 Gated registration
+- 🟡 LSA engineering-baseline parity
 
 ### Planned Features
 
-- 🔜 Facebook OAuth provider
-- 🔜 Password reset flow
+- 🔜 App membership and app-subject model
+- 🔜 Pairwise subjects for new clients
+- 🔜 Redirect-based SDK
 - 🔜 Multi-factor authentication
-- 🔜 Protected routes & RBAC
-- 🔜 E2E test coverage
+- 🔜 Expanded RBAC and security audit logging
+- 🔜 E2E and coverage enforcement
 
 ---
 
@@ -365,8 +380,8 @@ OAuth signup flow fix; users return to originating app after verification.
 - Comprehensive error handling
 - Type-safe implementations
 - Accessible UI components
-- Production-ready security
+- Evidence-based security documentation
 
 ---
 
-**Last Updated:** February 28, 2026
+**Last Updated:** June 19, 2026

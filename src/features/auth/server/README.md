@@ -1,7 +1,9 @@
 # Auth Server Layer
-Server-side logic for authentication.
 
-Contains:
-- `actions/`: Server actions (signin, signup, etc.)
-- `options.ts`: NextAuth configuration and provider setup.
-- `verify/`: Token creation, consumption, and resend logic for email verification.
+- `options.ts` — NextAuth providers, callbacks, credentials verification.
+- `createSessionToken.ts` — post-OTP NextAuth session creation.
+- `actions/` — signup, sign-in, reset request, reset consumption.
+- `providers/` — Google and GitHub provider factories.
+- `verify/` — OTP token lifecycle.
+- `reset/` — password-reset lifecycle and templates.
+- `oauth/` — OAuth/OIDC authorization-server implementation.
