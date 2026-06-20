@@ -39,6 +39,18 @@ vi.mock('crypto', () => ({
         ...hashApi,
       };
     }),
+    // HMAC stub: produces deterministic "hmac:<code>" for test assertions
+    createHmac: vi.fn((_algo: string, _key: string) => {
+      let value = '';
+      const hmacApi = {
+        update: vi.fn((input: string) => {
+          value = input;
+          return hmacApi;
+        }),
+        digest: vi.fn(() => `hmac:${value}`),
+      };
+      return hmacApi;
+    }),
   },
 }));
 
@@ -83,7 +95,7 @@ describe('OTP verification tokens', () => {
     expect(prismaMock.verificationToken.create).toHaveBeenCalledWith({
       data: {
         identifier: 'user@example.com',
-        token: 'hash:123456',
+        token: 'hmac:123456',
         expires: new Date(NOW.getTime() + 10 * 60 * 1000),
         attempts: 0,
       },
@@ -117,7 +129,7 @@ describe('OTP verification tokens', () => {
 
     prismaMock.verificationToken.findFirst
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ token: 'hash:active', expires: new Date(NOW.getTime() + 1000) });
+      .mockResolvedValueOnce({ token: 'hmac:active', expires: new Date(NOW.getTime() + 1000) });
     prismaMock.verificationToken.update.mockResolvedValue({ attempts: 5 });
     prismaMock.verificationToken.deleteMany.mockResolvedValue({ count: 1 });
 
@@ -138,7 +150,7 @@ describe('OTP verification tokens', () => {
 
     prismaMock.verificationToken.findFirst.mockResolvedValue({
       identifier: 'user@example.com',
-      token: 'hash:123456',
+      token: 'hmac:123456',
       expires: new Date(NOW.getTime() + 1000),
     });
     prismaMock.user.findUnique.mockResolvedValue({ id: 'user-id', emailVerified: null });

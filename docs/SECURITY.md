@@ -1,19 +1,16 @@
 # Security
 
-**Version:** 1.8.4
-**Last Updated:** 2026-06-19
-**Current Status:** Incident P001 is active; hardening is not complete.
+**Version:** 1.8.5
+**Last Updated:** 2026-06-20
+**Current Status:** Security hardening controls implemented; production verification pending.
 
 ## Security Posture
 
 The service has working security controls, but it must not currently be
 described as attack-proof or fully production-hardened.
 
-Authoritative point-in-time records:
-
-- [Security audit](audits/SECURITY-AUDIT-2026-06-17.md)
-- [Full engineering audit](audits/AUDIT-V1-AUTH-MANUMU-STUDIO.md)
-- [Incident P001](incidents/INCIDENT-P001-auth-security-exposure.md)
+Security findings and remediation evidence are maintained privately. This
+public document describes the current implemented controls and known risks.
 
 ## Implemented Controls
 
@@ -36,6 +33,8 @@ Authoritative point-in-time records:
 ### Email Verification
 
 - Six-digit OTPs generated with `crypto.randomInt`.
+- OTPs are stored as `HMAC-SHA256(code, OTP_HMAC_SECRET)` — bare SHA-256 no
+  longer used.
 - Configurable 10-minute default TTL and two-minute resend cooldown.
 - Maximum five failed attempts per active token.
 - Successful verification updates the user and deletes tokens transactionally.
@@ -57,10 +56,33 @@ Authoritative point-in-time records:
 - Client secrets stored as SHA-256 hashes and compared timing-safely.
 - Authorization codes are random, short-lived, client-bound, redirect-bound,
   scope-bound, and optionally PKCE/nonce-bound.
+- PKCE S256 is mandatory; `plain` is rejected at all validation points.
+- Authorization-code consumption is atomic via conditional `updateMany`.
 - RS256 access and ID tokens.
+- All token responses carry `Cache-Control: no-store` and `Pragma: no-cache`.
+- 429 responses carry `Retry-After` and a generic body; secrets never appear
+  in limiter keys or logs.
+- Token request bodies are Zod-validated (not cast with `as`).
 - Public-key-only JWKS endpoint.
 - Signed `id_token_hint` verification for logout.
 - Allowlisted post-logout redirects.
+
+### Rate Limiting
+
+- Distributed Upstash rate limiting is mandatory in production; fail-closed
+  when Upstash is unavailable.
+- `/oauth/token` and `/oauth/userinfo` are now rate-limited with independent
+  per-IP and per-client/token-fingerprint buckets.
+- IP extraction uses Vercel-injected headers validated with `node:net`;
+  forwarded headers are not trusted outside Vercel in production.
+- Seven-policy rate-limit map covers: credentials sign-in, signup, OTP
+  verification, OTP resend, password-reset request, password-reset consumption,
+  OAuth token exchange, UserInfo, and account mutation actions.
+
+### Registration
+
+- Self-service signup disabled in production via
+  `SELF_SERVICE_REGISTRATION_ENABLED=false`.
 
 ### HTTP and Data Layer
 
@@ -72,54 +94,60 @@ Authoritative point-in-time records:
 - Prisma parameterized queries; no application raw SQL found.
 - Environment files are ignored by Git.
 
+### Supply Chain and Secrets
+
+- CI has a blocking `pnpm audit --audit-level=high` job (full dependency tree
+  and production-only); zero HIGH/CRITICAL advisories required to pass.
+- Full-history gitleaks secret scan is a blocking CI job.
+- `SKIP_ENV_VALIDATION` removed from `vercel.json` and CI; full env validation
+  runs on every production build.
+- Seed data contains no known demo passwords and prints no secrets; the seed
+  script refuses to run in production without
+  `SEED_CONFIRMATION=DEVELOPMENT_ONLY`.
+
 ## Active Risks
-
-### Release-Blocking
-
-1. **Open registration:** any valid email can create an account.
-2. **Production rate-limit fallback:** missing Upstash credentials silently
-   enable a process-local limiter.
-3. **Dependency exposure:** the current dependency baseline includes recorded
-   high/critical advisories and no blocking audit gate.
 
 ### High Priority
 
-- `/oauth/token` and `/oauth/userinfo` are not rate-limited.
-- `X-Forwarded-For` is trusted before platform-owned IP headers.
-- PKCE `plain` is accepted and S256 is not mandatory.
-- Authorization-code consumption is not atomic.
-- OTPs use bare SHA-256, which is crackable after a database leak.
-- bcrypt cost 10 is below the intended hardening target.
-- Seed data contains known demo passwords and prints secrets.
-- Vercel/CI builds bypass environment validation.
-- Social providers use `allowDangerousEmailAccountLinking`.
-- Password-reset tokens are stored directly.
-- JWT decoding does not fully validate header algorithm, issuer, audience, and
-  runtime payload shape on every verification path.
+- **Auth.js/NextAuth v5 migration:** NextAuth v4 is in maintenance mode. No
+  security patches will be issued for v4 after its maintenance window closes.
+- **bcrypt cost 10:** Below the intended hardening target; bcrypt 12+ and a
+  migration strategy are planned.
+- **Account linking:** Social providers still use
+  `allowDangerousEmailAccountLinking: true` — see Account Linking section.
+- **Password-reset tokens stored directly:** Tokens are not hashed before
+  persistence.
+- **JWT validation gaps:** Header algorithm, issuer, audience, and runtime
+  payload shape are not fully validated on every verification path.
+- **Session lifecycle:** Max-age on `id_token_hint` and session expiry review
+  are pending.
 
 ### Operational Gaps
 
+- No CAPTCHA or bot defense.
 - No structured application logger.
 - No Sentry/error-tracking integration.
 - No request correlation IDs or alerting.
-- No secret-scanning CI job.
-- No coverage, E2E, or bundle-size release gates.
-- No health endpoint despite the existing smoke-script reference.
+- No coverage thresholds, E2E tests, or health endpoint.
+- Gated registration (invite/allowlist) not yet implemented; the signup kill
+  switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) is a temporary measure.
+- Pairwise subjects not yet implemented.
 
 ## Control Matrix
 
-| Area | Current | Required Next State |
-|------|---------|---------------------|
-| Registration | Public signup | Invite/allowlist/admin gate + bot defense |
-| Rate limits | Upstash or local Map | Upstash mandatory in production |
-| PKCE | Optional, `plain` or S256 | S256 required |
-| Auth code use | Read then update | Atomic conditional update |
-| OTP storage | SHA-256 | HMAC-SHA256 with server secret |
+| Area | Current (1.8.5) | Required Next State |
+|------|-----------------|---------------------|
+| Registration | Kill switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) | Invite/allowlist gate + bot defense |
+| Rate limits | Upstash mandatory, 7-policy map, all OAuth endpoints covered | Per-email caps, logout limiting |
+| PKCE | S256 required, plain rejected | — (complete) |
+| Auth code use | Atomic conditional update | — (complete) |
+| OTP storage | HMAC-SHA256 with server secret | — (complete) |
 | Password hashing | bcrypt 10 | bcrypt 12+ and migration strategy |
-| Dependencies | Manual | High/critical audit gate |
-| Secrets | No CI scan | Full-history gitleaks |
+| Dependencies | Blocking audit gate, 0 HIGH/CRITICAL | Ongoing maintenance |
+| Secrets | Full-history gitleaks in CI | Ongoing |
 | Observability | Console logs | Pino + request IDs + Sentry |
-| Testing | Seven Vitest files | Coverage thresholds + Playwright |
+| Testing | 13 files, 142 tests | Coverage thresholds + Playwright |
+| Session lifecycle | 30-day JWT | Max-age review, rotation |
 
 ## Account Linking
 
@@ -131,7 +159,7 @@ allowDangerousEmailAccountLinking: true
 
 This improves user experience but creates risk if provider email-verification
 semantics, provider trust, or account ownership assumptions change. It is not
-documented as “no account takeover risk.” The setting requires a dedicated
+documented as "no account takeover risk." The setting requires a dedicated
 review and explicit provider policy before broader use.
 
 ## Subjects and Privacy
@@ -159,35 +187,39 @@ Currently rate-limited:
 - OTP resend;
 - password-reset request;
 - password-reset consumption;
+- OAuth token exchange (per-IP + per-client/token-fingerprint buckets);
+- UserInfo (per-IP + per-token-fingerprint buckets);
 - account mutation actions.
 
 Not currently rate-limited:
 
-- OAuth token exchange;
-- UserInfo;
 - logout.
 
-The generic limiter uses IP plus email where available. Some flows also need
-independent per-IP and per-email caps to resist distributed abuse.
+All rate-limited paths use distributed Upstash buckets. The limiter is
+fail-closed in production: a missing or unreachable Upstash instance blocks
+the request rather than falling back to a process-local map.
 
 ## Environment and Secrets
 
 The runtime schema is `src/lib/env.ts`; `.env.example` mirrors its keys.
 
-Production-critical values:
+Production-required values (enforced by env schema; build fails if absent):
 
 - `DATABASE_URL`
 - `NEXTAUTH_SECRET`
 - `NEXTAUTH_URL` or `AUTH_URL`
 - `OAUTH_JWT_PRIVATE_KEY`
 - `OAUTH_JWT_PUBLIC_KEY`
+- `OTP_HMAC_SECRET`
 - `RESEND_API_KEY`
 - `RESEND_FROM`
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 
-The OAuth key variables and Upstash variables are still optional in the schema.
-The hardening packet will enforce production requirements.
+`OAUTH_JWT_PRIVATE_KEY`, `OAUTH_JWT_PUBLIC_KEY`, `OTP_HMAC_SECRET`,
+`UPSTASH_REDIS_REST_URL`, and `UPSTASH_REDIS_REST_TOKEN` are now required
+fields in the production env schema; the build fails without them.
+`SKIP_ENV_VALIDATION` has been removed from `vercel.json` and CI.
 
 Never store or log:
 
@@ -204,7 +236,7 @@ Never store or log:
 Security regressions, test regressions, build failures, and production auth
 exposure require an incident file before fixes begin.
 
-Incident P001 closes only after:
+An active security incident closes only after:
 
 1. security-hardening changes are merged;
 2. gated registration is merged;

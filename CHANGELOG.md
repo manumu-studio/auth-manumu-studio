@@ -5,15 +5,40 @@ This format follows [Conventional Commits](https://www.conventionalcommits.org/e
 
 ---
 
+## [1.8.5] - 2026-06-20
+
+### Security
+
+- **Dependencies and CI audit gate**: upgraded `next`/`eslint-config-next` to `^15.5.19` and `next-auth` to `^4.24.12`; upgraded Vitest toolchain from v2 to `^4.1.9` with `vite ^6.4.3`; removed the stale `package-lock.json`; added a blocking `security-audit` CI job (`pnpm audit --audit-level=high` full-tree and production, no `continue-on-error`) and a full-history gitleaks secret scan; converted CI build to frozen pnpm install. Result: zero HIGH/CRITICAL advisories in both audits (1 low, 9 moderate remain across the full tree; 2 moderate remain in production dependencies).
+
+- **Distributed rate limiting (fail-closed)**: production now requires Upstash Redis — the app refuses to start without it. The in-memory fallback is restricted to development and test. Client IP is derived from Vercel-injected headers and validated with `node:net` `isIP`. Seven independent per-surface rate-limit policies replace the previous single generic limiter.
+
+- **OAuth endpoint hardening**: `/oauth/token` enforces independent per-IP and per-client-id rate-limit buckets (before body parsing and after). `/oauth/userinfo` enforces independent per-IP and per-token-fingerprint buckets. Token request bodies are Zod-validated; Basic auth credentials are Base64-decoded before splitting on the first colon. All token responses (including errors and 429s) send `Cache-Control: no-store` + `Pragma: no-cache`. Rate-limit 429 responses carry `Retry-After` and a generic body. Client secrets and raw bearer tokens never appear in limiter keys or logs.
+
+- **Mandatory PKCE S256**: the authorization endpoint now requires a well-formed `code_challenge` with `code_challenge_method=S256`. The `plain` method is rejected everywhere. Token exchange rejects codes stored without a challenge, non-S256 methods, and missing, malformed, or mismatched verifiers — enforced even for confidential clients. Challenge comparisons are constant-time. Discovery advertises `code_challenge_methods_supported: ["S256"]`.
+
+- **Atomic authorization-code consumption**: codes are claimed with a single conditional `updateMany` (`WHERE usedAt IS NULL AND expiresAt > NOW()`). Tokens are issued only when exactly one row is claimed, eliminating the read-then-write replay race.
+
+- **HMAC OTP storage**: verification OTPs are stored as `HMAC-SHA256(code, OTP_HMAC_SECRET)` instead of bare SHA-256, so a database leak alone cannot crack codes. Outstanding pre-existing codes are invalidated on first deployment; users must request a new code.
+
+- **Environment enforcement**: production env validation now requires `DATABASE_URL`, `NEXTAUTH_SECRET`, `AUTH_URL`/`NEXTAUTH_URL`, `OAUTH_JWT_PRIVATE_KEY`, `OAUTH_JWT_PUBLIC_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `OTP_HMAC_SECRET`, and `SELF_SERVICE_REGISTRATION_ENABLED=false`. `SKIP_ENV_VALIDATION` removed from `vercel.json` and all CI build jobs; CI generates an ephemeral RSA keypair and supplies safe non-production values.
+
+- **Registration kill switch and safe seed**: self-service signup (first-party and OAuth) returns a generic "registration unavailable" response in production before any user lookup, gated by `SELF_SERVICE_REGISTRATION_ENABLED=false`. The database seed refuses to run in production, without `SEED_CONFIRMATION=DEVELOPMENT_ONLY`, or with weak/missing secrets. Hardcoded demo passwords and credential logging removed.
+
+### Testing
+
+- Added 6 new security test suites (110 new tests): `security-ci-config` (14), `security-rate-limit-foundation` (20), `security-oauth-rate-limits` (12), `security-pkce-s256` (25), `security-auth-code-concurrency` (7), `security-config-otp-seed-signup` (32). Total suite: **142 tests across 13 files**, all passing.
+
+---
+
 ## [1.8.4] - 2026-06-19
 
 ### Documentation
 
-- Added LSA-style documentation methodology scaffold: `docs/ai`, `docs/api`, `docs/audits`, `docs/continuation-prompts`, `docs/decisions`, `docs/eval`, `docs/incidents`, `docs/research`, and `docs/superpowers`.
-- Added incident template and registry for production, CI, build, test, and dev-workflow incidents.
-- Added full engineering and adversarial security audits plus Incident P001.
-- Synchronized README, architecture, security, environment, API, roadmap, and
-  project-map documentation with the current codebase.
+- Expanded public documentation for API contracts, architecture, security,
+  deployment, testing, contribution guidance, and project decisions.
+- Synchronized README, architecture, security, environment, API, and roadmap
+  documentation with the current codebase.
 - Added `CONTRIBUTING.md`, `docs/DEPLOYMENT.md`, and `docs/TESTING.md`.
 - Updated feature-level READMEs that were empty or described unimplemented
   future behavior.
@@ -21,8 +46,9 @@ This format follows [Conventional Commits](https://www.conventionalcommits.org/e
 ### Maintenance
 
 - Synchronized the package version to `1.8.4`.
-- Documented the security-hardening and gated-registration execution order.
-- Preserved historical audits, journal entries, and merged PR documents.
+- Documented the security-hardening and private-registration roadmap.
+- Preserved historical release records, journal entries, and merged PR
+  documents.
 
 > Releases between 0.2.0 and 1.8.3 are indexed in
 > `docs/DEVELOPMENT_JOURNAL.md`; changelog backfill is separate historical

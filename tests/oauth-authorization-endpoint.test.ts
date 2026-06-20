@@ -190,11 +190,13 @@ describe("OAuth /authorize validation", () => {
       "@/features/auth/server/oauth/authorizeRequest"
     );
 
+    // S256 PKCE is now mandatory — supply a valid challenge and method.
     const result = await validateAuthorizeRequest({
       client_id: "client-123",
       response_type: "code",
       scope: "openid email",
-      code_challenge: "challenge",
+      code_challenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+      code_challenge_method: "S256",
     });
 
     expect(result).toEqual({
@@ -203,8 +205,9 @@ describe("OAuth /authorize validation", () => {
       redirectUri: "https://app.example.com/callback",
       scopes: ["openid", "email"],
       state: undefined,
-      codeChallenge: "challenge",
-      codeChallengeMethod: "plain",
+      codeChallenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+      codeChallengeMethod: "S256",
+      nonce: undefined,
     });
   });
 
@@ -232,7 +235,7 @@ describe("OAuth /authorize validation", () => {
       redirect_uri: "https://app.example.com/callback",
       response_type: "code",
       scope: "openid",
-      code_challenge: "challenge",
+      code_challenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
       code_challenge_method: "S512",
       state: "state-1",
     });
@@ -240,7 +243,7 @@ describe("OAuth /authorize validation", () => {
     expect(result).toEqual({
       ok: false,
       error: "invalid_request",
-      description: "code_challenge_method must be S256 or plain.",
+      description: "code_challenge_method must be S256.",
       redirectUri: "https://app.example.com/callback",
       state: "state-1",
     });
@@ -265,10 +268,13 @@ describe("OAuth /authorize validation", () => {
       "@/features/auth/server/oauth/authorizeRequest"
     );
 
+    // S256 PKCE is mandatory — omitting it produces invalid_request, not ok:true.
     const result = await validateAuthorizeRequest({
       client_id: "client-123",
       redirect_uri: "https://app.example.com/callback",
       response_type: "code",
+      code_challenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+      code_challenge_method: "S256",
     });
 
     expect(result).toEqual({
@@ -277,8 +283,9 @@ describe("OAuth /authorize validation", () => {
       redirectUri: "https://app.example.com/callback",
       scopes: ["openid"],
       state: undefined,
-      codeChallenge: undefined,
-      codeChallengeMethod: undefined,
+      codeChallenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+      codeChallengeMethod: "S256",
+      nonce: undefined,
     });
   });
 });

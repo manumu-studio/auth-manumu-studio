@@ -48,11 +48,30 @@ jobs:
       - name: Run Tests
         run: pnpm test
 
+      - name: Generate ephemeral RSA keypair for build
+        run: |
+          PRIVATE_KEY=$(openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 2>/dev/null)
+          PUBLIC_KEY=$(echo "$PRIVATE_KEY" | openssl rsa -pubout 2>/dev/null)
+          echo "OAUTH_JWT_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+          echo "$PRIVATE_KEY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "OAUTH_JWT_PUBLIC_KEY<<EOF" >> $GITHUB_ENV
+          echo "$PUBLIC_KEY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
           CI: "1"
-          SKIP_ENV_VALIDATION: "true"
+          DATABASE_URL: "postgresql://u:p@localhost:5432/db?schema=public"
+          NEXTAUTH_SECRET: "ci-nextauth-secret-32chars-padded-x"
+          AUTH_URL: "https://auth.example.com"
+          UPSTASH_REDIS_REST_URL: "https://example.upstash.io"
+          UPSTASH_REDIS_REST_TOKEN: "dummy-upstash-token"
+          OTP_HMAC_SECRET: "ci-otp-hmac-secret-32chars-padded-"
+          SELF_SERVICE_REGISTRATION_ENABLED: "false"
+          OAUTH_JWT_PRIVATE_KEY: ${{ env.OAUTH_JWT_PRIVATE_KEY }}
+          OAUTH_JWT_PUBLIC_KEY: ${{ env.OAUTH_JWT_PUBLIC_KEY }}
         run: pnpm build
 
       - name: Smoke test
@@ -68,19 +87,81 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
 
-      - name: Install deps (npm, Vercel-like)
-        run: npm install --legacy-peer-deps
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate ephemeral RSA keypair for build
+        run: |
+          PRIVATE_KEY=$(openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 2>/dev/null)
+          PUBLIC_KEY=$(echo "$PRIVATE_KEY" | openssl rsa -pubout 2>/dev/null)
+          echo "OAUTH_JWT_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+          echo "$PRIVATE_KEY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "OAUTH_JWT_PUBLIC_KEY<<EOF" >> $GITHUB_ENV
+          echo "$PUBLIC_KEY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Build (Vercel-like)
         env:
           NEXT_TELEMETRY_DISABLED: "1"
           CI: "1"
-          SKIP_ENV_VALIDATION: "true"
-          DATABASE_URL: "postgresql://user:password@localhost:5432/db?schema=public"
-          NEXTAUTH_SECRET: "development-secret-change-me-32chars"
-        run: npx next build --no-lint
+          DATABASE_URL: "postgresql://u:p@localhost:5432/db?schema=public"
+          NEXTAUTH_SECRET: "ci-nextauth-secret-32chars-padded-x"
+          AUTH_URL: "https://auth.example.com"
+          UPSTASH_REDIS_URL: "https://example.upstash.io"
+          UPSTASH_REDIS_REST_URL: "https://example.upstash.io"
+          UPSTASH_REDIS_REST_TOKEN: "dummy-upstash-token"
+          OTP_HMAC_SECRET: "ci-otp-hmac-secret-32chars-padded-"
+          SELF_SERVICE_REGISTRATION_ENABLED: "false"
+          OAUTH_JWT_PRIVATE_KEY: ${{ env.OAUTH_JWT_PRIVATE_KEY }}
+          OAUTH_JWT_PUBLIC_KEY: ${{ env.OAUTH_JWT_PUBLIC_KEY }}
+        run: pnpm exec next build --no-lint
+
+  security-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit complete dependency tree
+        run: pnpm audit --audit-level=high
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level=high
+
+      - name: Scan repository history for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

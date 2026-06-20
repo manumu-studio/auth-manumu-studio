@@ -1,9 +1,10 @@
-import crypto from "crypto";
+// OAuth authorization-code token exchange; enforces mandatory S256 PKCE regardless of client type.
 import { prisma } from "@/lib/prisma";
 import { getOAuthClient, verifyClientSecret } from "./clientRegistry";
 import { resolveIssuer } from "./issuer";
 import { signAccessToken } from "./jwt";
 import { getUserClaims } from "./claims";
+import { isValidPkceValue, pkceChallengeMatches } from "./pkce";
 
 const ACCESS_TOKEN_TTL_MINUTES = 60;
 
@@ -32,20 +33,6 @@ export type AuthorizationCodeExchangeInput = {
 
 export type AuthorizationCodeExchangeResult = TokenSuccess | TokenError;
 
-function toBase64Url(input: Buffer | string): string {
-  const buffer = typeof input === "string" ? Buffer.from(input) : input;
-  return buffer.toString("base64url");
-}
-
-
-function computePkceChallenge(verifier: string, method: string | null): string {
-  if (method === "S256") {
-    const digest = crypto.createHash("sha256").update(verifier).digest();
-    return toBase64Url(digest);
-  }
-  return verifier;
-}
-
 function reject(
   error: TokenError["error"],
   description: string,
@@ -53,7 +40,6 @@ function reject(
 ): TokenError {
   return { ok: false, error, description, status };
 }
-
 export async function exchangeAuthorizationCode(
   input: AuthorizationCodeExchangeInput
 ): Promise<AuthorizationCodeExchangeResult> {
@@ -79,44 +65,69 @@ export async function exchangeAuthorizationCode(
     return reject("invalid_client", "Client authentication failed.", 401);
   }
 
+  // Client secret auth (confidential clients) — verify independently of PKCE.
   if (input.clientSecret) {
     const secretOk = verifyClientSecret(input.clientSecret, client.clientSecretHash);
     if (!secretOk) {
       return reject("invalid_client", "Client authentication failed.", 401);
     }
-  } else if (!codeRecord.codeChallenge) {
-    return reject("invalid_client", "client_secret is required for this client.", 401);
   }
 
   if (input.redirectUri && input.redirectUri !== codeRecord.redirectUri) {
     return reject("invalid_grant", "redirect_uri does not match authorization code.", 400);
   }
 
-  if (codeRecord.usedAt) {
-    return reject("invalid_grant", "Authorization code already used.", 400);
-  }
   if (codeRecord.expiresAt <= new Date()) {
     return reject("invalid_grant", "Authorization code expired.", 400);
   }
 
-  if (codeRecord.codeChallenge) {
-    if (!input.codeVerifier) {
-      return reject("invalid_grant", "code_verifier is required.", 400);
-    }
-    const expected = computePkceChallenge(
-      input.codeVerifier,
-      codeRecord.codeChallengeMethod
+  // PKCE S256 verification — mandatory for all grant types.
+  // Condition 1: stored record has no challenge (legacy or misconfigured).
+  if (!codeRecord.codeChallenge) {
+    return reject(
+      "invalid_grant",
+      "Authorization code was issued without PKCE; exchange rejected.",
+      400
     );
-    if (expected !== codeRecord.codeChallenge) {
-      return reject("invalid_grant", "code_verifier mismatch.", 400);
-    }
   }
 
+  // Condition 2: stored method is not S256 (downgrade attempt or legacy record).
+  if (codeRecord.codeChallengeMethod !== "S256") {
+    return reject(
+      "invalid_grant",
+      "code_challenge_method must be S256.",
+      400
+    );
+  }
+
+  // Condition 3: no verifier provided.
+  if (!input.codeVerifier) {
+    return reject("invalid_grant", "code_verifier is required.", 400);
+  }
+
+  // Condition 4: verifier is malformed (fails RFC 7636 char/length rules).
+  if (!isValidPkceValue(input.codeVerifier)) {
+    return reject("invalid_grant", "code_verifier is malformed.", 400);
+  }
+
+  // Condition 5: verifier does not produce the stored S256 challenge.
+  if (!pkceChallengeMatches(input.codeVerifier, codeRecord.codeChallenge)) {
+    return reject("invalid_grant", "code_verifier mismatch.", 400);
+  }
+
+  // Atomic claim: only the first concurrent request wins. The WHERE clause
+  // on usedAt: null and expiresAt: { gt: now } ensures no second writer can
+  // claim the same row — the DB evaluates this predicate atomically under its
+  // row-level lock. count === 0 means another request already claimed it or
+  // the code expired between validation and claim.
   const now = new Date();
-  await prisma.oAuthAuthorizationCode.update({
-    where: { id: codeRecord.id },
+  const claimed = await prisma.oAuthAuthorizationCode.updateMany({
+    where: { id: codeRecord.id, usedAt: null, expiresAt: { gt: now } },
     data: { usedAt: now },
   });
+  if (claimed.count !== 1) {
+    return reject("invalid_grant", "Authorization code is invalid or already used.", 400);
+  }
 
   const expiresIn = ACCESS_TOKEN_TTL_MINUTES * 60;
   const issuedAt = Math.floor(now.getTime() / 1000);
@@ -147,7 +158,7 @@ export async function exchangeAuthorizationCode(
       ...userClaims,
     };
     if (codeRecord.nonce) {
-      idTokenPayload.nonce = codeRecord.nonce;
+      idTokenPayload["nonce"] = codeRecord.nonce;
     }
     idToken = signAccessToken(idTokenPayload);
   }

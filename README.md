@@ -2,14 +2,10 @@
 
 Central authentication and OAuth/OIDC service for ManuMu Studio applications.
 
-**Version:** 1.8.4
+**Version:** 1.8.5
 **Runtime:** Next.js 15 App Router · TypeScript 5.9 · NextAuth v4 · Prisma 6 · PostgreSQL
 **Production URL:** [auth.manumustudio.com](https://auth.manumustudio.com)
 
-> Security hardening is in progress. This service has working authentication
-> and OIDC flows, but it is not yet presented as attack-resistant or generally
-> production-ready. See [Incident P001](docs/incidents/INCIDENT-P001-auth-security-exposure.md)
-> and the [security audit](docs/audits/SECURITY-AUDIT-2026-06-17.md).
 
 ## Current Capabilities
 
@@ -20,29 +16,23 @@ Central authentication and OAuth/OIDC service for ManuMu Studio applications.
 - JWT sessions with user ID and role claims.
 - Profile, password, connected-account, onboarding, and account-deletion UI.
 - OAuth client registry with exact redirect URI and allowed-origin lists.
-- Authorization Code flow with consent, PKCE support, access tokens, and ID tokens.
+- Authorization Code flow with consent, mandatory PKCE S256, access tokens, and ID tokens.
 - OIDC discovery, JWKS, UserInfo, and RP-initiated logout.
 - Prisma migrations for PostgreSQL and Neon-compatible deployment.
 
-## Known Security Work
+## Security Controls
 
-The following controls are planned but not yet complete:
+The following hardening controls are active in production:
 
-- Close unrestricted self-service registration.
-- Require distributed Upstash rate limiting in production.
-- Patch vulnerable dependencies and block vulnerable builds in CI.
-- Require PKCE S256 and remove `plain`.
-- Consume authorization codes atomically.
-- Replace bare SHA-256 OTP storage with keyed HMAC storage.
-- Harden JWT claim validation, session lifecycle, and account linking.
+- Upstash Redis rate limiting is required and fail-closed; the app refuses to start without it.
+- Seven independent per-surface rate-limit policies cover credentials, signup, OTP, password reset, OAuth token exchange, and UserInfo.
+- PKCE S256 is mandatory for every authorization request; `plain` is rejected.
+- Authorization codes are consumed atomically, preventing replay races.
+- Verification OTPs are stored as HMAC-SHA256 keyed with `OTP_HMAC_SECRET`.
+- Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`.
+- CI enforces a blocking dependency audit (`pnpm audit --audit-level=high`) and a full-history secret scan.
 
-The execution order is:
-
-1. `PACKET-security-hardening-now`
-2. `PACKET-gated-registration`
-3. LSA engineering-baseline parity
-4. App membership and pairwise subjects for new clients
-5. Redirect-based SDK
+Remaining work: invite/allowlist registration gate, bcrypt cost increase, observability, pairwise subjects. See [Security](docs/SECURITY.md).
 
 ## Architecture
 
@@ -115,33 +105,33 @@ pnpm prisma:migrate
 pnpm dev
 ```
 
-Use pnpm only. `package-lock.json` is a legacy lockfile scheduled for removal
-in the security-hardening dependency task.
+Use pnpm only; npm/yarn are not supported.
 
 ## Environment
 
-Required for the core application:
+Required in all environments:
 
 - `DATABASE_URL`
-- `NEXTAUTH_SECRET`
+- `NEXTAUTH_SECRET` (minimum 32 characters)
 - `NEXTAUTH_URL` or `AUTH_URL`
 
 Required for OAuth/OIDC token issuance:
 
 - `OAUTH_JWT_PRIVATE_KEY`
 - `OAUTH_JWT_PUBLIC_KEY`
-- optional `OAUTH_JWT_KID`
+- `OAUTH_JWT_KID` (optional)
 
-Required for production email delivery:
-
-- `RESEND_API_KEY`
-- `RESEND_FROM`
-
-Production rate limiting currently supports Upstash, but the variables are
-still optional until the security-hardening packet lands:
+Required in production:
 
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
+- `OTP_HMAC_SECRET` (minimum 32 characters)
+- `SELF_SERVICE_REGISTRATION_ENABLED` (must be `false`)
+
+Required for email delivery:
+
+- `RESEND_API_KEY`
+- `RESEND_FROM`
 
 See [.env.example](.env.example) and [Deployment](docs/DEPLOYMENT.md).
 

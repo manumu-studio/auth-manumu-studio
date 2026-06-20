@@ -12,7 +12,7 @@
 import { prisma } from "@/lib/prisma";
 import { createPasswordResetToken } from "@/features/auth/server/reset/createResetToken";
 import { sendPasswordResetEmail } from "@/features/auth/server/reset/sendResetEmail";
-import { buildRateLimitKey, getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { buildRateLimitKey, getClientIp, rateLimit } from "@/lib/rateLimit";
 import { requestResetSchema } from "@/lib/validation/reset";
 import { headers } from "next/headers";
 import type { ActionResult } from "./types";
@@ -30,7 +30,7 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
   const email = parsed.data.email.toLowerCase().trim();
 
   // 2. Rate limiting (prevents abuse)
-  const ip = getRequestIp(await headers());
+  const ip = getClientIp(await headers());
   const identifier = buildRateLimitKey({ scope: "password_reset", ip, email });
   const limitResult = await rateLimit(identifier);
 

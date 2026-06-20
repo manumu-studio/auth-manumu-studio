@@ -8,7 +8,8 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     oAuthAuthorizationCode: {
       findUnique: vi.fn(),
-      update: vi.fn(),
+      // updateMany is the atomic claim used since TASK-014; update is no longer called.
+      updateMany: vi.fn(),
     },
     user: {
       findUnique: vi.fn(),
@@ -50,10 +51,16 @@ afterEach(() => {
 });
 
 describe("OAuth /oauth/token", () => {
-  it("exchanges a valid code for a JWT access token (confidential client)", async () => {
+  it("exchanges a valid code for a JWT access token (confidential client with S256 PKCE)", async () => {
+    // S256 PKCE is now mandatory even for confidential clients.
+    // verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    // challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM (SHA-256 base64url of verifier)
+    const VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+    const CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
+
     const { prisma } = await import("@/lib/prisma");
     const prismaMock = prisma as unknown as {
-      oAuthAuthorizationCode: { findUnique: Mock; update: Mock };
+      oAuthAuthorizationCode: { findUnique: Mock; updateMany: Mock };
       user: { findUnique: Mock };
     };
     prismaMock.user.findUnique.mockResolvedValue({
@@ -70,12 +77,14 @@ describe("OAuth /oauth/token", () => {
       userId: "user-456",
       redirectUri: "https://app.example.com/callback",
       scopes: ["openid", "email"],
-      codeChallenge: null,
-      codeChallengeMethod: null,
+      codeChallenge: CHALLENGE,
+      codeChallengeMethod: "S256",
       expiresAt: new Date(NOW.getTime() + 5 * 60 * 1000),
       usedAt: null,
+      nonce: null,
     });
-    prismaMock.oAuthAuthorizationCode.update.mockResolvedValue({});
+    // Atomic claim succeeds (count: 1 → first and only successful claimant).
+    prismaMock.oAuthAuthorizationCode.updateMany.mockResolvedValue({ count: 1 });
 
     const { getOAuthClient, verifyClientSecret } = await import(
       "@/features/auth/server/oauth/clientRegistry"
@@ -95,6 +104,7 @@ describe("OAuth /oauth/token", () => {
       code: "auth-code",
       client_id: "client-123",
       client_secret: "secret",
+      code_verifier: VERIFIER,
     });
     const req = new Request("http://localhost/oauth/token", {
       method: "POST",
@@ -179,7 +189,14 @@ describe("OAuth /oauth/token", () => {
     });
   });
 
-  it("rejects missing or invalid PKCE verifier for public clients", async () => {
+  it("rejects a mismatched S256 verifier for public clients", async () => {
+    // S256 PKCE is mandatory. A wrong verifier (valid shape but wrong value) must
+    // be rejected with code_verifier mismatch, not accepted.
+    // verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+    // challenge: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM (SHA-256 base64url of verifier)
+    const CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
+    const WRONG_VERIFIER = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
     const { prisma } = await import("@/lib/prisma");
     const prismaMock = prisma as unknown as {
       oAuthAuthorizationCode: { findUnique: Mock };
@@ -191,8 +208,8 @@ describe("OAuth /oauth/token", () => {
       userId: "user-456",
       redirectUri: "https://app.example.com/callback",
       scopes: ["openid"],
-      codeChallenge: "expected",
-      codeChallengeMethod: "plain",
+      codeChallenge: CHALLENGE,
+      codeChallengeMethod: "S256",
       expiresAt: new Date(NOW.getTime() + 5 * 60 * 1000),
       usedAt: null,
     });
@@ -210,7 +227,7 @@ describe("OAuth /oauth/token", () => {
       grant_type: "authorization_code",
       code: "auth-code",
       client_id: "client-123",
-      code_verifier: "wrong",
+      code_verifier: WRONG_VERIFIER,
     });
     const req = new Request("http://localhost/oauth/token", {
       method: "POST",
@@ -228,11 +245,20 @@ describe("OAuth /oauth/token", () => {
     });
   });
 
-  it("rejects already used authorization codes", async () => {
+  it("rejects a replay (already-used) code via atomic claim returning count: 0", async () => {
+    // Since TASK-014, the read-side usedAt guard is removed. A replayed code is
+    // detected by the atomic updateMany returning count: 0 (another request already
+    // claimed usedAt or the code expired). The code record can have any usedAt value
+    // from findUnique — the claim write is the authoritative gate.
+    const VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+    const CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
+
     const { prisma } = await import("@/lib/prisma");
     const prismaMock = prisma as unknown as {
-      oAuthAuthorizationCode: { findUnique: Mock };
+      oAuthAuthorizationCode: { findUnique: Mock; updateMany: Mock };
     };
+    // findUnique returns a structurally valid (not yet expired) record;
+    // the "already used" reality is reflected in updateMany returning count: 0.
     prismaMock.oAuthAuthorizationCode.findUnique.mockResolvedValue({
       id: "code-1",
       code: "auth-code",
@@ -240,11 +266,14 @@ describe("OAuth /oauth/token", () => {
       userId: "user-456",
       redirectUri: "https://app.example.com/callback",
       scopes: ["openid"],
-      codeChallenge: null,
-      codeChallengeMethod: null,
+      codeChallenge: CHALLENGE,
+      codeChallengeMethod: "S256",
       expiresAt: new Date(NOW.getTime() + 5 * 60 * 1000),
-      usedAt: new Date(NOW.getTime() - 1000),
+      usedAt: null,
+      nonce: null,
     });
+    // Atomic claim fails — another request already claimed the code.
+    prismaMock.oAuthAuthorizationCode.updateMany.mockResolvedValue({ count: 0 });
 
     const { getOAuthClient, verifyClientSecret } = await import(
       "@/features/auth/server/oauth/clientRegistry"
@@ -264,6 +293,7 @@ describe("OAuth /oauth/token", () => {
       code: "auth-code",
       client_id: "client-123",
       client_secret: "secret",
+      code_verifier: VERIFIER,
     });
     const req = new Request("http://localhost/oauth/token", {
       method: "POST",
@@ -277,7 +307,7 @@ describe("OAuth /oauth/token", () => {
     expect(res.status).toBe(400);
     expect(payload).toEqual({
       error: "invalid_grant",
-      error_description: "Authorization code already used.",
+      error_description: "Authorization code is invalid or already used.",
     });
   });
 });
