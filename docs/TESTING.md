@@ -1,14 +1,14 @@
 # Testing
 
-**Version:** 1.8.5
+**Version:** 1.9.0
 
 ## Current State
 
 - Runner: Vitest `^4.1.9`
 - Environment: Node
 - Discovery: `tests/**/*.test.ts`
-- Current test files: 13
-- Current tests: 142
+- Current test files: 14
+- Current tests: 150
 - Coverage thresholds: not configured
 - Playwright E2E: not configured
 - CI: Vitest runs in the parallel `test-coverage` job; dependency audits run
@@ -26,9 +26,10 @@ Current suites cover:
 - OAuth token and UserInfo rate limits;
 - mandatory S256 PKCE and plain rejection;
 - atomic authorization-code consumption and replay prevention;
-- HMAC OTP creation and verification, seed safety, and registration kill switch.
+- HMAC OTP creation and verification, seed safety, and registration kill switch;
+- Packet 02 gated-registration schema and migration invariants.
 
-Baseline verification on 2026-06-20: 13 files and 142 tests passed.
+Baseline verification on 2026-06-21: 14 files and 150 tests passed.
 
 ## Commands
 
@@ -55,9 +56,15 @@ Requirements" are now covered.
 | `tests/security-auth-code-concurrency.test.ts` | 7 | Atomic code consumption, replay prevention |
 | `tests/security-config-otp-seed-signup.test.ts` | 32 | HMAC OTP, seed safety, registration kill switch |
 
-## Gated-Registration Test Requirements
+## Gated-Registration Schema Suite Added in 1.9.0
 
-These remain future work, to be addressed when the invite/allowlist gate is
+| File | Tests | Coverage area |
+|------|-------|---------------|
+| `tests/gated-registration-schema.test.ts` | 8 | Packet 02 schema, migration, registration-session, outbox, audit, and admin-MFA invariants |
+
+## Gated-Registration Runtime Test Requirements
+
+These remain future work, to be addressed when the invite/allowlist runtime gate is
 implemented:
 
 - invite issue, expiry, and single use;

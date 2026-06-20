@@ -5,6 +5,19 @@ This format follows [Conventional Commits](https://www.conventionalcommits.org/e
 
 ---
 
+## [1.9.0] - 2026-06-21
+
+### Added
+
+- **Packet 02 gated-registration database foundation**: added additive Prisma schema and reversible migration support for account status, credential modality, invite lifecycle, outbox delivery state, immutable audit events, explicit account-link intents, opaque registration sessions, and admin MFA factor state.
+- **Schema invariant coverage**: added `tests/gated-registration-schema.test.ts`, bringing the suite to **150 tests across 14 files**.
+
+### Changed
+
+- **Documentation baseline**: synchronized README, architecture, security, testing, changelog, journal, and PR docs with the new Packet 02 schema foundation while keeping the user-facing invite gate marked as unfinished runtime work.
+
+---
+
 ## [1.8.5] - 2026-06-20
 
 ### Security

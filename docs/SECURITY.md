@@ -1,7 +1,7 @@
 # Security
 
-**Version:** 1.8.5
-**Last Updated:** 2026-06-20
+**Version:** 1.9.0
+**Last Updated:** 2026-06-21
 **Current Status:** Security hardening controls implemented; production verification pending.
 
 ## Security Posture
@@ -129,15 +129,14 @@ public document describes the current implemented controls and known risks.
 - No Sentry/error-tracking integration.
 - No request correlation IDs or alerting.
 - No coverage thresholds, E2E tests, or health endpoint.
-- Gated registration (invite/allowlist) not yet implemented; the signup kill
-  switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) is a temporary measure.
+- Gated registration runtime flows are not yet implemented; the Packet 02 schema foundation exists and the signup kill switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) remains the production guard until the runtime gate ships.
 - Pairwise subjects not yet implemented.
 
 ## Control Matrix
 
-| Area | Current (1.8.5) | Required Next State |
+| Area | Current (1.9.0) | Required Next State |
 |------|-----------------|---------------------|
-| Registration | Kill switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) | Invite/allowlist gate + bot defense |
+| Registration | Kill switch plus Packet 02 schema foundation | Invite/allowlist runtime gate + bot defense |
 | Rate limits | Upstash mandatory, 7-policy map, all OAuth endpoints covered | Per-email caps, logout limiting |
 | PKCE | S256 required, plain rejected | — (complete) |
 | Auth code use | Atomic conditional update | — (complete) |
@@ -146,7 +145,7 @@ public document describes the current implemented controls and known risks.
 | Dependencies | Blocking audit gate, 0 HIGH/CRITICAL | Ongoing maintenance |
 | Secrets | Full-history gitleaks in CI | Ongoing |
 | Observability | Console logs | Pino + request IDs + Sentry |
-| Testing | 13 files, 142 tests | Coverage thresholds + Playwright |
+| Testing | 14 files, 150 tests | Coverage thresholds + Playwright |
 | Session lifecycle | 30-day JWT | Max-age review, rotation |
 
 ## Account Linking

@@ -2,7 +2,7 @@
 
 Central authentication and OAuth/OIDC service for ManuMu Studio applications.
 
-**Version:** 1.8.5
+**Version:** 1.9.0
 **Runtime:** Next.js 15 App Router · TypeScript 5.9 · NextAuth v4 · Prisma 6 · PostgreSQL
 **Production URL:** [auth.manumustudio.com](https://auth.manumustudio.com)
 
@@ -19,6 +19,7 @@ Central authentication and OAuth/OIDC service for ManuMu Studio applications.
 - Authorization Code flow with consent, mandatory PKCE S256, access tokens, and ID tokens.
 - OIDC discovery, JWKS, UserInfo, and RP-initiated logout.
 - Prisma migrations for PostgreSQL and Neon-compatible deployment.
+- Packet 02 database foundation for invite-gated registration: account status, invite lifecycle, outbox, immutable audit events, registration-session handles, and admin MFA factor state.
 
 ## Security Controls
 
@@ -32,7 +33,7 @@ The following hardening controls are active in production:
 - Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`.
 - CI enforces a blocking dependency audit (`pnpm audit --audit-level=high`) and a full-history secret scan.
 
-Remaining work: invite/allowlist registration gate, bcrypt cost increase, observability, pairwise subjects. See [Security](docs/SECURITY.md).
+Remaining work: invite/allowlist runtime flows on top of the new schema foundation, bcrypt cost increase, observability, pairwise subjects. See [Security](docs/SECURITY.md).
 
 ## Architecture
 
@@ -75,8 +76,10 @@ src/
 └── lib/                          # Env, Prisma, rate limits, validation
 
 prisma/
-├── schema.prisma
-└── migrations/
+├── schema.prisma              # Includes Packet 02 gated-registration foundation
+└── migrations/                 # Includes reversible gated-registration foundation SQL
+
+tests/                          # Vitest suites, including schema/security invariants
 
 docs/
 ├── ai/                           # Project methodology context
@@ -151,6 +154,7 @@ pnpm prisma:deploy
 Current limitations:
 
 - `pnpm lint` runs ESLint with `--fix`; CI should become read-only.
+- Current suite: 14 Vitest files / 150 tests.
 - Coverage thresholds and Playwright E2E tests are not configured.
 - The `smoke` script targets `/api/healthz`, which will be implemented during
   the LSA parity work.
