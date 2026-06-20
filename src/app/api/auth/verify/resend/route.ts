@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { resendVerificationToken } from "@/features/auth/server/verify/resend";
 import { resendSchema } from "@/lib/validation/verify";
-import { buildRateLimitKey, getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { buildRateLimitKey, getClientIp, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const parsed = resendSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ ok: false, reason: "bad-request" }, { status: 400 });
 
-  const ip = getRequestIp(req.headers);
+  const ip = getClientIp(req.headers);
   const identifier = buildRateLimitKey({
     scope: "verify_resend",
     ip,

@@ -1,7 +1,7 @@
 # Architecture
 
-**Version:** 1.8.4
-**Last Updated:** 2026-06-19
+**Version:** 1.8.5
+**Last Updated:** 2026-06-20
 
 ## System Role
 
@@ -62,7 +62,7 @@ sequenceDiagram
     A->>S: FormData
     S->>S: Zod validation + rate limit
     S->>D: Create unverified User + UserProfile
-    S->>D: Store SHA-256 OTP hash
+    S->>D: Store HMAC-SHA256 OTP hash
     S->>E: Send six-digit OTP
     U->>V: Submit email + code
     V->>D: Validate code / attempts / expiry
@@ -74,11 +74,11 @@ sequenceDiagram
 Current behavior:
 
 - OTPs use `crypto.randomInt`.
-- OTP hashes use bare SHA-256; HMAC hardening is pending.
+- OTP codes are stored as HMAC-SHA256 keyed with `OTP_HMAC_SECRET`; a bare-SHA-256 hash is not recoverable without the server secret.
 - Maximum attempts are enforced, but failed-attempt updates are not fully
   atomic.
 - Successful verification automatically creates a 30-day JWT session.
-- Signup is currently public; invite gating is pending.
+- Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`; invite gating is the planned next state.
 
 ### Credentials Sign-In
 
@@ -123,7 +123,7 @@ planned.
 - redirects to the exact registered redirect URI with `code` and `state`.
 
 Validation includes client status, exact redirect URI matching, supported and
-client-allowed scopes, response type, PKCE fields, and optional nonce.
+client-allowed scopes, response type, mandatory S256 PKCE fields, and optional nonce.
 
 ### Token Exchange
 
@@ -139,12 +139,12 @@ The exchange:
 - issues a one-hour RS256 access token;
 - issues an ID token when `openid` was granted.
 
-Known limitations:
-
-- PKCE `plain` is accepted and PKCE is not mandatory for every client.
-- Authorization-code consumption is read-then-update rather than atomic.
-- The token endpoint is not rate-limited.
-- Token request JSON is asserted rather than Zod-parsed.
+**1.8.5 security properties:**
+- PKCE S256 is mandatory; `plain` is rejected and missing challenges are rejected.
+- Code consumption is atomic: a single conditional `updateMany` claims the code; tokens are issued only when exactly one row is claimed.
+- The token endpoint is rate-limited by independent per-IP and per-client-id buckets.
+- Token request bodies are Zod-validated.
+- All token responses carry `Cache-Control: no-store` and `Pragma: no-cache`. Rate-limit 429 responses include `Retry-After`.
 
 ### Claims and Subjects
 
@@ -171,7 +171,7 @@ Email and profile claims are returned only when their scopes are granted.
 - `/oauth/logout`
 
 JWKS publishes a single RS256 public key with a derived or configured `kid`.
-Key rotation is not automated.
+Key rotation is not automated. Discovery advertises `code_challenge_methods_supported: ["S256"]` only.
 
 ### RP-Initiated Logout
 
@@ -184,6 +184,20 @@ Key rotation is not automated.
 
 Expired ID token hints are accepted after signature verification. Maximum-age
 hardening is pending.
+
+### Rate Limiting
+
+A 7-entry immutable policy map assigns independent rate-limit ceilings to each abuse surface:
+
+- credentials sign-in (per IP + email)
+- signup (per IP)
+- OTP verification (per IP + email)
+- OTP resend (per IP + email)
+- password-reset request (per IP)
+- OAuth token exchange — two independent buckets: per-IP (checked before body parsing) and per-normalized-client-id (checked after)
+- OAuth UserInfo — two independent buckets: per-IP and per-SHA-256-token-fingerprint
+
+Client secrets and raw bearer tokens never enter limiter keys or logs. The limiter is backed by Upstash Redis in production; a process-local fallback is available in development only.
 
 ## Data Model
 
@@ -256,16 +270,13 @@ flowchart TB
     N --> G[Google / GitHub]
 ```
 
-Upstash is optional in the current environment schema. Without it, the app
-falls back to process-local memory, which is unsuitable for production
-serverless rate limiting. The hardening packet makes Upstash mandatory in
-production.
+Upstash Redis is required in production. The app refuses to start without valid Upstash credentials. The in-memory rate-limit fallback is available in development and test only. Seven independent per-surface rate-limit policies are applied across credential, OAuth, and OTP endpoints.
 
 See [Deployment](DEPLOYMENT.md).
 
 ## Current Direction
 
-1. Resolve Incident P001 through security hardening.
+1. Deploy security hardening (v1.8.5) to production and verify golden paths (CI passes; production verification pending).
 2. Remove open signup through gated registration.
 3. Reach the LSA engineering baseline for strict TypeScript, CI, tests,
    observability, documentation, and accessibility.

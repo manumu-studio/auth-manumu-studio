@@ -21,7 +21,7 @@ import { z } from "zod";
 import { googleProvider } from "@/features/auth/server/providers/google";
 import { githubProvider } from "@/features/auth/server/providers/github";
 import { env } from "@/lib/env";
-import { buildRateLimitKey, getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { buildRateLimitKey, getClientIp, rateLimit } from "@/lib/rateLimit";
 
 /**
  * Zod schema for validating credentials input
@@ -74,7 +74,7 @@ export const authOptions: NextAuthOptions = {
         // Normalize email (lowercase, trimmed) and fetch user
         const normalizedEmail = email.trim().toLowerCase();
 
-        const ip = getRequestIp(req?.headers ?? {});
+        const ip = getClientIp(req?.headers ?? {});
         const identifier = buildRateLimitKey({
           scope: "signin",
           ip,

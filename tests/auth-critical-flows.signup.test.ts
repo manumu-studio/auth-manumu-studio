@@ -13,7 +13,7 @@ vi.mock('@/lib/prisma', () => ({
 
 vi.mock('@/lib/rateLimit', () => ({
   buildRateLimitKey: vi.fn(() => 'rate:limit:key'),
-  getRequestIp: vi.fn(() => '127.0.0.1'),
+  getClientIp: vi.fn(() => '127.0.0.1'),
   rateLimit: vi.fn(async () => ({
     success: true,
     limit: 3,

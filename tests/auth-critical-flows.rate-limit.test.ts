@@ -4,7 +4,7 @@ const ORIGINAL_ENV = { ...process.env };
 
 vi.mock('@/lib/rateLimit', () => ({
   buildRateLimitKey: vi.fn(() => 'rate:limit:key'),
-  getRequestIp: vi.fn(() => '127.0.0.1'),
+  getClientIp: vi.fn(() => '127.0.0.1'),
   rateLimit: vi.fn(),
 }));
 
@@ -122,7 +122,7 @@ describe('Rate-limit enforcement', () => {
 
     vi.doMock('@/lib/rateLimit', () => ({
       buildRateLimitKey: vi.fn(() => 'rate:limit:key'),
-      getRequestIp: vi.fn(() => '127.0.0.1'),
+      getClientIp: vi.fn(() => '127.0.0.1'),
       rateLimit: rateLimitMock,
     }));
 

@@ -12,9 +12,12 @@ function generateOtpCode(): string {
   return num.toString().padStart(6, "0");
 }
 
-// Hash the code for storage (never store plaintext OTPs)
+// Hash the code for storage using HMAC-SHA256 keyed with OTP_HMAC_SECRET.
+// Falls back to NEXTAUTH_SECRET in dev/test when OTP_HMAC_SECRET is absent.
+// OTP_HMAC_SECRET is required in production via env validation (EnvSchemaProd).
 export function hashOtpCode(code: string): string {
-  return crypto.createHash("sha256").update(code).digest("hex");
+  const secret = env.OTP_HMAC_SECRET ?? env.NEXTAUTH_SECRET ?? "";
+  return crypto.createHmac("sha256", secret).update(code, "utf8").digest("hex");
 }
 
 export async function createVerificationToken(email: string) {

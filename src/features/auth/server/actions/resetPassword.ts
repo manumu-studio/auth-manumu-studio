@@ -11,7 +11,7 @@
 
 import { headers } from "next/headers";
 import { consumePasswordResetToken } from "@/features/auth/server/reset/consumeResetToken";
-import { buildRateLimitKey, getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { buildRateLimitKey, getClientIp, rateLimit } from "@/lib/rateLimit";
 import { resetPasswordSchema } from "@/lib/validation/reset";
 import type { ActionResult } from "./types";
 
@@ -37,7 +37,7 @@ export async function resetPassword(formData: FormData): Promise<ActionResult> {
   const { token, password } = parsed.data;
 
   // 2. Rate limiting — prevents brute-force and CPU exhaustion via bcrypt
-  const ip = getRequestIp(await headers());
+  const ip = getClientIp(await headers());
   const identifier = buildRateLimitKey({ scope: "password_reset_consume", ip });
   const limitResult = await rateLimit(identifier);
 

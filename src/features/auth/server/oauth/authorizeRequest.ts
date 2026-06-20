@@ -1,4 +1,6 @@
+// Validates incoming OAuth /authorize requests; enforces mandatory S256 PKCE.
 import { assertRedirectUriAllowed, getOAuthClient } from "@/features/auth/server/oauth";
+import { isValidPkceValue } from "./pkce";
 
 export type AuthorizeRequest = {
   client_id?: string;
@@ -18,8 +20,8 @@ export type AuthorizationValidationResult =
       redirectUri: string;
       scopes: string[];
       state?: string;
-      codeChallenge?: string;
-      codeChallengeMethod?: "S256" | "plain";
+      codeChallenge: string;
+      codeChallengeMethod: "S256";
       nonce?: string;
     }
   | {
@@ -37,16 +39,6 @@ function parseScopes(scope?: string): string[] {
   if (!raw) return ["openid"];
   const values = raw.split(/\s+/).filter(Boolean);
   return values.length ? values : ["openid"];
-}
-
-function resolveCodeChallengeMethod(
-  codeChallenge?: string,
-  method?: string
-): "S256" | "plain" | undefined {
-  if (!codeChallenge) return undefined;
-  if (!method) return "plain";
-  if (method === "S256" || method === "plain") return method;
-  return undefined;
 }
 
 export async function validateAuthorizeRequest(
@@ -121,24 +113,32 @@ export async function validateAuthorizeRequest(
     }
   }
 
-  const codeChallengeMethod = resolveCodeChallengeMethod(
-    params.code_challenge,
-    params.code_challenge_method
-  );
-  if (params.code_challenge_method && !codeChallengeMethod) {
+  // PKCE S256 is mandatory — no defaulting, no plain fallback.
+  if (!params.code_challenge) {
     return {
       ok: false,
       error: "invalid_request",
-      description: "code_challenge_method must be S256 or plain.",
+      description: "code_challenge is required.",
       redirectUri,
       state: params.state,
     };
   }
-  if (params.code_challenge_method && !params.code_challenge) {
+
+  if (!isValidPkceValue(params.code_challenge)) {
     return {
       ok: false,
       error: "invalid_request",
-      description: "code_challenge is required when method is provided.",
+      description: "code_challenge is malformed.",
+      redirectUri,
+      state: params.state,
+    };
+  }
+
+  if (params.code_challenge_method !== "S256") {
+    return {
+      ok: false,
+      error: "invalid_request",
+      description: "code_challenge_method must be S256.",
       redirectUri,
       state: params.state,
     };
@@ -151,7 +151,7 @@ export async function validateAuthorizeRequest(
     scopes,
     state: params.state,
     codeChallenge: params.code_challenge,
-    codeChallengeMethod,
+    codeChallengeMethod: "S256" as const,
     nonce: params.nonce,
   };
 }

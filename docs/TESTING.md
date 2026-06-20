@@ -1,17 +1,18 @@
 # Testing
 
-**Version:** 1.8.4
+**Version:** 1.8.5
 
 ## Current State
 
-- Runner: Vitest
+- Runner: Vitest `^4.1.9`
 - Environment: Node
 - Discovery: `tests/**/*.test.ts`
-- Current test files: 7
-- Current tests: 32
+- Current test files: 13
+- Current tests: 142
 - Coverage thresholds: not configured
 - Playwright E2E: not configured
-- CI: tests run inside the sequential `build-test` job
+- CI: Vitest runs in the parallel `test-coverage` job; dependency audits run
+  in the parallel `security-audit` job
 
 Current suites cover:
 
@@ -19,9 +20,15 @@ Current suites cover:
 - OTP verification and rate limiting;
 - OAuth authorize validation;
 - OAuth token exchange;
-- JWKS and OIDC discovery.
+- JWKS and OIDC discovery;
+- CI config and audit gate;
+- distributed rate-limit foundation, fail-closed behavior, and IP extraction;
+- OAuth token and UserInfo rate limits;
+- mandatory S256 PKCE and plain rejection;
+- atomic authorization-code consumption and replay prevention;
+- HMAC OTP creation and verification, seed safety, and registration kill switch.
 
-Baseline verification on 2026-06-19: 7 files and 32 tests passed.
+Baseline verification on 2026-06-20: 13 files and 142 tests passed.
 
 ## Commands
 
@@ -33,20 +40,25 @@ pnpm lint
 pnpm build
 ```
 
-## Security-Hardening Test Requirements
+## Security Test Suites Added in 1.8.5
 
-Phase 0 must add durable tests for:
+The following six suites were introduced in the 1.8.5 security hardening
+release. All items previously listed under "Security-Hardening Test
+Requirements" are now covered.
 
-- production Upstash requirement;
-- trusted platform IP extraction;
-- OAuth token/UserInfo rate limits;
-- token response `Cache-Control: no-store`;
-- S256-only PKCE;
-- concurrent authorization-code redemption;
-- HMAC OTP creation and verification;
-- seed/config safety.
+| File | Tests | Coverage area |
+|------|-------|---------------|
+| `tests/security-ci-config.test.ts` | 14 | CI config and audit gate |
+| `tests/security-rate-limit-foundation.test.ts` | 20 | Distributed limiter foundation, fail-closed behavior, IP extraction |
+| `tests/security-oauth-rate-limits.test.ts` | 12 | OAuth token and UserInfo rate limits |
+| `tests/security-pkce-s256.test.ts` | 25 | Mandatory S256, plain rejection, constant-time comparison |
+| `tests/security-auth-code-concurrency.test.ts` | 7 | Atomic code consumption, replay prevention |
+| `tests/security-config-otp-seed-signup.test.ts` | 32 | HMAC OTP, seed safety, registration kill switch |
 
 ## Gated-Registration Test Requirements
+
+These remain future work, to be addressed when the invite/allowlist gate is
+implemented:
 
 - invite issue, expiry, and single use;
 - atomic invite consumption with user creation;

@@ -32,6 +32,75 @@ const EnvSchema = z.object({
   SESSION_IDLE_TIMEOUT_MINUTES: z.coerce.number().int().positive().default(30),
   MFA_ISSUER: z.string().default("ManuMu Studio"),
   HIBP_ENABLED: z.enum(["true", "false"]).default("false").transform(v => v === "true"),
+  VERCEL: z.enum(["1"]).optional(),
+  // OTP HMAC key — required in production, optional in dev (falls back to NEXTAUTH_SECRET)
+  OTP_HMAC_SECRET: z.string().min(32).optional(),
+  // Self-service registration kill switch
+  SELF_SERVICE_REGISTRATION_ENABLED: z.enum(["true", "false"]).default("true"),
+  // Seed-only optional fields (never set in production)
+  SEED_ADMIN_PASSWORD: z.string().optional(),
+  SEED_USER_PASSWORD: z.string().optional(),
+  SEED_OAUTH_CLIENT_SECRET: z.string().optional(),
+  SEED_CONFIRMATION: z.string().optional(),
+});
+
+// Production requires Upstash: the in-memory rate-limit fallback is a no-op on
+// serverless (each cold start gets a fresh process), so missing Upstash creds
+// silently disable rate limiting. Fail boot instead of degrading insecurely.
+// Applied only on the full-validation path; the SKIP_ENV_VALIDATION path uses
+// EnvSchema.partial() (a ZodObject method unavailable on the ZodEffects below).
+const EnvSchemaProd = EnvSchema.superRefine((data, ctx) => {
+  if (process.env.NODE_ENV === "production") {
+    if (!data.UPSTASH_REDIS_REST_URL) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["UPSTASH_REDIS_REST_URL"],
+        message: "UPSTASH_REDIS_REST_URL is required in production",
+      });
+    }
+    if (!data.UPSTASH_REDIS_REST_TOKEN) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["UPSTASH_REDIS_REST_TOKEN"],
+        message: "UPSTASH_REDIS_REST_TOKEN is required in production",
+      });
+    }
+    if (!data.OAUTH_JWT_PRIVATE_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["OAUTH_JWT_PRIVATE_KEY"],
+        message: "OAUTH_JWT_PRIVATE_KEY is required in production",
+      });
+    }
+    if (!data.OAUTH_JWT_PUBLIC_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["OAUTH_JWT_PUBLIC_KEY"],
+        message: "OAUTH_JWT_PUBLIC_KEY is required in production",
+      });
+    }
+    if (!data.AUTH_URL && !data.NEXTAUTH_URL) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["AUTH_URL"],
+        message: "AUTH_URL or NEXTAUTH_URL is required in production",
+      });
+    }
+    if (!data.OTP_HMAC_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["OTP_HMAC_SECRET"],
+        message: "OTP_HMAC_SECRET is required in production (min 32 chars)",
+      });
+    }
+    if (data.SELF_SERVICE_REGISTRATION_ENABLED !== "false") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["SELF_SERVICE_REGISTRATION_ENABLED"],
+        message: 'SELF_SERVICE_REGISTRATION_ENABLED must be "false" in production until invite gating ships',
+      });
+    }
+  }
 });
 
 const shouldSkipValidation = process.env.SKIP_ENV_VALIDATION === "true";
@@ -71,9 +140,16 @@ const rawEnv = {
   SESSION_IDLE_TIMEOUT_MINUTES: normalizeEnvValue(process.env.SESSION_IDLE_TIMEOUT_MINUTES),
   MFA_ISSUER: normalizeEnvValue(process.env.MFA_ISSUER),
   HIBP_ENABLED: normalizeEnvValue(process.env.HIBP_ENABLED),
+  VERCEL: normalizeEnvValue(process.env.VERCEL),
+  OTP_HMAC_SECRET: normalizeEnvValue(process.env.OTP_HMAC_SECRET),
+  SELF_SERVICE_REGISTRATION_ENABLED: normalizeEnvValue(process.env.SELF_SERVICE_REGISTRATION_ENABLED),
+  SEED_ADMIN_PASSWORD: normalizeEnvValue(process.env.SEED_ADMIN_PASSWORD),
+  SEED_USER_PASSWORD: normalizeEnvValue(process.env.SEED_USER_PASSWORD),
+  SEED_OAUTH_CLIENT_SECRET: normalizeEnvValue(process.env.SEED_OAUTH_CLIENT_SECRET),
+  SEED_CONFIRMATION: normalizeEnvValue(process.env.SEED_CONFIRMATION),
 };
 
-const parsed = (shouldSkipValidation ? EnvSchema.partial() : EnvSchema).safeParse(rawEnv);
+const parsed = (shouldSkipValidation ? EnvSchema.partial() : EnvSchemaProd).safeParse(rawEnv);
 if (!parsed.success) {
   throw parsed.error;
 }
