@@ -6,6 +6,15 @@ import { isIP } from "node:net";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { env } from "@/lib/env";
+import { hashRateLimitIdentifier, normalizeRateLimitIdentifier } from "./rateLimitIdentifiers";
+export { buildAdmissionRateLimitChecks } from "./rateLimitAdmission";
+export { hashRateLimitIdentifier } from "./rateLimitIdentifiers";
+export type {
+  AdmissionRateLimitCheck,
+  AdmissionRateLimitInput,
+  AdmissionRateLimitScope,
+  AdmissionRateLimitSurface,
+} from "./rateLimitAdmission";
 
 // --- Types ---
 
@@ -32,7 +41,23 @@ export type RateLimitPolicy =
   | "oauth-token-ip"
   | "oauth-token-client"
   | "oauth-userinfo-ip"
-  | "oauth-userinfo-token";
+  | "oauth-userinfo-token"
+  | "registration-ip"
+  | "registration-account"
+  | "registration-invite"
+  | "invite-redemption-ip"
+  | "invite-redemption-invite"
+  | "login-ip"
+  | "login-account"
+  | "password-reset-ip"
+  | "password-reset-account"
+  | "otp-verify-ip"
+  | "otp-verify-account"
+  | "fragment-exchange-ip"
+  | "fragment-exchange-invite"
+  | "exchange-write-global"
+  | "admin-operation-ip"
+  | "admin-operation-admin";
 
 type PolicyConfig = {
   readonly limit: number;
@@ -52,6 +77,22 @@ const POLICY_LIMITS = {
   "oauth-token-client": { limit: 120, windowMinutes: 1 },
   "oauth-userinfo-ip": { limit: 300, windowMinutes: 1 },
   "oauth-userinfo-token": { limit: 120, windowMinutes: 1 },
+  "registration-ip": { limit: 5, windowMinutes: 60 },
+  "registration-account": { limit: 5, windowMinutes: 60 },
+  "registration-invite": { limit: 5, windowMinutes: 60 },
+  "invite-redemption-ip": { limit: 10, windowMinutes: 60 },
+  "invite-redemption-invite": { limit: 10, windowMinutes: 60 },
+  "login-ip": { limit: env.RATE_LIMIT_MAX, windowMinutes: env.RATE_LIMIT_WINDOW_MINUTES },
+  "login-account": { limit: env.RATE_LIMIT_MAX, windowMinutes: env.RATE_LIMIT_WINDOW_MINUTES },
+  "password-reset-ip": { limit: 3, windowMinutes: 60 },
+  "password-reset-account": { limit: 3, windowMinutes: 60 },
+  "otp-verify-ip": { limit: 3, windowMinutes: 60 },
+  "otp-verify-account": { limit: 3, windowMinutes: 60 },
+  "fragment-exchange-ip": { limit: 30, windowMinutes: 10 },
+  "fragment-exchange-invite": { limit: 10, windowMinutes: 10 },
+  "exchange-write-global": { limit: 300, windowMinutes: 10 },
+  "admin-operation-ip": { limit: 30, windowMinutes: 10 },
+  "admin-operation-admin": { limit: 20, windowMinutes: 10 },
 } as const satisfies Record<RateLimitPolicy, PolicyConfig>;
 
 // --- Upstash per-policy limiter cache ---
@@ -86,12 +127,13 @@ export function memoryLimit(
   policy: RateLimitPolicy = "auth-sensitive"
 ): RateLimitResult {
   const { limit, windowMinutes } = POLICY_LIMITS[policy];
+  const storeKey = `${policy}:${identifier}`;
   const windowMs = windowMinutes * 60 * 1000;
   const now = Date.now();
-  const timestamps = memoryStore.get(identifier) ?? [];
+  const timestamps = memoryStore.get(storeKey) ?? [];
   const recent = timestamps.filter((ts) => now - ts < windowMs);
   recent.push(now);
-  memoryStore.set(identifier, recent);
+  memoryStore.set(storeKey, recent);
 
   const remaining = Math.max(0, limit - recent.length);
   return {
@@ -106,8 +148,9 @@ export function memoryLimit(
 
 export function buildRateLimitKey({ scope, ip, email }: RateLimitKeyInput): string {
   const safeIp = (ip ?? "unknown").trim() || "unknown";
-  const safeEmail = (email ?? "unknown").trim().toLowerCase() || "unknown";
-  return `${scope}:${safeIp}:${safeEmail}`;
+  const normalizedEmail = normalizeRateLimitIdentifier(email).toLowerCase();
+  const safeEmail = normalizedEmail === "unknown" ? "unknown" : hashRateLimitIdentifier(normalizedEmail);
+  return `${scope}:ip:${safeIp}:account:${safeEmail}`;
 }
 
 // --- Header helper ---

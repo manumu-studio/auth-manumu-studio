@@ -6,6 +6,8 @@ import { resolve } from 'path';
 import crypto from 'crypto';
 
 const ROOT = resolve(import.meta.dirname, '..');
+const HEX_32_BYTE_KEY = 'a'.repeat(64);
+const ADMIN_MFA_KEY_VERSION = '2026-06';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -39,6 +41,15 @@ function buildProdBaseEnv(): Record<string, string> {
     UPSTASH_REDIS_REST_TOKEN: 'dummy-token',
     OTP_HMAC_SECRET: 'prod-otp-hmac-secret-at-least-32xx',
     SELF_SERVICE_REGISTRATION_ENABLED: 'false',
+    TURNSTILE_SECRET_KEY: 'prod-turnstile-secret-at-least-32',
+    TURNSTILE_EXPECTED_HOSTNAME: 'auth.example.com',
+    TURNSTILE_EXPECTED_ACTION: 'gated-registration',
+    INTERNAL_WORKER_AUTH_SECRET: 'prod-worker-auth-secret-at-least-32',
+    INVITE_DELIVERY_ENCRYPTION_KEY: HEX_32_BYTE_KEY,
+    INVITE_DELIVERY_KEY_VERSION: 'invite-2026-06',
+    ADMIN_MFA_SECRET_ENCRYPTION_KEYS: JSON.stringify({ [ADMIN_MFA_KEY_VERSION]: HEX_32_BYTE_KEY }),
+    ADMIN_MFA_SECRET_KEY_VERSION: ADMIN_MFA_KEY_VERSION,
+    ADMIN_ELEVATION_MAX_AGE_SECONDS: '300',
   };
 }
 

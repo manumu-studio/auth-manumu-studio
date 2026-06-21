@@ -10,11 +10,13 @@ This format follows [Conventional Commits](https://www.conventionalcommits.org/e
 ### Added
 
 - **Packet 02 gated-registration database foundation**: added additive Prisma schema and reversible migration support for account status, credential modality, invite lifecycle, outbox delivery state, immutable audit events, explicit account-link intents, opaque registration sessions, and admin MFA factor state.
-- **Schema invariant coverage**: added `tests/gated-registration-schema.test.ts`, bringing the suite to **150 tests across 14 files**.
+- **Invite lifecycle service foundation**: added server-only invite issuance, generic lookup, conditional redemption, reuse audit/alert, and idempotent revocation helpers for Packet 02.
+- **Packet 02 admission foundation**: added fail-closed production env requirements, Turnstile siteverify validation, shared CSRF/enumeration-parity helpers, six-surface rate-limit wiring, and reset/OTP admission integrations.
+- **Gated-registration invariant coverage**: added schema, invite lifecycle, and admission suites, bringing the suite to **182 tests across 16 files**.
 
 ### Changed
 
-- **Documentation baseline**: synchronized README, architecture, security, testing, changelog, journal, and PR docs with the new Packet 02 schema foundation while keeping the user-facing invite gate marked as unfinished runtime work.
+- **Documentation baseline**: synchronized README, architecture, security, deployment, testing, changelog, journal, PR docs, and task reports with the Packet 02 schema, invite lifecycle, and admission-control foundation while keeping the user-facing invite gate marked as unfinished runtime work.
 
 ---
 

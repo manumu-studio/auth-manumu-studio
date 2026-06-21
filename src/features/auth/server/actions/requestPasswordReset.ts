@@ -10,12 +10,18 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { createGenericAdmissionFailure } from "@/features/auth/server/admission";
 import { createPasswordResetToken } from "@/features/auth/server/reset/createResetToken";
 import { sendPasswordResetEmail } from "@/features/auth/server/reset/sendResetEmail";
-import { buildRateLimitKey, getClientIp, rateLimit } from "@/lib/rateLimit";
+import { buildAdmissionRateLimitChecks, getClientIp, rateLimit } from "@/lib/rateLimit";
 import { requestResetSchema } from "@/lib/validation/reset";
 import { headers } from "next/headers";
 import type { ActionResult } from "./types";
+
+const genericAdmissionActionError = (): ActionResult => ({
+  ok: false,
+  errors: { formErrors: [createGenericAdmissionFailure().body.message] },
+});
 
 export async function requestPasswordReset(formData: FormData): Promise<ActionResult> {
   // 1. Validate input
@@ -31,11 +37,14 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
 
   // 2. Rate limiting (prevents abuse)
   const ip = getClientIp(await headers());
-  const identifier = buildRateLimitKey({ scope: "password_reset", ip, email });
-  const limitResult = await rateLimit(identifier);
-
-  if (!limitResult.success) {
-    return { ok: false, errors: { formErrors: ["Too many requests. Please try again later."] } };
+  const checks = buildAdmissionRateLimitChecks({
+    surface: "password-reset",
+    ip,
+    accountIdentifier: email,
+  });
+  for (const check of checks) {
+    const limitResult = await rateLimit(check.key, check.policy);
+    if (!limitResult.success) return genericAdmissionActionError();
   }
 
   // 3. Find user (always return success to prevent email enumeration)

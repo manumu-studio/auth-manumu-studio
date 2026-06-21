@@ -124,20 +124,20 @@ public document describes the current implemented controls and known risks.
 
 ### Operational Gaps
 
-- No CAPTCHA or bot defense.
+- Turnstile verification helpers exist, but the public registration runtime has not consumed them yet.
 - No structured application logger.
 - No Sentry/error-tracking integration.
 - No request correlation IDs or alerting.
 - No coverage thresholds, E2E tests, or health endpoint.
-- Gated registration runtime flows are not yet implemented; the Packet 02 schema foundation exists and the signup kill switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) remains the production guard until the runtime gate ships.
+- Gated registration runtime flows are not yet implemented; the Packet 02 schema, invite lifecycle, and admission-control foundation exists and the signup kill switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) remains the production guard until the runtime gate ships.
 - Pairwise subjects not yet implemented.
 
 ## Control Matrix
 
 | Area | Current (1.9.0) | Required Next State |
 |------|-----------------|---------------------|
-| Registration | Kill switch plus Packet 02 schema foundation | Invite/allowlist runtime gate + bot defense |
-| Rate limits | Upstash mandatory, 7-policy map, all OAuth endpoints covered | Per-email caps, logout limiting |
+| Registration | Kill switch plus Packet 02 schema, invite lifecycle, and admission-control foundation | Invite/allowlist runtime gate |
+| Rate limits | Upstash mandatory, OAuth endpoints covered, Packet 02 six-surface admission dimensions implemented | Consumer wiring for remaining Packet 02 runtime routes, logout limiting |
 | PKCE | S256 required, plain rejected | — (complete) |
 | Auth code use | Atomic conditional update | — (complete) |
 | OTP storage | HMAC-SHA256 with server secret | — (complete) |
@@ -145,7 +145,7 @@ public document describes the current implemented controls and known risks.
 | Dependencies | Blocking audit gate, 0 HIGH/CRITICAL | Ongoing maintenance |
 | Secrets | Full-history gitleaks in CI | Ongoing |
 | Observability | Console logs | Pino + request IDs + Sentry |
-| Testing | 14 files, 150 tests | Coverage thresholds + Playwright |
+| Testing | 16 files, 182 tests | Coverage thresholds + Playwright |
 | Session lifecycle | 30-day JWT | Max-age review, rotation |
 
 ## Account Linking
@@ -214,10 +214,20 @@ Production-required values (enforced by env schema; build fails if absent):
 - `RESEND_FROM`
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
+- `TURNSTILE_SECRET_KEY`
+- `TURNSTILE_EXPECTED_HOSTNAME`
+- `TURNSTILE_EXPECTED_ACTION`
+- `INTERNAL_WORKER_AUTH_SECRET`
+- `INVITE_DELIVERY_ENCRYPTION_KEY`
+- `INVITE_DELIVERY_KEY_VERSION`
+- `ADMIN_MFA_SECRET_ENCRYPTION_KEYS`
+- `ADMIN_MFA_SECRET_KEY_VERSION`
+- `ADMIN_ELEVATION_MAX_AGE_SECONDS`
 
 `OAUTH_JWT_PRIVATE_KEY`, `OAUTH_JWT_PUBLIC_KEY`, `OTP_HMAC_SECRET`,
-`UPSTASH_REDIS_REST_URL`, and `UPSTASH_REDIS_REST_TOKEN` are now required
-fields in the production env schema; the build fails without them.
+`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and the Packet 02
+admission/invite/Admin-MFA secrets above are required fields in the production
+env schema; the build fails without them.
 `SKIP_ENV_VALIDATION` has been removed from `vercel.json` and CI.
 
 Never store or log:

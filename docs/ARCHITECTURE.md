@@ -35,7 +35,7 @@ flowchart LR
 | Layer | Location | Responsibility |
 |-------|----------|----------------|
 | App Router | `src/app/` | Pages, route handlers, layouts |
-| Authentication domain | `src/features/auth/` | Auth UI, actions, verification, reset, OAuth/OIDC |
+| Authentication domain | `src/features/auth/` | Auth UI, actions, verification, reset, OAuth/OIDC, invite lifecycle services, admission helpers |
 | Account domain | `src/features/account/` | Profile, onboarding, password, providers, deletion |
 | Shared UI | `src/components/ui/` | Reusable application components |
 | Shared runtime | `src/lib/` | Prisma, environment, rate limiting, validation, data |
@@ -78,7 +78,7 @@ Current behavior:
 - Maximum attempts are enforced, but failed-attempt updates are not fully
   atomic.
 - Successful verification automatically creates a 30-day JWT session.
-- Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`; the Packet 02 schema foundation for invite gating exists, while the runtime invite flow remains the planned next state.
+- Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`; the Packet 02 schema, invite lifecycle, and shared admission-control foundation exists, while the user-facing invite flow remains the planned next state.
 
 ### Credentials Sign-In
 
@@ -270,14 +270,14 @@ flowchart TB
     N --> G[Google / GitHub]
 ```
 
-Upstash Redis is required in production. The app refuses to start without valid Upstash credentials. The in-memory rate-limit fallback is available in development and test only. Seven independent per-surface rate-limit policies are applied across credential, OAuth, and OTP endpoints.
+Upstash Redis is required in production. The app refuses to start without valid Upstash credentials. The in-memory rate-limit fallback is available in development and test only. Packet 02 adds independent admission dimensions across registration, invite redemption, login, password reset, OTP verify, fragment exchange, and admin operation surfaces.
 
 See [Deployment](DEPLOYMENT.md).
 
 ## Current Direction
 
 1. Deploy security hardening (v1.8.5) to production and verify golden paths (CI passes; production verification pending).
-2. Complete the invite-gated registration runtime on top of the Packet 02 schema foundation.
+2. Complete the invite-gated registration runtime on top of the Packet 02 schema, invite lifecycle, and admission-control foundation.
 3. Reach the LSA engineering baseline for strict TypeScript, CI, tests,
    observability, documentation, and accessibility.
 4. Add `App`, `AppMembership`, and `AppSubject`.

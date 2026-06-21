@@ -1,6 +1,40 @@
 // src/lib/env.ts
 import { z } from 'zod';
 
+const HexEncoded32ByteKeySchema = z
+  .string()
+  .regex(/^[a-f0-9]{64}$/i, "Must be a 32-byte hex-encoded key");
+
+const AdminMfaSecretKeyringSchema = z
+  .record(z.string().min(1), HexEncoded32ByteKeySchema)
+  .refine((keyring) => Object.keys(keyring).length > 0, {
+    message: "ADMIN_MFA_SECRET_ENCRYPTION_KEYS must contain at least one key version",
+  });
+
+const AdminMfaSecretKeyringEnvSchema = z
+  .string()
+  .transform((value, ctx): unknown => {
+    try {
+      const parsedJson: unknown = JSON.parse(value);
+      return parsedJson;
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "ADMIN_MFA_SECRET_ENCRYPTION_KEYS must be valid JSON",
+      });
+      return z.NEVER;
+    }
+  })
+  .pipe(AdminMfaSecretKeyringSchema);
+
+const AdminElevationMaxAgeSchema = z.coerce
+  .number()
+  .int()
+  .refine((value) => value === 300, {
+    message: "ADMIN_ELEVATION_MAX_AGE_SECONDS must be 300",
+  })
+  .default(300);
+
 const EnvSchema = z.object({
   DATABASE_URL: z.string().url(),
   NEXTAUTH_SECRET: z
@@ -37,12 +71,32 @@ const EnvSchema = z.object({
   OTP_HMAC_SECRET: z.string().min(32).optional(),
   // Self-service registration kill switch
   SELF_SERVICE_REGISTRATION_ENABLED: z.enum(["true", "false"]).default("true"),
+  // Packet 02 gated-registration controls
+  TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
+  TURNSTILE_EXPECTED_HOSTNAME: z.string().min(1).optional(),
+  TURNSTILE_EXPECTED_ACTION: z.string().min(1).optional(),
+  INTERNAL_WORKER_AUTH_SECRET: z.string().min(32).optional(),
+  INVITE_DELIVERY_ENCRYPTION_KEY: HexEncoded32ByteKeySchema.optional(),
+  INVITE_DELIVERY_KEY_VERSION: z.string().min(1).optional(),
+  ADMIN_MFA_SECRET_ENCRYPTION_KEYS: AdminMfaSecretKeyringEnvSchema.optional(),
+  ADMIN_MFA_SECRET_KEY_VERSION: z.string().min(1).optional(),
+  ADMIN_ELEVATION_MAX_AGE_SECONDS: AdminElevationMaxAgeSchema,
   // Seed-only optional fields (never set in production)
   SEED_ADMIN_PASSWORD: z.string().optional(),
   SEED_USER_PASSWORD: z.string().optional(),
   SEED_OAUTH_CLIENT_SECRET: z.string().optional(),
   SEED_CONFIRMATION: z.string().optional(),
 });
+
+const requireProductionValue = (ctx: z.RefinementCtx, path: string, value: unknown) => {
+  if (value === undefined || value === null || value === "") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: [path],
+      message: `${path} is required in production`,
+    });
+  }
+};
 
 // Production requires Upstash: the in-memory rate-limit fallback is a no-op on
 // serverless (each cold start gets a fresh process), so missing Upstash creds
@@ -100,6 +154,28 @@ const EnvSchemaProd = EnvSchema.superRefine((data, ctx) => {
         message: 'SELF_SERVICE_REGISTRATION_ENABLED must be "false" in production until invite gating ships',
       });
     }
+    requireProductionValue(ctx, "TURNSTILE_SECRET_KEY", data.TURNSTILE_SECRET_KEY);
+    requireProductionValue(ctx, "TURNSTILE_EXPECTED_HOSTNAME", data.TURNSTILE_EXPECTED_HOSTNAME);
+    requireProductionValue(ctx, "TURNSTILE_EXPECTED_ACTION", data.TURNSTILE_EXPECTED_ACTION);
+    requireProductionValue(ctx, "INTERNAL_WORKER_AUTH_SECRET", data.INTERNAL_WORKER_AUTH_SECRET);
+    requireProductionValue(ctx, "INVITE_DELIVERY_ENCRYPTION_KEY", data.INVITE_DELIVERY_ENCRYPTION_KEY);
+    requireProductionValue(ctx, "INVITE_DELIVERY_KEY_VERSION", data.INVITE_DELIVERY_KEY_VERSION);
+    requireProductionValue(ctx, "ADMIN_MFA_SECRET_ENCRYPTION_KEYS", data.ADMIN_MFA_SECRET_ENCRYPTION_KEYS);
+    requireProductionValue(ctx, "ADMIN_MFA_SECRET_KEY_VERSION", data.ADMIN_MFA_SECRET_KEY_VERSION);
+    if (
+      data.ADMIN_MFA_SECRET_ENCRYPTION_KEYS &&
+      data.ADMIN_MFA_SECRET_KEY_VERSION &&
+      !Object.prototype.hasOwnProperty.call(
+        data.ADMIN_MFA_SECRET_ENCRYPTION_KEYS,
+        data.ADMIN_MFA_SECRET_KEY_VERSION
+      )
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["ADMIN_MFA_SECRET_KEY_VERSION"],
+        message: "ADMIN_MFA_SECRET_KEY_VERSION must exist in ADMIN_MFA_SECRET_ENCRYPTION_KEYS",
+      });
+    }
   }
 });
 
@@ -143,6 +219,15 @@ const rawEnv = {
   VERCEL: normalizeEnvValue(process.env.VERCEL),
   OTP_HMAC_SECRET: normalizeEnvValue(process.env.OTP_HMAC_SECRET),
   SELF_SERVICE_REGISTRATION_ENABLED: normalizeEnvValue(process.env.SELF_SERVICE_REGISTRATION_ENABLED),
+  TURNSTILE_SECRET_KEY: normalizeEnvValue(process.env.TURNSTILE_SECRET_KEY),
+  TURNSTILE_EXPECTED_HOSTNAME: normalizeEnvValue(process.env.TURNSTILE_EXPECTED_HOSTNAME),
+  TURNSTILE_EXPECTED_ACTION: normalizeEnvValue(process.env.TURNSTILE_EXPECTED_ACTION),
+  INTERNAL_WORKER_AUTH_SECRET: normalizeEnvValue(process.env.INTERNAL_WORKER_AUTH_SECRET),
+  INVITE_DELIVERY_ENCRYPTION_KEY: normalizeEnvValue(process.env.INVITE_DELIVERY_ENCRYPTION_KEY),
+  INVITE_DELIVERY_KEY_VERSION: normalizeEnvValue(process.env.INVITE_DELIVERY_KEY_VERSION),
+  ADMIN_MFA_SECRET_ENCRYPTION_KEYS: normalizeEnvValue(process.env.ADMIN_MFA_SECRET_ENCRYPTION_KEYS),
+  ADMIN_MFA_SECRET_KEY_VERSION: normalizeEnvValue(process.env.ADMIN_MFA_SECRET_KEY_VERSION),
+  ADMIN_ELEVATION_MAX_AGE_SECONDS: normalizeEnvValue(process.env.ADMIN_ELEVATION_MAX_AGE_SECONDS),
   SEED_ADMIN_PASSWORD: normalizeEnvValue(process.env.SEED_ADMIN_PASSWORD),
   SEED_USER_PASSWORD: normalizeEnvValue(process.env.SEED_USER_PASSWORD),
   SEED_OAUTH_CLIENT_SECRET: normalizeEnvValue(process.env.SEED_OAUTH_CLIENT_SECRET),
