@@ -35,10 +35,13 @@ This format follows [Conventional Commits](https://www.conventionalcommits.org/e
 
 ### Documentation
 
+- Added LSA-style documentation methodology scaffold: `docs/ai`, `docs/api`, `docs/audits`, `docs/continuation-prompts`, `docs/decisions`, `docs/eval`, `docs/incidents`, `docs/research`, and `docs/superpowers`.
+- Added incident template and registry for production, CI, build, test, and dev-workflow incidents.
+- Added full engineering and adversarial security audits plus Incident P001.
 - Expanded public documentation for API contracts, architecture, security,
   deployment, testing, contribution guidance, and project decisions.
-- Synchronized README, architecture, security, environment, API, and roadmap
-  documentation with the current codebase.
+- Synchronized README, architecture, security, environment, API, roadmap, and
+  project-map documentation with the current codebase.
 - Added `CONTRIBUTING.md`, `docs/DEPLOYMENT.md`, and `docs/TESTING.md`.
 - Updated feature-level READMEs that were empty or described unimplemented
   future behavior.
@@ -46,9 +49,8 @@ This format follows [Conventional Commits](https://www.conventionalcommits.org/e
 ### Maintenance
 
 - Synchronized the package version to `1.8.4`.
-- Documented the security-hardening and private-registration roadmap.
-- Preserved historical release records, journal entries, and merged PR
-  documents.
+- Documented the security-hardening and gated-registration execution order.
+- Preserved historical audits, journal entries, and merged PR documents.
 
 > Releases between 0.2.0 and 1.8.3 are indexed in
 > `docs/DEVELOPMENT_JOURNAL.md`; changelog backfill is separate historical
