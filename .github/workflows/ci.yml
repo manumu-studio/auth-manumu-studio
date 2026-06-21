@@ -59,6 +59,21 @@ jobs:
           echo "$PUBLIC_KEY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
+      - name: Generate Packet 02 build env
+        run: |
+          INVITE_KEY=$(openssl rand -hex 32)
+          ADMIN_MFA_KEY=$(openssl rand -hex 32)
+          {
+            echo "TURNSTILE_SECRET_KEY=ci-turnstile"
+            echo "TURNSTILE_EXPECTED_HOSTNAME=auth.example.com"
+            echo "TURNSTILE_EXPECTED_ACTION=gated-registration"
+            echo "INTERNAL_WORKER_AUTH_SECRET=$(openssl rand -hex 32)"
+            echo "INVITE_DELIVERY_ENCRYPTION_KEY=$INVITE_KEY"
+            echo "INVITE_DELIVERY_KEY_VERSION=1"
+            printf 'ADMIN_MFA_SECRET_ENCRYPTION_KEYS={"1":"%s"}\n' "$ADMIN_MFA_KEY"
+            echo "ADMIN_MFA_SECRET_KEY_VERSION=1"
+          } >> "$GITHUB_ENV"
+
       - name: Build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
@@ -115,6 +130,21 @@ jobs:
           echo "OAUTH_JWT_PUBLIC_KEY<<EOF" >> $GITHUB_ENV
           echo "$PUBLIC_KEY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+
+      - name: Generate Packet 02 build env
+        run: |
+          INVITE_KEY=$(openssl rand -hex 32)
+          ADMIN_MFA_KEY=$(openssl rand -hex 32)
+          {
+            echo "TURNSTILE_SECRET_KEY=ci-turnstile"
+            echo "TURNSTILE_EXPECTED_HOSTNAME=auth.example.com"
+            echo "TURNSTILE_EXPECTED_ACTION=gated-registration"
+            echo "INTERNAL_WORKER_AUTH_SECRET=$(openssl rand -hex 32)"
+            echo "INVITE_DELIVERY_ENCRYPTION_KEY=$INVITE_KEY"
+            echo "INVITE_DELIVERY_KEY_VERSION=1"
+            printf 'ADMIN_MFA_SECRET_ENCRYPTION_KEYS={"1":"%s"}\n' "$ADMIN_MFA_KEY"
+            echo "ADMIN_MFA_SECRET_KEY_VERSION=1"
+          } >> "$GITHUB_ENV"
 
       - name: Build (Vercel-like)
         env:

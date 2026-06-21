@@ -37,7 +37,7 @@ function buildProdEnv(): Record<string, string> {
     UPSTASH_REDIS_REST_TOKEN: "prod-upstash-token",
     OTP_HMAC_SECRET: "prod-otp-hmac-secret-at-least-32-chars",
     SELF_SERVICE_REGISTRATION_ENABLED: "false",
-    TURNSTILE_SECRET_KEY: "prod-turnstile-secret-at-least-32",
+    TURNSTILE_SECRET_KEY: "test-turnstile-fixture",
     TURNSTILE_EXPECTED_HOSTNAME: "auth.example.com",
     TURNSTILE_EXPECTED_ACTION: "gated-registration",
     INTERNAL_WORKER_AUTH_SECRET: "prod-worker-auth-secret-at-least-32",
@@ -79,7 +79,7 @@ describe("Packet 02 production env contract", () => {
   it("accepts a production environment with every Packet 02 control active", async () => {
     const { env } = await importEnvWith(buildProdEnv());
 
-    expect(env.TURNSTILE_SECRET_KEY).toBe("prod-turnstile-secret-at-least-32");
+    expect(env.TURNSTILE_SECRET_KEY).toBe("test-turnstile-fixture");
     expect(env.TURNSTILE_EXPECTED_HOSTNAME).toBe("auth.example.com");
     expect(env.TURNSTILE_EXPECTED_ACTION).toBe("gated-registration");
     expect(env.INTERNAL_WORKER_AUTH_SECRET).toBe("prod-worker-auth-secret-at-least-32");

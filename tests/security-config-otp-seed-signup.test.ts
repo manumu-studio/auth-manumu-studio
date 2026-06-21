@@ -41,7 +41,7 @@ function buildProdBaseEnv(): Record<string, string> {
     UPSTASH_REDIS_REST_TOKEN: 'dummy-token',
     OTP_HMAC_SECRET: 'prod-otp-hmac-secret-at-least-32xx',
     SELF_SERVICE_REGISTRATION_ENABLED: 'false',
-    TURNSTILE_SECRET_KEY: 'prod-turnstile-secret-at-least-32',
+    TURNSTILE_SECRET_KEY: 'test-turnstile-fixture',
     TURNSTILE_EXPECTED_HOSTNAME: 'auth.example.com',
     TURNSTILE_EXPECTED_ACTION: 'gated-registration',
     INTERNAL_WORKER_AUTH_SECRET: 'prod-worker-auth-secret-at-least-32',

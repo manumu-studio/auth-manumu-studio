@@ -1,0 +1,10 @@
+title = "auth-manumu-studio gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Deterministic non-secret test fixtures used for env validation"
+stopwords = [
+  '''prod-turnstile-secret-at-least-32''',
+]

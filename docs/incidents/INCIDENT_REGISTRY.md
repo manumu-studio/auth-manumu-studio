@@ -11,6 +11,8 @@ Track production, CI, test, build, and development-workflow incidents here.
 
 | ID | Date | Severity | Status | Summary | Owner |
 |----|------|----------|--------|---------|-------|
+| INCIDENT-P007 | 2026-06-21 | SEV-4 | VERIFYING | Packet 02 PR CI lacks new build env fixtures and gitleaks flags fake Turnstile test fixtures | Manu / Codex |
+| INCIDENT-P006 | 2026-06-21 | SEV-4 | VERIFYING | Vercel Preview deployment for `feat/gated-registration` lacked eight new Packet 02 env variables | Manu |
 | INCIDENT-P001 | 2026-06-17 | SEV-2 | INVESTIGATING | Production-facing auth exposure: open registration, ineffective rate-limit fallback, vulnerable dependencies, and OAuth/OTP hardening gaps | Manu / Codex |
 
 ## Follow-up Items
