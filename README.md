@@ -6,7 +6,6 @@ Central authentication and OAuth/OIDC service for ManuMu Studio applications.
 **Runtime:** Next.js 15 App Router · TypeScript 5.9 · NextAuth v4 · Prisma 6 · PostgreSQL
 **Production URL:** [auth.manumustudio.com](https://auth.manumustudio.com)
 
-
 ## Current Capabilities
 
 - Credentials sign-in with bcrypt password hashing.
@@ -35,6 +34,8 @@ The following hardening controls are active in production:
 - CI enforces a blocking dependency audit (`pnpm audit --audit-level=high`) and a full-history secret scan.
 
 Remaining work: invite/allowlist runtime flows on top of the new foundation, bcrypt cost increase, observability, pairwise subjects. See [Security](docs/SECURITY.md).
+
+Historical security review records live in `docs/audits/` and `docs/incidents/`.
 
 ## Architecture
 
