@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ManuMu Studio Authentication API
-  version: 1.8.4
+  version: 1.8.5
   description: |
     Current application-owned authentication and OAuth/OIDC endpoints.
     NextAuth's generated `/api/auth/*` endpoints are intentionally excluded.
@@ -12,7 +12,7 @@ servers:
 paths:
   /.well-known/openid-configuration:
     get:
-      summary: Read OIDC discovery metadata
+      summary: Read OIDC discovery metadata (advertises S256 PKCE only)
       responses:
         "200":
           description: OIDC provider metadata
@@ -74,13 +74,15 @@ paths:
             type: string
         - name: code_challenge
           in: query
+          required: true
           schema:
             type: string
         - name: code_challenge_method
           in: query
+          required: true
           schema:
             type: string
-            enum: [plain, S256]
+            const: S256
         - name: nonce
           in: query
           schema:
@@ -111,18 +113,65 @@ paths:
       responses:
         "200":
           description: Token response
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Pragma:
+              schema:
+                type: string
+                const: no-cache
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/TokenResponse"
         "400":
           description: Invalid request, grant, or grant type
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Pragma:
+              schema:
+                type: string
+                const: no-cache
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/OAuthError"
         "401":
           description: Client authentication failed
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Pragma:
+              schema:
+                type: string
+                const: no-cache
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthError"
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+              description: Seconds to wait before retrying
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Pragma:
+              schema:
+                type: string
+                const: no-cache
           content:
             application/json:
               schema:
@@ -142,6 +191,14 @@ paths:
                 $ref: "#/components/schemas/UserInfo"
         "401":
           description: Missing or invalid access token
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+              description: Seconds to wait before retrying
 
   /oauth/logout:
     get:

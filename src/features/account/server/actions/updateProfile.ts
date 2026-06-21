@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/features/auth/server/options';
 import { prisma } from '@/lib/prisma';
 import { UpdateProfileSchema } from '@/lib/validation/account';
-import { buildRateLimitKey, getRequestIp, rateLimit } from '@/lib/rateLimit';
+import { buildRateLimitKey, getClientIp, rateLimit } from '@/lib/rateLimit';
 import { headers } from 'next/headers';
 import type { AccountActionResult } from './types';
 
@@ -15,7 +15,7 @@ export async function updateProfile(formData: FormData): Promise<AccountActionRe
   if (!session?.user?.id) return { ok: false, errors: { formErrors: ['Unauthorized'] } };
 
   // Rate limiting
-  const ip = getRequestIp(await headers());
+  const ip = getClientIp(await headers());
   const key = buildRateLimitKey({ scope: 'update-profile', ip, email: session.user.email });
   const limit = await rateLimit(key);
   if (!limit.success) return { ok: false, errors: { formErrors: ['Too many requests. Please try again later.'] } };

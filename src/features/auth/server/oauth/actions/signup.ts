@@ -31,7 +31,8 @@ import type { ActionResult } from "./types";
 import { createVerificationToken } from "@/features/auth/server/verify/createToken";
 import { sendVerificationEmail } from "@/features/auth/lib/email/provider";
 import { headers } from "next/headers";
-import { buildRateLimitKey, getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { buildRateLimitKey, getClientIp, rateLimit } from "@/lib/rateLimit";
+import { env } from "@/lib/env";
 
 /**
  * Register a new user account
@@ -40,6 +41,11 @@ import { buildRateLimitKey, getRequestIp, rateLimit } from "@/lib/rateLimit";
  * @returns {Promise<ActionResult>} Action result with success/error status
  */
 export async function registerUser(formData: FormData): Promise<ActionResult> {
+  // Kill switch: block self-service registration when disabled (e.g., production invite-only mode)
+  if (env.SELF_SERVICE_REGISTRATION_ENABLED === "false") {
+    return { ok: false, errors: { formErrors: ["Registration is currently unavailable."] } };
+  }
+
   const raw = {
     firstname: formData.get("firstname")?.toString(),
     lastname: formData.get("lastname")?.toString(),
@@ -73,7 +79,7 @@ export async function registerUser(formData: FormData): Promise<ActionResult> {
   const city = data.city?.trim();
   const address = data.address?.trim();
 
-  const ip = getRequestIp(await headers());
+  const ip = getClientIp(await headers());
   const identifier = buildRateLimitKey({
     scope: "signup",
     ip,

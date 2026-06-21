@@ -4,7 +4,7 @@ import { consumeVerificationToken } from "@/features/auth/server/verify/consumeT
 import { createSessionToken, getSessionCookieName } from "@/features/auth/server/createSessionToken";
 import { prisma } from "@/lib/prisma";
 import { otpVerifySchema } from "@/lib/validation/verify";
-import { buildRateLimitKey, getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { buildRateLimitKey, getClientIp, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, reason: "bad-request" }, { status: 400 });
   }
 
-  const ip = getRequestIp(req.headers);
+  const ip = getClientIp(req.headers);
   const identifier = buildRateLimitKey({
     scope: "verify-otp",
     ip,

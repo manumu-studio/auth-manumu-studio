@@ -17,7 +17,7 @@ export async function GET() {
     claims_supported: ["sub", "email", "email_verified", "name", "picture"],
     grant_types_supported: ["authorization_code"],
     token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
-    code_challenge_methods_supported: ["plain", "S256"],
+    code_challenge_methods_supported: ["S256"],
   };
 
   return NextResponse.json(discovery, {

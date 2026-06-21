@@ -5,7 +5,7 @@ import { headers } from 'next/headers';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/features/auth/server/options';
 import { prisma } from '@/lib/prisma';
-import { buildRateLimitKey, getRequestIp, rateLimit } from '@/lib/rateLimit';
+import { buildRateLimitKey, getClientIp, rateLimit } from '@/lib/rateLimit';
 import { OnboardingSchema } from '@/lib/validation/account';
 import type { AccountActionResult } from './types';
 
@@ -17,7 +17,7 @@ export async function completeOnboarding(formData: FormData): Promise<AccountAct
   }
 
   // Rate limiting
-  const ip = getRequestIp(await headers());
+  const ip = getClientIp(await headers());
   const key = buildRateLimitKey({ scope: 'complete-onboarding', ip, email: session.user.email });
   const limit = await rateLimit(key);
   if (!limit.success) {

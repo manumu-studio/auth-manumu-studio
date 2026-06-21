@@ -89,20 +89,28 @@ tools/agents/
 
 # Cursor rules
 .cursorrules
+.cursor/
 
 # Session continuity
 CONTINUATION_PROMPT_NEXT_SESSION.md
+CONTINUATION_REGISTRY.md
 PROJECT_MAP.md
 
 # Internal process docs
 docs/CLAUDE.md
 docs/DEVELOPMENT_PLAYBOOK.md
+docs/ai/
+docs/audits/
 docs/build-packets/
 docs/build-packet-reports/
+docs/continuation-prompts/
 docs/cursor-tasks/
 docs/cursor-task-reports/
 docs/cursor-specs/
+docs/incidents/
+docs/research/
 docs/session-prompts/
+docs/superpowers/
 
 # Claude Code config
 .claude/
