@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/features/auth/server/options";
 import { createAuthorizationCode } from "@/features/auth/server/oauth/authorization";
+import { prisma } from "@/lib/prisma";
 import {
   validateAuthorizeRequest,
   type AuthorizeRequest,
@@ -97,6 +98,13 @@ async function authorizeAction(formData: FormData) {
     const callbackUrl = `/oauth/authorize?${buildAuthorizeQuery(params)}`;
     redirect(`/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { status: true },
+  });
+  if (!user || user.status !== "ACTIVE") {
+    redirect(`/api/auth/signin?callbackUrl=${encodeURIComponent(`/oauth/authorize?${buildAuthorizeQuery(params)}`)}`);
+  }
 
   if (decision !== "approve") {
     redirect(
@@ -157,6 +165,17 @@ export default async function AuthorizePage(props: {
     const signInParams = new URLSearchParams();
     signInParams.set('callbackUrl', callbackUrl);
     if (params.mode) signInParams.set('mode', params.mode);
+    redirect(`/?${signInParams.toString()}`);
+  }
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { status: true },
+  });
+  if (!user || user.status !== "ACTIVE") {
+    const callbackUrl = `/oauth/authorize?${buildAuthorizeQuery(params)}`;
+    const signInParams = new URLSearchParams();
+    signInParams.set("callbackUrl", callbackUrl);
+    if (params.mode) signInParams.set("mode", params.mode);
     redirect(`/?${signInParams.toString()}`);
   }
 

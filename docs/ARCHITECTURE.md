@@ -35,7 +35,7 @@ flowchart LR
 | Layer | Location | Responsibility |
 |-------|----------|----------------|
 | App Router | `src/app/` | Pages, route handlers, layouts |
-| Authentication domain | `src/features/auth/` | Auth UI, actions, verification, reset, OAuth/OIDC, invite lifecycle services, admission helpers |
+| Authentication domain | `src/features/auth/` | Auth UI, actions, verification, reset, OAuth/OIDC, social sign-in gates, invite lifecycle services, admission helpers |
 | Account domain | `src/features/account/` | Profile, onboarding, password, providers, deletion |
 | Shared UI | `src/components/ui/` | Reusable application components |
 | Shared runtime | `src/lib/` | Prisma, environment, rate limiting, validation, data |
@@ -78,7 +78,7 @@ Current behavior:
 - Maximum attempts are enforced, but failed-attempt updates are not fully
   atomic.
 - Successful verification automatically creates a 30-day JWT session.
-- Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`; the Packet 02 schema, invite lifecycle, transactional outbox worker, and shared admission-control foundation exist, while the user-facing invite flow remains the planned next state.
+- Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`; the Packet 02 schema, invite lifecycle, transactional outbox worker, atomic invite registration service, and shared admission-control foundation exist, while remaining public invite surfaces stay behind the production kill switch.
 
 ### Credentials Sign-In
 
@@ -93,9 +93,19 @@ Current behavior:
 ### Social Sign-In
 
 Google and GitHub providers are enabled only when both provider environment
-variables exist. NextAuth's `allowDangerousEmailAccountLinking` option is
-currently enabled. That is a documented hardening target, not a guarantee that
-email-based linking is risk-free.
+variables exist. Social callbacks are gated by provider account identity, not by
+email equality:
+
+1. Non-OAuth sign-in follows the credentials flow.
+2. OAuth sign-in looks up the exact `{ provider, providerAccountId }` account.
+3. The callback allows the sign-in only when that account already exists and the
+   linked user is `ACTIVE`.
+4. Unlinked OAuth identities, same-email credentials users without an existing
+   social `Account`, and inactive/suspended/deleted users are denied generically.
+
+The Prisma adapter is wrapped so `createUser` and `linkAccount` throw before
+durable persistence if a future NextAuth path bypasses the callback gate.
+Explicit social account linking is reserved for a future both-factor ceremony.
 
 ### Password Reset
 
@@ -208,15 +218,64 @@ erDiagram
     User ||--o| UserProfile : has
     User ||--o{ OAuthClient : creates
     User ||--o{ OAuthAuthorizationCode : authorizes
+    User ||--o{ Invite : issues
+    User ||--o{ Invite : redeems
+    User ||--o{ OutboxEmail : receives
+    User ||--o{ AuditEvent : acts_as
+    User ||--o{ AuditEvent : is_target_of
+    User ||--o{ AccountLinkIntent : has
+    User ||--o{ AdminMfaFactor : has
     OAuthClient ||--o{ OAuthAuthorizationCode : issues_for
+    Invite ||--o{ RegistrationSession : scopes
 
     User {
       string id
       string email
-      string password
       datetime emailVerified
+      AccountStatus status
       Role role
       AccountOrigin origin
+    }
+
+    Invite {
+      bytes tokenHash
+      string normalizedEmail
+      InviteStatus status
+      datetime expiresAt
+    }
+
+    OutboxEmail {
+      string eventType
+      string dedupId
+      OutboxEmailStatus status
+      bytes inviteCiphertext
+      int keyVersion
+    }
+
+    AuditEvent {
+      string action
+      string targetType
+      json metadata
+    }
+
+    RegistrationSession {
+      bytes handleHash
+      bytes inviteTokenHash
+      RegistrationSessionStatus status
+      datetime expiresAt
+    }
+
+    AccountLinkIntent {
+      string provider
+      bytes nonceHash
+      datetime expiresAt
+    }
+
+    AdminMfaFactor {
+      AdminMfaKind kind
+      AdminMfaStatus status
+      bytes secretCipher
+      int keyVersion
     }
 
     VerificationToken {
@@ -277,7 +336,7 @@ See [Deployment](DEPLOYMENT.md).
 ## Current Direction
 
 1. Deploy security hardening (v1.8.5) to production and verify golden paths (CI passes; production verification pending).
-2. Complete the invite-gated registration runtime on top of the Packet 02 schema, invite lifecycle, outbox worker, and admission-control foundation.
+2. Complete the remaining invite-gated registration runtime surfaces on top of the Packet 02 schema, invite lifecycle, outbox worker, atomic invite registration service, and admission-control foundation.
 3. Reach the LSA engineering baseline for strict TypeScript, CI, tests,
    observability, documentation, and accessibility.
 4. Add `App`, `AppMembership`, and `AppSubject`.

@@ -69,6 +69,7 @@ describe("OAuth /oauth/token", () => {
       emailVerified: new Date(),
       name: "Test User",
       image: null,
+      status: "ACTIVE",
     });
     prismaMock.oAuthAuthorizationCode.findUnique.mockResolvedValue({
       id: "code-1",

@@ -22,10 +22,11 @@ export async function getUserClaims(
       emailVerified: true,
       name: true,
       image: true,
+      status: true,
     },
   });
 
-  if (!user) {
+  if (!user || user.status !== "ACTIVE") {
     return null;
   }
 

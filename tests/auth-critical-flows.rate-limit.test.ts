@@ -36,6 +36,9 @@ vi.mock('@/features/auth/lib/email/provider', () => ({
 
 vi.mock('next/headers', () => ({
   headers: vi.fn(() => new Headers({ 'x-forwarded-for': '127.0.0.1' })),
+  cookies: vi.fn(() => ({
+    get: vi.fn(() => undefined),
+  })),
 }));
 
 beforeEach(() => {
@@ -54,7 +57,7 @@ afterEach(() => {
 });
 
 describe('Rate-limit enforcement', () => {
-  it('blocks signup when rate-limited', async () => {
+  it('fails signup closed before invite admission is present', async () => {
     const { rateLimit } = await import('@/lib/rateLimit');
     const rateLimitMock = rateLimit as unknown as Mock;
     rateLimitMock.mockResolvedValue({
@@ -80,7 +83,7 @@ describe('Rate-limit enforcement', () => {
 
     await expect(registerUser(formData)).resolves.toEqual({
       ok: false,
-      errors: { formErrors: ['Too many requests. Please try again later.'] },
+      errors: { formErrors: ['Unable to complete this request.'] },
     });
   });
 
@@ -127,6 +130,10 @@ describe('Rate-limit enforcement', () => {
     }));
 
     vi.doMock('@/lib/rateLimit', () => ({
+      buildAdmissionRateLimitChecks: vi.fn(() => [
+        { scope: 'ip', key: 'login:ip:key', policy: 'login-ip' },
+        { scope: 'account', key: 'login:account:key', policy: 'login-account' },
+      ]),
       buildRateLimitKey: vi.fn(() => 'rate:limit:key'),
       getClientIp: vi.fn(() => '127.0.0.1'),
       rateLimit: rateLimitMock,

@@ -329,6 +329,7 @@ describe("token exchange — PKCE enforcement", () => {
       emailVerified: new Date(),
       name: "Test User",
       image: null,
+      status: "ACTIVE",
     });
   }
 

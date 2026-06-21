@@ -1,4 +1,6 @@
+// Configures the optional GitHub OAuth provider for NextAuth.
 import GitHubProvider from "next-auth/providers/github";
+
 import { env } from "@/lib/env";
 
 export function githubProvider() {
@@ -9,8 +11,6 @@ export function githubProvider() {
   return GitHubProvider({
     clientId,
     clientSecret,
-    // Allow linking existing accounts by email
-    allowDangerousEmailAccountLinking: true,
   });
 }
 
@@ -23,4 +23,3 @@ export function githubProvider() {
  * Local:
  *   http://localhost:3000/api/auth/callback/github
  */
-

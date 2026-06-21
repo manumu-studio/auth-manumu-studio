@@ -7,6 +7,8 @@ export interface SessionUser {
   email: string;
   name: string | null;
   role: "USER" | "ADMIN";
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "DELETED";
+  sessionVersion: number;
 }
 
 /**
@@ -14,6 +16,10 @@ export interface SessionUser {
  * Used after OTP verification to create a session without credentials sign-in.
  */
 export async function createSessionToken(user: SessionUser): Promise<string> {
+  if (user.status !== "ACTIVE") {
+    throw new Error("SESSION_USER_NOT_ACTIVE");
+  }
+
   const role = user.role === "ADMIN" ? "ADMIN" : "USER";
   const token = await encode({
     token: {
@@ -22,6 +28,7 @@ export async function createSessionToken(user: SessionUser): Promise<string> {
       email: user.email,
       name: user.name,
       role,
+      sessionVersion: user.sessionVersion,
     },
     secret: env.NEXTAUTH_SECRET,
   });

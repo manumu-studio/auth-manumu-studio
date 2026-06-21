@@ -1,4 +1,6 @@
+// Configures the optional Google OAuth provider for NextAuth.
 import GoogleProvider from "next-auth/providers/google";
+
 import { env } from "@/lib/env";
 
 export function googleProvider() {
@@ -9,8 +11,6 @@ export function googleProvider() {
   return GoogleProvider({
     clientId,
     clientSecret,
-    // Allow linking existing accounts by email
-    allowDangerousEmailAccountLinking: true,
   });
 }
 

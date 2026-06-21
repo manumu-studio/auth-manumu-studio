@@ -9,7 +9,7 @@ Central authentication and OAuth/OIDC service for ManuMu Studio applications.
 ## Current Capabilities
 
 - Credentials sign-in with bcrypt password hashing.
-- Google and GitHub sign-in through NextAuth.
+- Google and GitHub sign-in through NextAuth for already-linked active accounts.
 - Six-digit OTP email verification with resend cooldown and auto-login.
 - Enumeration-resistant password-reset request flow.
 - JWT sessions with user ID and role claims.
@@ -18,7 +18,7 @@ Central authentication and OAuth/OIDC service for ManuMu Studio applications.
 - Authorization Code flow with consent, mandatory PKCE S256, access tokens, and ID tokens.
 - OIDC discovery, JWKS, UserInfo, and RP-initiated logout.
 - Prisma migrations for PostgreSQL and Neon-compatible deployment.
-- Packet 02 foundation for invite-gated registration: account status, invite lifecycle service, QStash-ready transactional email outbox worker, immutable audit events, registration-session handles, admin MFA factor state, Turnstile verification, shared admission helpers, and six-surface rate-limit wiring.
+- Packet 02 invite-gated registration foundation: account status lifecycle (INACTIVE/ACTIVE/SUSPENDED/DELETED), invite lifecycle service with hash-only token storage, atomic invite registration and activation service, QStash-ready transactional email outbox worker with claim-token fencing and encrypted invite delivery, immutable audit events, registration-session handles, admin MFA factor state, Cloudflare Turnstile verification, shared admission helpers, and seven-surface rate-limit wiring.
 
 ## Security Controls
 
@@ -26,14 +26,17 @@ The following hardening controls are active in production:
 
 - Upstash Redis rate limiting is required and fail-closed; the app refuses to start without it.
 - Packet 02 admission helpers add shared Turnstile verification, CSRF/parity helpers, and independent limiter dimensions for registration, invite redemption, login, password reset, OTP verify, fragment exchange, and admin operations.
-- Packet 02 outbox delivery uses an internal worker route with fail-closed bearer-secret auth, TASK-021 limiter wiring, claim-token fencing, encrypted invite payloads, and fragment-only invite links.
+- Packet 02 outbox delivery uses an internal worker route with fail-closed bearer-secret auth, admission limiter wiring, claim-token fencing, encrypted invite payloads, and fragment-only invite links.
+- Social sign-in hardening: unlinked OAuth first sign-in and silent same-email account linking are denied; explicit account linking is reserved for a future ceremony.
 - PKCE S256 is mandatory for every authorization request; `plain` is rejected.
 - Authorization codes are consumed atomically, preventing replay races.
 - Verification OTPs are stored as HMAC-SHA256 keyed with `OTP_HMAC_SECRET`.
 - Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`.
 - CI enforces a blocking dependency audit (`pnpm audit --audit-level=high`) and a full-history secret scan.
 
-Remaining work: invite/allowlist runtime flows on top of the new foundation, bcrypt cost increase, observability, pairwise subjects. See [Security](docs/SECURITY.md).
+Remaining work: invite/allowlist runtime flows on top of the new foundation,
+explicit social account linking, bcrypt cost increase, observability, and
+pairwise subjects. See [Security](docs/SECURITY.md).
 
 Historical security review records live in `docs/audits/` and `docs/incidents/`.
 
@@ -75,11 +78,24 @@ src/
 ├── components/ui/                # Shared UI components
 ├── features/
 │   ├── account/                  # Profile and account settings
-│   └── auth/                     # Auth UI, actions, OAuth/OIDC, invites, outbox
+│   └── auth/
+│       ├── lib/
+│       │   ├── email/                # Email provider helper
+│       │   └── turnstile/            # Cloudflare Turnstile verification
+│       └── server/
+│           ├── actions/              # Server actions: sign-in, sign-up, reset
+│           ├── admission/            # CSRF, enumeration-parity, admission types
+│           ├── invites/              # Invite lifecycle: issue, lookup, redeem, revoke
+│           ├── oauth/                # OAuth/OIDC authorization, token, claims, PKCE
+│           ├── outbox/               # Transactional email outbox worker and crypto
+│           ├── providers/            # NextAuth provider configuration
+│           ├── reset/                # Password-reset flow
+│           ├── social/               # Social sign-in gate and gated Prisma adapter
+│           └── verify/               # OTP verification flow
 └── lib/                          # Env, Prisma, rate limits, validation
 
 prisma/
-├── schema.prisma              # Includes Packet 02 gated-registration foundation
+├── schema.prisma              # Includes Packet 02 gated-registration foundation models
 └── migrations/                 # Includes reversible gated-registration foundation SQL
 
 tests/                          # Vitest suites, including schema/security invariants
@@ -166,7 +182,7 @@ pnpm prisma:deploy
 Current limitations:
 
 - `pnpm lint` runs ESLint with `--fix`; CI should become read-only.
-- Current suite: 17 Vitest files / 194 tests.
+- Current suite: 19 Vitest files / 220 tests.
 - Coverage thresholds and Playwright E2E tests are not configured.
 - The `smoke` script targets `/api/healthz`, which will be implemented during
   the LSA parity work.

@@ -14,14 +14,18 @@
 
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import { z } from "zod";
 import { googleProvider } from "@/features/auth/server/providers/google";
 import { githubProvider } from "@/features/auth/server/providers/github";
 import { env } from "@/lib/env";
-import { buildRateLimitKey, getClientIp, rateLimit } from "@/lib/rateLimit";
+import { buildAdmissionRateLimitChecks, getClientIp, rateLimit, type HeaderSource } from "@/lib/rateLimit";
+import { allowSocialSignIn } from "@/features/auth/server/social/signInGate";
+import { gatedPrismaAdapter } from "@/features/auth/server/social/gatedPrismaAdapter";
+import { createGenericAdmissionFailure, padAdmissionTiming } from "./admission";
+
+const DUMMY_PASSWORD_HASH = "$2a$10$7EqJtq98hPqEX7fNZaFWoOhi.McZTpBdWnB7Rso8yX3i.Yx5x2m6e";
 
 /**
  * Zod schema for validating credentials input
@@ -31,13 +35,37 @@ const CredentialsSchema = z.object({
   password: z.string().min(8),
 });
 
+async function consumeLoginLimiters(headers: HeaderSource, email: string): Promise<boolean> {
+  const ip = getClientIp(headers);
+  const checks = buildAdmissionRateLimitChecks({
+    surface: "login",
+    ip,
+    accountIdentifier: email,
+  });
+
+  for (const check of checks) {
+    const limitResult = await rateLimit(check.key, check.policy);
+    if (!limitResult.success) return false;
+  }
+
+  return true;
+}
+
+function getSessionVersion(value: unknown): number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : 0;
+}
+
+function normalizeRole(role: string): "USER" | "ADMIN" {
+  return role === "ADMIN" ? "ADMIN" : "USER";
+}
+
 /**
  * NextAuth.js configuration object
  * 
  * @type {NextAuthOptions}
  */
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: gatedPrismaAdapter(prisma),
 
   // Use JWT strategy so credentials + OAuth both work without DB sessions
   session: { strategy: "jwt" },
@@ -65,23 +93,24 @@ export const authOptions: NextAuthOptions = {
        * @throws {Error} "EMAIL_NOT_VERIFIED" if email not verified
        */
       async authorize(credentials, req) {
+        const startedAtMs = Date.now();
+        const rejectWithParity = async () => {
+          void createGenericAdmissionFailure(401);
+          await padAdmissionTiming(startedAtMs);
+          return null;
+        };
+
         // Validate input format with Zod
         const parsed = CredentialsSchema.safeParse(credentials);
-        if (!parsed.success) return null;
+        if (!parsed.success) return rejectWithParity();
 
         const { email, password } = parsed.data;
         
         // Normalize email (lowercase, trimmed) and fetch user
         const normalizedEmail = email.trim().toLowerCase();
 
-        const ip = getClientIp(req?.headers ?? {});
-        const identifier = buildRateLimitKey({
-          scope: "signin",
-          ip,
-          email: normalizedEmail,
-        });
-        const limitResult = await rateLimit(identifier);
-        if (!limitResult.success) {
+        const limitersPass = await consumeLoginLimiters(req?.headers ?? {}, normalizedEmail);
+        if (!limitersPass) {
           throw new Error("RATE_LIMITED");
         }
 
@@ -91,35 +120,35 @@ export const authOptions: NextAuthOptions = {
             id: true,
             name: true,
             email: true,
-            password: true,
+            passwordHash: true,
+            hasPasswordCredential: true,
             role: true,
             emailVerified: true,
             origin: true,
+            status: true,
+            sessionVersion: true,
           },
         });
         
-        // User not found or no password (OAuth-only account)
-        if (!user || !user.password) return null;
-        if (user.origin === "PETSGRAM") return null;
+        const passwordHash = user?.passwordHash ?? DUMMY_PASSWORD_HASH;
+        const passwordOk = await compare(password, passwordHash);
+        const userCanAuthenticate =
+          Boolean(user) &&
+          user?.origin !== "PETSGRAM" &&
+          user?.hasPasswordCredential === true &&
+          user?.status === "ACTIVE" &&
+          Boolean(user?.emailVerified) &&
+          Boolean(user?.passwordHash) &&
+          passwordOk;
 
-        // Verify password using bcrypt (constant-time comparison)
-        const ok = await compare(password, user.password);
-        if (!ok) return null;
+        if (!userCanAuthenticate || !user) return rejectWithParity();
 
-        // Security: Block credentials sign-in until email is verified
-        // This prevents unauthorized access before email ownership is confirmed
-        if (!user.emailVerified) {
-          // NextAuth surfaces this as res.error === 'EMAIL_NOT_VERIFIED'
-          throw new Error("EMAIL_NOT_VERIFIED");
-        }
-
-        // Return user object with role for JWT token
-        // Type assertion needed because NextAuth User type doesn't include role
         return {
           id: user.id,
           name: user.name ?? undefined,
-          email: user.email!,
-          role: (user.role as "USER" | "ADMIN") ?? "USER",
+          email: user.email,
+          role: normalizeRole(user.role),
+          sessionVersion: user.sessionVersion,
         };
       },
     }),
@@ -131,6 +160,10 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
+    async signIn({ account }) {
+      return allowSocialSignIn(account);
+    },
+
     /**
      * JWT callback - called whenever a JWT is created or updated
      * 
@@ -151,6 +184,22 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role ?? "USER";
         token.name = user.name ?? token.name;
         token.email = user.email ?? token.email;
+        token.sessionVersion = user.sessionVersion ?? 0;
+      }
+      if (token.uid) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.uid },
+          select: { status: true, sessionVersion: true },
+        });
+        const tokenVersion = getSessionVersion(token.sessionVersion);
+        if (!dbUser || dbUser.status !== "ACTIVE" || dbUser.sessionVersion !== tokenVersion) {
+          token.authRejected = true;
+          token.uid = undefined;
+          token.role = undefined;
+          return token;
+        }
+        token.authRejected = false;
+        token.sessionVersion = dbUser.sessionVersion;
       }
       return token;
     },
@@ -168,6 +217,11 @@ export const authOptions: NextAuthOptions = {
      */
     async session({ session, token }) {
       if (session.user) {
+        if (token.authRejected || !token.uid) {
+          session.user.id = "";
+          session.user.role = undefined;
+          return session;
+        }
         // Hydrate session with custom fields from JWT
         session.user.id = token.uid ?? "";
         session.user.role = token.role ?? "USER";

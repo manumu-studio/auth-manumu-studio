@@ -108,13 +108,19 @@ describe('OTP verification tokens', () => {
     const { prisma } = await import('@/lib/prisma');
     const prismaMock = prisma as unknown as {
       verificationToken: { findFirst: Mock };
+      $transaction: Mock;
     };
 
-    prismaMock.verificationToken.findFirst
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null);
+    prismaMock.$transaction.mockImplementation(async (callback: (tx: {
+      verificationToken: { findFirst: Mock };
+    }) => Promise<unknown>) =>
+      callback({
+        verificationToken: { findFirst: vi.fn(async () => null) },
+      })
+    );
+    prismaMock.verificationToken.findFirst.mockResolvedValueOnce(null);
 
-    await expect(consumeVerificationToken('user@example.com', '111111')).resolves.toEqual({
+    await expect(consumeVerificationToken('user@example.com', '111111', 'Password1!')).resolves.toEqual({
       ok: false,
       reason: 'not-found',
     });
@@ -125,15 +131,24 @@ describe('OTP verification tokens', () => {
     const { prisma } = await import('@/lib/prisma');
     const prismaMock = prisma as unknown as {
       verificationToken: { findFirst: Mock; update: Mock; deleteMany: Mock };
+      $transaction: Mock;
     };
 
-    prismaMock.verificationToken.findFirst
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ token: 'hmac:active', expires: new Date(NOW.getTime() + 1000) });
+    prismaMock.$transaction.mockImplementation(async (callback: (tx: {
+      verificationToken: { findFirst: Mock };
+    }) => Promise<unknown>) =>
+      callback({
+        verificationToken: { findFirst: vi.fn(async () => null) },
+      })
+    );
+    prismaMock.verificationToken.findFirst.mockResolvedValueOnce({
+      token: 'hmac:active',
+      expires: new Date(NOW.getTime() + 1000),
+    });
     prismaMock.verificationToken.update.mockResolvedValue({ attempts: 5 });
     prismaMock.verificationToken.deleteMany.mockResolvedValue({ count: 1 });
 
-    await expect(consumeVerificationToken('user@example.com', '000000')).resolves.toEqual({
+    await expect(consumeVerificationToken('user@example.com', '000000', 'Password1!')).resolves.toEqual({
       ok: false,
       reason: 'max-attempts',
     });
@@ -144,21 +159,31 @@ describe('OTP verification tokens', () => {
     const { prisma } = await import('@/lib/prisma');
     const prismaMock = prisma as unknown as {
       verificationToken: { findFirst: Mock; deleteMany: Mock };
-      user: { findUnique: Mock; update: Mock };
+      user: { findUnique: Mock; updateMany: Mock };
       $transaction: Mock;
     };
 
-    prismaMock.verificationToken.findFirst.mockResolvedValue({
-      identifier: 'user@example.com',
-      token: 'hmac:123456',
-      expires: new Date(NOW.getTime() + 1000),
-    });
-    prismaMock.user.findUnique.mockResolvedValue({ id: 'user-id', emailVerified: null });
-    prismaMock.user.update.mockResolvedValue({ id: 'user-id' });
-    prismaMock.verificationToken.deleteMany.mockResolvedValue({ count: 1 });
-    prismaMock.$transaction.mockResolvedValue([]);
+    prismaMock.$transaction.mockImplementation(async (callback: (tx: {
+      user: { findUnique: Mock; updateMany: Mock };
+      verificationToken: { findFirst: Mock; deleteMany: Mock };
+    }) => Promise<unknown>) =>
+      callback({
+        user: {
+          findUnique: vi.fn(async () => ({ id: 'user-id', emailVerified: null, status: 'INACTIVE' })),
+          updateMany: vi.fn(async () => ({ count: 1 })),
+        },
+        verificationToken: {
+          findFirst: vi.fn(async () => ({
+            identifier: 'user@example.com',
+            token: 'hmac:123456',
+            expires: new Date(NOW.getTime() + 1000),
+          })),
+          deleteMany: vi.fn(async () => ({ count: 1 })),
+        },
+      })
+    );
 
-    await expect(consumeVerificationToken('user@example.com', '123456')).resolves.toEqual({ ok: true });
+    await expect(consumeVerificationToken('user@example.com', '123456', 'Password1!')).resolves.toEqual({ ok: true });
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
   });
 });
@@ -174,7 +199,7 @@ describe('OTP resend flow', () => {
 
     prismaMock.user.findUnique.mockResolvedValue({ emailVerified: null, name: null });
     prismaMock.verificationToken.findFirst.mockResolvedValue({
-      expires: new Date(NOW.getTime() + 9 * 60 * 1000),
+      expires: new Date(NOW.getTime() + 11 * 60 * 1000),
     });
 
     await expect(resendVerificationToken('cooldown@example.com')).resolves.toEqual({
