@@ -27,7 +27,7 @@ Current suites cover:
 - mandatory S256 PKCE and plain rejection;
 - atomic authorization-code consumption and replay prevention;
 - HMAC OTP creation and verification, seed safety, and registration kill switch;
-- Packet 02 gated-registration schema, migration, invite lifecycle, transactional outbox, admission, Turnstile, CSRF, parity, limiter, social-JIT, and silent-linking invariants.
+- gated-registration schema, migration, invite lifecycle, transactional outbox, admission controls (Turnstile, CSRF, enumeration parity, limiter dimensions), social sign-in hardening (JIT denial, silent-linking denial, adapter backstops).
 
 Baseline verification on 2026-06-21: 18 files and 203 tests passed.
 
@@ -60,10 +60,10 @@ Requirements" are now covered.
 
 | File | Tests | Coverage area |
 |------|-------|---------------|
-| `tests/gated-registration-schema.test.ts` | 8 | Packet 02 schema, migration, registration-session, outbox lease/fencing/retry, audit, and admin-MFA invariants |
+| `tests/gated-registration-schema.test.ts` | 8 | Schema, migration, registration-session, outbox lease/fencing/retry, audit, and admin-MFA invariants |
 | `tests/gated-registration-invites.test.ts` | 5 | Invite issuance, lookup, redemption CAS, reuse audit/alert, and revocation invariants |
 | `tests/gated-registration-outbox.test.ts` | 12 | Internal outbox route auth/rate-limit wiring, QStash body/dedup contract, SKIP LOCKED claim, fencing, retry/terminal failure, encrypted invite delivery, key rotation, and fragment-only invite links |
-| `tests/gated-registration-admission.test.ts` | 27 | Packet 02 env fail-closed contract, Turnstile verifier, CSRF/parity helpers, limiter dimensions, and reset/OTP admission wiring |
+| `tests/gated-registration-admission.test.ts` | 27 | Env fail-closed contract, Turnstile verifier, CSRF/parity helpers, limiter dimensions, and reset/OTP admission wiring |
 | `tests/gated-registration-social-jit.test.ts` | 9 | Social provider config guard, existing linked-account compatibility, unlinked OAuth denial, same-email no-link behavior, inactive-user denial, redacted denial telemetry, and adapter create/link backstops |
 
 ## Gated-Registration Runtime Test Requirements

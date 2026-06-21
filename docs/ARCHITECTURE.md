@@ -39,7 +39,7 @@ flowchart LR
 | Account domain | `src/features/account/` | Profile, onboarding, password, providers, deletion |
 | Shared UI | `src/components/ui/` | Reusable application components |
 | Shared runtime | `src/lib/` | Prisma, environment, rate limiting, validation, data |
-| Persistence | `prisma/` | Schema, migrations, seed, Packet 02 gated-registration foundation |
+| Persistence | `prisma/` | Schema, migrations, seed, gated-registration foundation models |
 
 Route handlers generally delegate to feature/server modules. A known exception
 is OTP verification, which performs the post-verification user lookup and
@@ -78,7 +78,7 @@ Current behavior:
 - Maximum attempts are enforced, but failed-attempt updates are not fully
   atomic.
 - Successful verification automatically creates a 30-day JWT session.
-- Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`; the Packet 02 schema, invite lifecycle, transactional outbox worker, and shared admission-control foundation exist, while the user-facing invite flow remains the planned next state.
+- Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`; the gated-registration schema, invite lifecycle service, transactional outbox worker, and shared admission-control foundation exist, while the user-facing invite runtime flow remains the planned next state.
 
 ### Credentials Sign-In
 
@@ -105,8 +105,7 @@ email equality:
 
 The Prisma adapter is wrapped so `createUser` and `linkAccount` throw before
 durable persistence if a future NextAuth path bypasses the callback gate.
-Explicit social account linking is reserved for the TASK-023 both-factor
-ceremony.
+Explicit social account linking is reserved for a future both-factor ceremony.
 
 ### Password Reset
 
@@ -219,15 +218,64 @@ erDiagram
     User ||--o| UserProfile : has
     User ||--o{ OAuthClient : creates
     User ||--o{ OAuthAuthorizationCode : authorizes
+    User ||--o{ Invite : issues
+    User ||--o{ Invite : redeems
+    User ||--o{ OutboxEmail : receives
+    User ||--o{ AuditEvent : acts_as
+    User ||--o{ AuditEvent : is_target_of
+    User ||--o{ AccountLinkIntent : has
+    User ||--o{ AdminMfaFactor : has
     OAuthClient ||--o{ OAuthAuthorizationCode : issues_for
+    Invite ||--o{ RegistrationSession : scopes
 
     User {
       string id
       string email
-      string password
       datetime emailVerified
+      AccountStatus status
       Role role
       AccountOrigin origin
+    }
+
+    Invite {
+      bytes tokenHash
+      string normalizedEmail
+      InviteStatus status
+      datetime expiresAt
+    }
+
+    OutboxEmail {
+      string eventType
+      string dedupId
+      OutboxEmailStatus status
+      bytes inviteCiphertext
+      int keyVersion
+    }
+
+    AuditEvent {
+      string action
+      string targetType
+      json metadata
+    }
+
+    RegistrationSession {
+      bytes handleHash
+      bytes inviteTokenHash
+      RegistrationSessionStatus status
+      datetime expiresAt
+    }
+
+    AccountLinkIntent {
+      string provider
+      bytes nonceHash
+      datetime expiresAt
+    }
+
+    AdminMfaFactor {
+      AdminMfaKind kind
+      AdminMfaStatus status
+      bytes secretCipher
+      int keyVersion
     }
 
     VerificationToken {
@@ -281,14 +329,14 @@ flowchart TB
     N --> G[Google / GitHub]
 ```
 
-Upstash Redis is required in production. The app refuses to start without valid Upstash credentials. The in-memory rate-limit fallback is available in development and test only. Packet 02 adds independent admission dimensions across registration, invite redemption, login, password reset, OTP verify, fragment exchange, and admin operation surfaces. The internal outbox worker endpoint consumes the same trusted-IP/rate-limit helpers and processes QStash-safe messages that contain only the opaque outbox row id plus non-secret routing metadata.
+Upstash Redis is required in production. The app refuses to start without valid Upstash credentials. The in-memory rate-limit fallback is available in development and test only. Independent admission dimensions are wired across seven surfaces: registration, invite-redemption, login, password-reset, OTP-verify, fragment-exchange, and admin-operation. The internal outbox worker endpoint consumes the same trusted-IP/rate-limit helpers and processes QStash-safe messages that contain only the opaque outbox row id plus non-secret routing metadata.
 
 See [Deployment](DEPLOYMENT.md).
 
 ## Current Direction
 
 1. Deploy security hardening (v1.8.5) to production and verify golden paths (CI passes; production verification pending).
-2. Complete the invite-gated registration runtime on top of the Packet 02 schema, invite lifecycle, outbox worker, and admission-control foundation.
+2. Complete the invite-gated registration runtime on top of the gated-registration schema, invite lifecycle service, outbox worker, and admission-control foundation.
 3. Reach the LSA engineering baseline for strict TypeScript, CI, tests,
    observability, documentation, and accessibility.
 4. Add `App`, `AppMembership`, and `AppSubject`.
