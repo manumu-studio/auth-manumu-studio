@@ -1,6 +1,6 @@
 # Deployment
 
-**Version:** 1.8.5
+**Version:** 1.9.0
 **Target:** Vercel + Neon PostgreSQL
 
 ## Required Services
@@ -10,6 +10,7 @@
 - Resend account and verified sender
 - RSA key pair for OAuth/OIDC signing
 - Upstash Redis (required in production — the app refuses to boot without it)
+- QStash-compatible delivery for the internal transactional email outbox worker
 
 ## Required Environment Variables
 
@@ -44,6 +45,18 @@
 
 - `SELF_SERVICE_REGISTRATION_ENABLED` — must be `false` in production for this release
 
+### Packet 02 Admission and Invite Controls (required in production)
+
+- `TURNSTILE_SECRET_KEY`
+- `TURNSTILE_EXPECTED_HOSTNAME`
+- `TURNSTILE_EXPECTED_ACTION`
+- `INTERNAL_WORKER_AUTH_SECRET`
+- `INVITE_DELIVERY_ENCRYPTION_KEY` (32-byte hex key)
+- `INVITE_DELIVERY_KEY_VERSION`
+- `ADMIN_MFA_SECRET_ENCRYPTION_KEYS` (JSON version-to-32-byte-hex-key map)
+- `ADMIN_MFA_SECRET_KEY_VERSION` (must exist in the keyring)
+- `ADMIN_ELEVATION_MAX_AGE_SECONDS` — must be `300`
+
 ### Optional / Rate-Limit Tuning
 
 - `RATE_LIMIT_MAX`
@@ -64,12 +77,14 @@ See `.env.example` for a full annotated reference.
 
 ## Pre-Deploy Checklist
 
-Before deploying 1.8.5 to production:
+Before deploying 1.9.0 to production:
 
 - [ ] Generate and set `OTP_HMAC_SECRET` (≥32 characters, never reuse across environments)
 - [ ] Verify Upstash Redis production credentials (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`)
 - [ ] Verify RSA signing keys (`OAUTH_JWT_PRIVATE_KEY`, `OAUTH_JWT_PUBLIC_KEY`) and correct issuer URL (`AUTH_URL`)
 - [ ] Set `SELF_SERVICE_REGISTRATION_ENABLED=false` in Vercel environment
+- [ ] Set Packet 02 Turnstile, internal-worker, invite-delivery, Admin-MFA keyring, and admin freshness env vars
+- [ ] Confirm the internal outbox worker destination is reachable at `/api/internal/outbox-email` and receives only opaque row-id QStash messages
 - [ ] Rotate any previously-used seeded or shared credentials (seed passwords, OAuth client secrets)
 - [ ] Confirm CI pipeline passes (lint, typecheck, tests, build, security audit) on the branch
 - [ ] Confirm preview deployment is healthy

@@ -1,7 +1,7 @@
 # Architecture
 
-**Version:** 1.8.5
-**Last Updated:** 2026-06-20
+**Version:** 1.9.0
+**Last Updated:** 2026-06-21
 
 ## System Role
 
@@ -35,11 +35,11 @@ flowchart LR
 | Layer | Location | Responsibility |
 |-------|----------|----------------|
 | App Router | `src/app/` | Pages, route handlers, layouts |
-| Authentication domain | `src/features/auth/` | Auth UI, actions, verification, reset, OAuth/OIDC |
+| Authentication domain | `src/features/auth/` | Auth UI, actions, verification, reset, OAuth/OIDC, invite lifecycle services, admission helpers |
 | Account domain | `src/features/account/` | Profile, onboarding, password, providers, deletion |
 | Shared UI | `src/components/ui/` | Reusable application components |
 | Shared runtime | `src/lib/` | Prisma, environment, rate limiting, validation, data |
-| Persistence | `prisma/` | Schema, migrations, seed |
+| Persistence | `prisma/` | Schema, migrations, seed, Packet 02 gated-registration foundation |
 
 Route handlers generally delegate to feature/server modules. A known exception
 is OTP verification, which performs the post-verification user lookup and
@@ -78,7 +78,7 @@ Current behavior:
 - Maximum attempts are enforced, but failed-attempt updates are not fully
   atomic.
 - Successful verification automatically creates a 30-day JWT session.
-- Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`; invite gating is the planned next state.
+- Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`; the Packet 02 schema, invite lifecycle, transactional outbox worker, and shared admission-control foundation exist, while the user-facing invite flow remains the planned next state.
 
 ### Credentials Sign-In
 
@@ -270,14 +270,14 @@ flowchart TB
     N --> G[Google / GitHub]
 ```
 
-Upstash Redis is required in production. The app refuses to start without valid Upstash credentials. The in-memory rate-limit fallback is available in development and test only. Seven independent per-surface rate-limit policies are applied across credential, OAuth, and OTP endpoints.
+Upstash Redis is required in production. The app refuses to start without valid Upstash credentials. The in-memory rate-limit fallback is available in development and test only. Packet 02 adds independent admission dimensions across registration, invite redemption, login, password reset, OTP verify, fragment exchange, and admin operation surfaces. The internal outbox worker endpoint consumes the same trusted-IP/rate-limit helpers and processes QStash-safe messages that contain only the opaque outbox row id plus non-secret routing metadata.
 
 See [Deployment](DEPLOYMENT.md).
 
 ## Current Direction
 
 1. Deploy security hardening (v1.8.5) to production and verify golden paths (CI passes; production verification pending).
-2. Remove open signup through gated registration.
+2. Complete the invite-gated registration runtime on top of the Packet 02 schema, invite lifecycle, outbox worker, and admission-control foundation.
 3. Reach the LSA engineering baseline for strict TypeScript, CI, tests,
    observability, documentation, and accessibility.
 4. Add `App`, `AppMembership`, and `AppSubject`.

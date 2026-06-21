@@ -18,25 +18,76 @@ enum AccountOrigin {
   PETSGRAM
 }
 
+enum AccountStatus {
+  INACTIVE
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum InviteStatus {
+  ISSUED
+  REDEEMED
+  REVOKED
+}
+
+enum OutboxEmailStatus {
+  PENDING
+  CLAIMED
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum RegistrationSessionStatus {
+  PENDING
+  CONSUMED
+  DECOY
+}
+
+enum AdminMfaKind {
+  TOTP
+  WEBAUTHN
+}
+
+enum AdminMfaStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+}
+
 /* -------- NextAuth core -------- */
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          Role      @default(USER)
-  origin        AccountOrigin @default(FIRST_PARTY)
+  id                    String        @id @default(cuid())
+  name                  String?
+  email                 String        @unique @db.Citext
+  emailVerified         DateTime?
+  image                 String?
+  password              String?
+  passwordHash          String?
+  hasPasswordCredential Boolean       @default(false)
+  status                AccountStatus @default(INACTIVE)
+  role                  Role          @default(USER)
+  origin                AccountOrigin @default(FIRST_PARTY)
+  mfaEnrolledAt         DateTime?
+  lastStrongAuthAt      DateTime?
+  sessionVersion        Int           @default(0)
 
-  accounts      Account[]
-  sessions      Session[]
-  profile       UserProfile?
-  oauthClients  OAuthClient[] @relation("UserOAuthClients")
+  accounts               Account[]
+  sessions               Session[]
+  profile                UserProfile?
+  oauthClients           OAuthClient[] @relation("UserOAuthClients")
   oauthAuthorizationCodes OAuthAuthorizationCode[]
+  invitesIssued          Invite[] @relation("InviteIssuer")
+  invitesRedeemed        Invite[] @relation("InviteRedeemer")
+  outboxEmails           OutboxEmail[] @relation("OutboxEmailRecipient")
+  auditEventsAsActor     AuditEvent[] @relation("AuditActor")
+  auditEventsAsTarget    AuditEvent[] @relation("AuditTarget")
+  accountLinkIntents     AccountLinkIntent[]
+  adminMfaFactors        AdminMfaFactor[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
@@ -91,6 +142,144 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
+/* -------- Packet 02 gated registration foundation -------- */
+model Invite {
+  id               String       @id @default(cuid())
+  tokenHash        Bytes        @unique
+  normalizedEmail  String?      @db.Citext
+  status           InviteStatus @default(ISSUED)
+  expiresAt        DateTime
+  issuerUserId     String
+  redeemedByUserId String?
+  redeemedAt       DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  issuer              User @relation("InviteIssuer", fields: [issuerUserId], references: [id], onDelete: Restrict)
+  redeemedBy          User? @relation("InviteRedeemer", fields: [redeemedByUserId], references: [id], onDelete: Restrict)
+  registrationSessions RegistrationSession[]
+
+  @@index([status, expiresAt])
+  @@index([issuerUserId])
+  @@index([redeemedByUserId])
+  @@index([normalizedEmail])
+  @@map("invites")
+}
+
+model OutboxEmail {
+  id               String            @id @default(cuid())
+  eventType        String
+  aggregateId      String?
+  recipientUserId  String?
+  dedupId          String            @unique
+  status           OutboxEmailStatus @default(PENDING)
+  attempts         Int               @default(0)
+  availableAt      DateTime          @default(now())
+  claimedAt        DateTime?
+  claimToken       String?
+  leaseExpiresAt   DateTime?
+  nextAttemptAt    DateTime?
+  sentAt           DateTime?
+  failedAt         DateTime?
+  lastErrorCode    String?
+  inviteCiphertext Bytes?
+  keyVersion       Int?
+  clearedAt        DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  recipient User? @relation("OutboxEmailRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, availableAt])
+  @@index([status, nextAttemptAt])
+  @@index([leaseExpiresAt])
+  @@index([recipientUserId])
+  @@index([eventType, aggregateId])
+  @@map("outbox_emails")
+}
+
+model AuditEvent {
+  id            String   @id @default(cuid())
+  actorUserId   String?
+  action        String
+  targetType    String
+  targetId      String?
+  targetUserId  String?
+  requestId     String?
+  supportId     String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  actor      User? @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  targetUser User? @relation("AuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId, createdAt])
+  @@index([targetType, targetId])
+  @@index([targetUserId])
+  @@index([requestId])
+  @@map("audit_events")
+}
+
+model AccountLinkIntent {
+  id                String    @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String?
+  nonceHash         Bytes     @unique
+  expiresAt         DateTime
+  consumedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, provider, expiresAt])
+  @@index([expiresAt])
+  @@map("account_link_intents")
+}
+
+model RegistrationSession {
+  id              String                    @id @default(cuid())
+  handleHash      Bytes                     @unique
+  inviteTokenHash Bytes?
+  inviteId        String?
+  normalizedEmail String?                   @db.Citext
+  nonce           Bytes
+  status          RegistrationSessionStatus @default(PENDING)
+  expiresAt       DateTime
+  consumedAt      DateTime?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  invite Invite? @relation(fields: [inviteId], references: [id], onDelete: SetNull)
+
+  @@index([expiresAt])
+  @@index([inviteTokenHash])
+  @@map("registration_sessions")
+}
+
+model AdminMfaFactor {
+  id               String         @id @default(cuid())
+  userId           String
+  kind             AdminMfaKind
+  status           AdminMfaStatus @default(PENDING)
+  /// Encrypted with ADMIN_MFA_SECRET_ENCRYPTION_KEYS; never invite-delivery keys or HKDF/KMS-derived material.
+  secretCipher     Bytes
+  /// Write-version from ADMIN_MFA_SECRET_KEY_VERSION; decrypt by each row's stored version.
+  keyVersion       Int
+  createdAt        DateTime       @default(now())
+  activatedAt      DateTime?
+  revokedAt        DateTime?
+  lastUsedAt       DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([kind, status])
+  @@map("admin_mfa_factors")
+}
+
 /* -------- Project extension -------- */
 model UserProfile {
   id       String  @id @default(cuid())
@@ -99,7 +288,7 @@ model UserProfile {
   city     String? @db.VarChar(120)
   address  String? @db.Text
 
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([country, city])
   @@map("user_profiles")

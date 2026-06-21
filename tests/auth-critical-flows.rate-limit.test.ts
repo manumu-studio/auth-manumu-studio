@@ -3,6 +3,9 @@ import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vite
 const ORIGINAL_ENV = { ...process.env };
 
 vi.mock('@/lib/rateLimit', () => ({
+  buildAdmissionRateLimitChecks: vi.fn(() => [
+    { scope: 'ip', key: 'rate:limit:key', policy: 'otp-verify-ip' },
+  ]),
   buildRateLimitKey: vi.fn(() => 'rate:limit:key'),
   getClientIp: vi.fn(() => '127.0.0.1'),
   rateLimit: vi.fn(),
@@ -81,7 +84,7 @@ describe('Rate-limit enforcement', () => {
     });
   });
 
-  it('returns 429 for resend when rate-limited', async () => {
+  it('returns a generic admission response for resend when rate-limited', async () => {
     const { rateLimit } = await import('@/lib/rateLimit');
     const rateLimitMock = rateLimit as unknown as Mock;
     rateLimitMock.mockResolvedValue({
@@ -101,11 +104,14 @@ describe('Rate-limit enforcement', () => {
 
     const res = await POST(req);
 
-    expect(res.status).toBe(429);
-    await expect(res.json()).resolves.toEqual({
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toMatchObject({
       ok: false,
-      reason: 'rate-limited',
+      message: 'Unable to complete this request.',
     });
+    expect(body.supportId).toMatch(/^admission_/);
+    expect(body.reason).toBeUndefined();
   });
 
   it('throws RATE_LIMITED for credential sign-in', async () => {

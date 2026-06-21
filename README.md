@@ -2,7 +2,7 @@
 
 Central authentication and OAuth/OIDC service for ManuMu Studio applications.
 
-**Version:** 1.8.5
+**Version:** 1.9.0
 **Runtime:** Next.js 15 App Router · TypeScript 5.9 · NextAuth v4 · Prisma 6 · PostgreSQL
 **Production URL:** [auth.manumustudio.com](https://auth.manumustudio.com)
 
@@ -18,20 +18,22 @@ Central authentication and OAuth/OIDC service for ManuMu Studio applications.
 - Authorization Code flow with consent, mandatory PKCE S256, access tokens, and ID tokens.
 - OIDC discovery, JWKS, UserInfo, and RP-initiated logout.
 - Prisma migrations for PostgreSQL and Neon-compatible deployment.
+- Packet 02 foundation for invite-gated registration: account status, invite lifecycle service, QStash-ready transactional email outbox worker, immutable audit events, registration-session handles, admin MFA factor state, Turnstile verification, shared admission helpers, and six-surface rate-limit wiring.
 
 ## Security Controls
 
 The following hardening controls are active in production:
 
 - Upstash Redis rate limiting is required and fail-closed; the app refuses to start without it.
-- Seven independent per-surface rate-limit policies cover credentials, signup, OTP, password reset, OAuth token exchange, and UserInfo.
+- Packet 02 admission helpers add shared Turnstile verification, CSRF/parity helpers, and independent limiter dimensions for registration, invite redemption, login, password reset, OTP verify, fragment exchange, and admin operations.
+- Packet 02 outbox delivery uses an internal worker route with fail-closed bearer-secret auth, TASK-021 limiter wiring, claim-token fencing, encrypted invite payloads, and fragment-only invite links.
 - PKCE S256 is mandatory for every authorization request; `plain` is rejected.
 - Authorization codes are consumed atomically, preventing replay races.
 - Verification OTPs are stored as HMAC-SHA256 keyed with `OTP_HMAC_SECRET`.
 - Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`.
 - CI enforces a blocking dependency audit (`pnpm audit --audit-level=high`) and a full-history secret scan.
 
-Remaining work: invite/allowlist registration gate, bcrypt cost increase, observability, pairwise subjects. See [Security](docs/SECURITY.md).
+Remaining work: invite/allowlist runtime flows on top of the new foundation, bcrypt cost increase, observability, pairwise subjects. See [Security](docs/SECURITY.md).
 
 Historical security review records live in `docs/audits/` and `docs/incidents/`.
 
@@ -65,6 +67,7 @@ src/
 │   ├── (public)/                 # Public authentication entry
 │   ├── (auth)/                   # Verify, reset, onboarding
 │   ├── api/auth/                 # NextAuth and OTP APIs
+│   ├── api/internal/             # Internal worker endpoints
 │   ├── dashboard/                # Protected account management
 │   ├── oauth/                    # Authorize, token, UserInfo, logout
 │   ├── .well-known/              # OIDC discovery
@@ -72,12 +75,14 @@ src/
 ├── components/ui/                # Shared UI components
 ├── features/
 │   ├── account/                  # Profile and account settings
-│   └── auth/                     # Auth UI, actions, OAuth/OIDC internals
+│   └── auth/                     # Auth UI, actions, OAuth/OIDC, invites, outbox
 └── lib/                          # Env, Prisma, rate limits, validation
 
 prisma/
-├── schema.prisma
-└── migrations/
+├── schema.prisma              # Includes Packet 02 gated-registration foundation
+└── migrations/                 # Includes reversible gated-registration foundation SQL
+
+tests/                          # Vitest suites, including schema/security invariants
 
 docs/
 ├── ai/                           # Project methodology context
@@ -128,6 +133,15 @@ Required in production:
 - `UPSTASH_REDIS_REST_TOKEN`
 - `OTP_HMAC_SECRET` (minimum 32 characters)
 - `SELF_SERVICE_REGISTRATION_ENABLED` (must be `false`)
+- `TURNSTILE_SECRET_KEY`
+- `TURNSTILE_EXPECTED_HOSTNAME`
+- `TURNSTILE_EXPECTED_ACTION`
+- `INTERNAL_WORKER_AUTH_SECRET`
+- `INVITE_DELIVERY_ENCRYPTION_KEY`
+- `INVITE_DELIVERY_KEY_VERSION`
+- `ADMIN_MFA_SECRET_ENCRYPTION_KEYS`
+- `ADMIN_MFA_SECRET_KEY_VERSION`
+- `ADMIN_ELEVATION_MAX_AGE_SECONDS` (must be `300`)
 
 Required for email delivery:
 
@@ -152,6 +166,7 @@ pnpm prisma:deploy
 Current limitations:
 
 - `pnpm lint` runs ESLint with `--fix`; CI should become read-only.
+- Current suite: 17 Vitest files / 194 tests.
 - Coverage thresholds and Playwright E2E tests are not configured.
 - The `smoke` script targets `/api/healthz`, which will be implemented during
   the LSA parity work.

@@ -1,7 +1,7 @@
 # Security
 
-**Version:** 1.8.5
-**Last Updated:** 2026-06-20
+**Version:** 1.9.0
+**Last Updated:** 2026-06-21
 **Current Status:** Security hardening controls implemented; production verification pending.
 
 ## Security Posture
@@ -83,6 +83,10 @@ public document describes the current implemented controls and known risks.
 
 - Self-service signup disabled in production via
   `SELF_SERVICE_REGISTRATION_ENABLED=false`.
+- Transactional email delivery is handled by an internal outbox worker with
+  fail-closed bearer-secret auth, TASK-021 limiter consumption, claim-token
+  fencing, encrypted invite payloads, key-version decrypt support, and raw invite
+  tokens emitted only in `/invite#token=...` fragments.
 
 ### HTTP and Data Layer
 
@@ -124,21 +128,20 @@ public document describes the current implemented controls and known risks.
 
 ### Operational Gaps
 
-- No CAPTCHA or bot defense.
+- Turnstile verification helpers exist, but the public registration runtime has not consumed them yet.
 - No structured application logger.
 - No Sentry/error-tracking integration.
 - No request correlation IDs or alerting.
 - No coverage thresholds, E2E tests, or health endpoint.
-- Gated registration (invite/allowlist) not yet implemented; the signup kill
-  switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) is a temporary measure.
+- Gated registration runtime flows are not yet implemented; the Packet 02 schema, invite lifecycle, transactional outbox worker, and admission-control foundation exist and the signup kill switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) remains the production guard until the runtime gate ships.
 - Pairwise subjects not yet implemented.
 
 ## Control Matrix
 
-| Area | Current (1.8.5) | Required Next State |
+| Area | Current (1.9.0) | Required Next State |
 |------|-----------------|---------------------|
-| Registration | Kill switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) | Invite/allowlist gate + bot defense |
-| Rate limits | Upstash mandatory, 7-policy map, all OAuth endpoints covered | Per-email caps, logout limiting |
+| Registration | Kill switch plus Packet 02 schema, invite lifecycle, transactional outbox worker, and admission-control foundation | Invite/allowlist runtime gate |
+| Rate limits | Upstash mandatory, OAuth endpoints covered, Packet 02 six-surface admission dimensions implemented | Consumer wiring for remaining Packet 02 runtime routes, logout limiting |
 | PKCE | S256 required, plain rejected | — (complete) |
 | Auth code use | Atomic conditional update | — (complete) |
 | OTP storage | HMAC-SHA256 with server secret | — (complete) |
@@ -146,7 +149,7 @@ public document describes the current implemented controls and known risks.
 | Dependencies | Blocking audit gate, 0 HIGH/CRITICAL | Ongoing maintenance |
 | Secrets | Full-history gitleaks in CI | Ongoing |
 | Observability | Console logs | Pino + request IDs + Sentry |
-| Testing | 13 files, 142 tests | Coverage thresholds + Playwright |
+| Testing | 17 files, 194 tests | Coverage thresholds + Playwright |
 | Session lifecycle | 30-day JWT | Max-age review, rotation |
 
 ## Account Linking
@@ -215,10 +218,20 @@ Production-required values (enforced by env schema; build fails if absent):
 - `RESEND_FROM`
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
+- `TURNSTILE_SECRET_KEY`
+- `TURNSTILE_EXPECTED_HOSTNAME`
+- `TURNSTILE_EXPECTED_ACTION`
+- `INTERNAL_WORKER_AUTH_SECRET`
+- `INVITE_DELIVERY_ENCRYPTION_KEY`
+- `INVITE_DELIVERY_KEY_VERSION`
+- `ADMIN_MFA_SECRET_ENCRYPTION_KEYS`
+- `ADMIN_MFA_SECRET_KEY_VERSION`
+- `ADMIN_ELEVATION_MAX_AGE_SECONDS`
 
 `OAUTH_JWT_PRIVATE_KEY`, `OAUTH_JWT_PUBLIC_KEY`, `OTP_HMAC_SECRET`,
-`UPSTASH_REDIS_REST_URL`, and `UPSTASH_REDIS_REST_TOKEN` are now required
-fields in the production env schema; the build fails without them.
+`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and the Packet 02
+admission/invite/Admin-MFA secrets above are required fields in the production
+env schema; the build fails without them.
 `SKIP_ENV_VALIDATION` has been removed from `vercel.json` and CI.
 
 Never store or log:

@@ -1,14 +1,14 @@
 # Testing
 
-**Version:** 1.8.5
+**Version:** 1.9.0
 
 ## Current State
 
 - Runner: Vitest `^4.1.9`
 - Environment: Node
 - Discovery: `tests/**/*.test.ts`
-- Current test files: 13
-- Current tests: 142
+- Current test files: 17
+- Current tests: 194
 - Coverage thresholds: not configured
 - Playwright E2E: not configured
 - CI: Vitest runs in the parallel `test-coverage` job; dependency audits run
@@ -26,9 +26,10 @@ Current suites cover:
 - OAuth token and UserInfo rate limits;
 - mandatory S256 PKCE and plain rejection;
 - atomic authorization-code consumption and replay prevention;
-- HMAC OTP creation and verification, seed safety, and registration kill switch.
+- HMAC OTP creation and verification, seed safety, and registration kill switch;
+- Packet 02 gated-registration schema, migration, invite lifecycle, transactional outbox, admission, Turnstile, CSRF, parity, and limiter invariants.
 
-Baseline verification on 2026-06-20: 13 files and 142 tests passed.
+Baseline verification on 2026-06-21: 17 files and 194 tests passed.
 
 ## Commands
 
@@ -55,18 +56,25 @@ Requirements" are now covered.
 | `tests/security-auth-code-concurrency.test.ts` | 7 | Atomic code consumption, replay prevention |
 | `tests/security-config-otp-seed-signup.test.ts` | 32 | HMAC OTP, seed safety, registration kill switch |
 
-## Gated-Registration Test Requirements
+## Gated-Registration Suites Added in 1.9.0
 
-These remain future work, to be addressed when the invite/allowlist gate is
+| File | Tests | Coverage area |
+|------|-------|---------------|
+| `tests/gated-registration-schema.test.ts` | 8 | Packet 02 schema, migration, registration-session, outbox lease/fencing/retry, audit, and admin-MFA invariants |
+| `tests/gated-registration-invites.test.ts` | 5 | Invite issuance, lookup, redemption CAS, reuse audit/alert, and revocation invariants |
+| `tests/gated-registration-outbox.test.ts` | 12 | Internal outbox route auth/rate-limit wiring, QStash body/dedup contract, SKIP LOCKED claim, fencing, retry/terminal failure, encrypted invite delivery, key rotation, and fragment-only invite links |
+| `tests/gated-registration-admission.test.ts` | 27 | Packet 02 env fail-closed contract, Turnstile verifier, CSRF/parity helpers, limiter dimensions, and reset/OTP admission wiring |
+
+## Gated-Registration Runtime Test Requirements
+
+These remain future work, to be addressed when the invite/allowlist runtime gate is
 implemented:
 
-- invite issue, expiry, and single use;
 - atomic invite consumption with user creation;
 - allowlist behavior;
-- Turnstile success/failure;
 - disposable-email rejection;
-- enumeration-safe responses;
-- per-IP and per-email abuse limits.
+- end-to-end parity evidence across final registration and invite-redemption routes;
+- consumer wiring for final registration, fragment-exchange, invite-redemption, admin, and linking surfaces.
 
 ## LSA Target State
 
