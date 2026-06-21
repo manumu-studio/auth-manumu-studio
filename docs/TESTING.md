@@ -7,8 +7,8 @@
 - Runner: Vitest `^4.1.9`
 - Environment: Node
 - Discovery: `tests/**/*.test.ts`
-- Current test files: 16
-- Current tests: 182
+- Current test files: 17
+- Current tests: 194
 - Coverage thresholds: not configured
 - Playwright E2E: not configured
 - CI: Vitest runs in the parallel `test-coverage` job; dependency audits run
@@ -27,9 +27,9 @@ Current suites cover:
 - mandatory S256 PKCE and plain rejection;
 - atomic authorization-code consumption and replay prevention;
 - HMAC OTP creation and verification, seed safety, and registration kill switch;
-- Packet 02 gated-registration schema, migration, invite lifecycle, admission, Turnstile, CSRF, parity, and limiter invariants.
+- Packet 02 gated-registration schema, migration, invite lifecycle, transactional outbox, admission, Turnstile, CSRF, parity, and limiter invariants.
 
-Baseline verification on 2026-06-21: 16 files and 182 tests passed.
+Baseline verification on 2026-06-21: 17 files and 194 tests passed.
 
 ## Commands
 
@@ -60,8 +60,9 @@ Requirements" are now covered.
 
 | File | Tests | Coverage area |
 |------|-------|---------------|
-| `tests/gated-registration-schema.test.ts` | 8 | Packet 02 schema, migration, registration-session, outbox, audit, and admin-MFA invariants |
+| `tests/gated-registration-schema.test.ts` | 8 | Packet 02 schema, migration, registration-session, outbox lease/fencing/retry, audit, and admin-MFA invariants |
 | `tests/gated-registration-invites.test.ts` | 5 | Invite issuance, lookup, redemption CAS, reuse audit/alert, and revocation invariants |
+| `tests/gated-registration-outbox.test.ts` | 12 | Internal outbox route auth/rate-limit wiring, QStash body/dedup contract, SKIP LOCKED claim, fencing, retry/terminal failure, encrypted invite delivery, key rotation, and fragment-only invite links |
 | `tests/gated-registration-admission.test.ts` | 27 | Packet 02 env fail-closed contract, Turnstile verifier, CSRF/parity helpers, limiter dimensions, and reset/OTP admission wiring |
 
 ## Gated-Registration Runtime Test Requirements

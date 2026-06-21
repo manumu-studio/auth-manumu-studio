@@ -9,14 +9,16 @@ This format follows [Conventional Commits](https://www.conventionalcommits.org/e
 
 ### Added
 
-- **Packet 02 gated-registration database foundation**: added additive Prisma schema and reversible migration support for account status, credential modality, invite lifecycle, outbox delivery state, immutable audit events, explicit account-link intents, opaque registration sessions, and admin MFA factor state.
+- **Packet 02 gated-registration database foundation**: added additive Prisma schema and reversible migration support for account status, credential modality, invite lifecycle, outbox delivery state with worker lease/fencing and retry fields, immutable audit events, explicit account-link intents, opaque registration sessions, and admin MFA factor state.
 - **Invite lifecycle service foundation**: added server-only invite issuance, generic lookup, conditional redemption, reuse audit/alert, and idempotent revocation helpers for Packet 02.
+- **Transactional email outbox worker**: added the internal outbox worker route, QStash-safe message/dedup helpers, `FOR UPDATE SKIP LOCKED` claim flow, claim-token fencing, retry/terminal failure transitions, encrypted invite-token delivery, key-version decrypt support, and fragment-only invite URL emission.
 - **Packet 02 admission foundation**: added fail-closed production env requirements, Turnstile siteverify validation, shared CSRF/enumeration-parity helpers, six-surface rate-limit wiring, and reset/OTP admission integrations.
-- **Gated-registration invariant coverage**: added schema, invite lifecycle, and admission suites, bringing the suite to **182 tests across 16 files**.
+- **Gated-registration invariant coverage**: added schema, invite lifecycle, outbox, and admission suites, bringing the suite to **194 tests across 17 files**.
 
 ### Changed
 
-- **Documentation baseline**: synchronized README, architecture, security, deployment, testing, changelog, journal, PR docs, and task reports with the Packet 02 schema, invite lifecycle, and admission-control foundation while keeping the user-facing invite gate marked as unfinished runtime work.
+- **Documentation baseline**: synchronized README, architecture, security, deployment, testing, changelog, journal, PR docs, and task reports with the Packet 02 schema, invite lifecycle, outbox worker, and admission-control foundation while keeping the user-facing invite gate marked as unfinished runtime work.
+- **Outbox schema contract repair**: aligned the TASK-016 `OutboxEmail` schema with TASK-018's read-only dependency by adding lease/fencing, retry, terminal failure, and `inviteCiphertext` fields before worker implementation.
 
 ---
 

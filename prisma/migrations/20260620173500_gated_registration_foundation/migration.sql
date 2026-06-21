@@ -105,9 +105,13 @@ CREATE TABLE "public"."outbox_emails" (
   "attempts" INTEGER NOT NULL DEFAULT 0,
   "availableAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "claimedAt" TIMESTAMP(3),
+  "claimToken" TEXT,
+  "leaseExpiresAt" TIMESTAMP(3),
+  "nextAttemptAt" TIMESTAMP(3),
   "sentAt" TIMESTAMP(3),
+  "failedAt" TIMESTAMP(3),
   "lastErrorCode" TEXT,
-  "ciphertext" BYTEA,
+  "inviteCiphertext" BYTEA,
   "keyVersion" INTEGER,
   "clearedAt" TIMESTAMP(3),
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -115,8 +119,8 @@ CREATE TABLE "public"."outbox_emails" (
 
   CONSTRAINT "outbox_emails_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "chk_outbox_email_ciphertext_clear" CHECK (
-    ("clearedAt" IS NULL OR ("ciphertext" IS NULL AND "keyVersion" IS NULL))
-    AND ("ciphertext" IS NULL OR "keyVersion" IS NOT NULL)
+    ("clearedAt" IS NULL OR ("inviteCiphertext" IS NULL AND "keyVersion" IS NULL))
+    AND ("inviteCiphertext" IS NULL OR "keyVersion" IS NOT NULL)
   )
 );
 
@@ -198,6 +202,8 @@ CREATE INDEX "invites_normalizedEmail_idx" ON "public"."invites"("normalizedEmai
 
 CREATE UNIQUE INDEX "outbox_emails_dedupId_key" ON "public"."outbox_emails"("dedupId");
 CREATE INDEX "outbox_emails_status_availableAt_idx" ON "public"."outbox_emails"("status", "availableAt");
+CREATE INDEX "outbox_emails_status_nextAttemptAt_idx" ON "public"."outbox_emails"("status", "nextAttemptAt");
+CREATE INDEX "outbox_emails_leaseExpiresAt_idx" ON "public"."outbox_emails"("leaseExpiresAt");
 CREATE INDEX "outbox_emails_recipientUserId_idx" ON "public"."outbox_emails"("recipientUserId");
 CREATE INDEX "outbox_emails_eventType_aggregateId_idx" ON "public"."outbox_emails"("eventType", "aggregateId");
 

@@ -25,6 +25,7 @@ Track production, CI, test, build, and development-workflow incidents here.
 
 | ID | Date | Severity | Resolved | Summary | PR |
 |----|------|----------|----------|---------|----|
+| INCIDENT-P005 | 2026-06-21 | SEV-4 | 2026-06-21 | TASK-018 outbox schema contract aligned with committed `eventType`/aggregate/user mapping; no payload JSONB column added | n/a |
 | INCIDENT-P004 | 2026-06-21 | SEV-4 | 2026-06-21 | Packet 02 production env contract expanded, but the legacy fully-configured production test fixture omitted the new required secrets | n/a |
 | INCIDENT-P003 | 2026-06-20 | SEV-4 | 2026-06-21 | Packet 02 vendor-review egress gate resolved by RUN 6 PASS/GO artifacts and secret-pattern check | n/a |
 | INCIDENT-P001-CI | 2026-06-20 | SEV-4 | 2026-06-20 | Explicit Prisma generation repaired the cached clean-runner build path; follow-up local/server barriers remain tracked | #29 |

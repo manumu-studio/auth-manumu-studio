@@ -89,12 +89,26 @@ describe('Packet 02 gated registration schema foundation', () => {
     expectBlockMatches(
       'model',
       'OutboxEmail',
-      /dedupId\s+String\s+@unique[\s\S]*clearedAt\s+DateTime\?/, 
-      'OutboxEmail must deduplicate and track payload clearing',
+      /dedupId\s+String\s+@unique[\s\S]*inviteCiphertext\s+Bytes\?[\s\S]*clearedAt\s+DateTime\?/,
+      'OutboxEmail must deduplicate and track invite payload clearing',
     );
     expect(readSchema()).not.toContain('dedupKey');
+    expect(readSchema()).not.toContain('ciphertext      Bytes?');
+    expectBlockMatches(
+      'model',
+      'OutboxEmail',
+      /claimToken\s+String\?[\s\S]*leaseExpiresAt\s+DateTime\?[\s\S]*nextAttemptAt\s+DateTime\?[\s\S]*failedAt\s+DateTime\?/,
+      'OutboxEmail must expose TASK-018 lease, fencing, retry, and terminal failure fields',
+    );
     expectMigrationContains('chk_outbox_email_ciphertext_clear');
     expectMigrationContains('outbox_emails_status_availableAt_idx');
+    expectMigrationContains('outbox_emails_status_nextAttemptAt_idx');
+    expectMigrationContains('outbox_emails_leaseExpiresAt_idx');
+    expectMigrationContains('"claimToken" TEXT');
+    expectMigrationContains('"leaseExpiresAt" TIMESTAMP(3)');
+    expectMigrationContains('"nextAttemptAt" TIMESTAMP(3)');
+    expectMigrationContains('"failedAt" TIMESTAMP(3)');
+    expectMigrationContains('"inviteCiphertext" BYTEA');
     expectMigrationContains('outbox_emails_dedupId_key');
   });
 

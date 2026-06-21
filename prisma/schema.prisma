@@ -168,26 +168,32 @@ model Invite {
 }
 
 model OutboxEmail {
-  id              String            @id @default(cuid())
-  eventType       String
-  aggregateId     String?
-  recipientUserId String?
-  dedupId         String            @unique
-  status          OutboxEmailStatus @default(PENDING)
-  attempts        Int               @default(0)
-  availableAt     DateTime          @default(now())
-  claimedAt       DateTime?
-  sentAt          DateTime?
-  lastErrorCode   String?
-  ciphertext      Bytes?
-  keyVersion      Int?
-  clearedAt       DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id               String            @id @default(cuid())
+  eventType        String
+  aggregateId      String?
+  recipientUserId  String?
+  dedupId          String            @unique
+  status           OutboxEmailStatus @default(PENDING)
+  attempts         Int               @default(0)
+  availableAt      DateTime          @default(now())
+  claimedAt        DateTime?
+  claimToken       String?
+  leaseExpiresAt   DateTime?
+  nextAttemptAt    DateTime?
+  sentAt           DateTime?
+  failedAt         DateTime?
+  lastErrorCode    String?
+  inviteCiphertext Bytes?
+  keyVersion       Int?
+  clearedAt        DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   recipient User? @relation("OutboxEmailRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
 
   @@index([status, availableAt])
+  @@index([status, nextAttemptAt])
+  @@index([leaseExpiresAt])
   @@index([recipientUserId])
   @@index([eventType, aggregateId])
   @@map("outbox_emails")

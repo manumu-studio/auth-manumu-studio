@@ -83,6 +83,10 @@ public document describes the current implemented controls and known risks.
 
 - Self-service signup disabled in production via
   `SELF_SERVICE_REGISTRATION_ENABLED=false`.
+- Transactional email delivery is handled by an internal outbox worker with
+  fail-closed bearer-secret auth, TASK-021 limiter consumption, claim-token
+  fencing, encrypted invite payloads, key-version decrypt support, and raw invite
+  tokens emitted only in `/invite#token=...` fragments.
 
 ### HTTP and Data Layer
 
@@ -129,14 +133,14 @@ public document describes the current implemented controls and known risks.
 - No Sentry/error-tracking integration.
 - No request correlation IDs or alerting.
 - No coverage thresholds, E2E tests, or health endpoint.
-- Gated registration runtime flows are not yet implemented; the Packet 02 schema, invite lifecycle, and admission-control foundation exists and the signup kill switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) remains the production guard until the runtime gate ships.
+- Gated registration runtime flows are not yet implemented; the Packet 02 schema, invite lifecycle, transactional outbox worker, and admission-control foundation exist and the signup kill switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) remains the production guard until the runtime gate ships.
 - Pairwise subjects not yet implemented.
 
 ## Control Matrix
 
 | Area | Current (1.9.0) | Required Next State |
 |------|-----------------|---------------------|
-| Registration | Kill switch plus Packet 02 schema, invite lifecycle, and admission-control foundation | Invite/allowlist runtime gate |
+| Registration | Kill switch plus Packet 02 schema, invite lifecycle, transactional outbox worker, and admission-control foundation | Invite/allowlist runtime gate |
 | Rate limits | Upstash mandatory, OAuth endpoints covered, Packet 02 six-surface admission dimensions implemented | Consumer wiring for remaining Packet 02 runtime routes, logout limiting |
 | PKCE | S256 required, plain rejected | — (complete) |
 | Auth code use | Atomic conditional update | — (complete) |
@@ -145,7 +149,7 @@ public document describes the current implemented controls and known risks.
 | Dependencies | Blocking audit gate, 0 HIGH/CRITICAL | Ongoing maintenance |
 | Secrets | Full-history gitleaks in CI | Ongoing |
 | Observability | Console logs | Pino + request IDs + Sentry |
-| Testing | 16 files, 182 tests | Coverage thresholds + Playwright |
+| Testing | 17 files, 194 tests | Coverage thresholds + Playwright |
 | Session lifecycle | 30-day JWT | Max-age review, rotation |
 
 ## Account Linking
