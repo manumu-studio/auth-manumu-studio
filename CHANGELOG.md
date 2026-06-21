@@ -13,11 +13,15 @@ This format follows [Conventional Commits](https://www.conventionalcommits.org/e
 - **Invite lifecycle service foundation**: added server-only invite issuance, generic lookup, conditional redemption, reuse audit/alert, and idempotent revocation helpers for Packet 02.
 - **Transactional email outbox worker**: added the internal outbox worker route, QStash-safe message/dedup helpers, `FOR UPDATE SKIP LOCKED` claim flow, claim-token fencing, retry/terminal failure transitions, encrypted invite-token delivery, key-version decrypt support, and fragment-only invite URL emission.
 - **Packet 02 admission foundation**: added fail-closed production env requirements, Turnstile siteverify validation, shared CSRF/enumeration-parity helpers, six-surface rate-limit wiring, and reset/OTP admission integrations.
-- **Gated-registration invariant coverage**: added schema, invite lifecycle, outbox, and admission suites, bringing the suite to **194 tests across 17 files**.
+- **Gated-registration invariant coverage**: added schema, invite lifecycle, outbox, admission, and social-JIT suites, bringing the suite to **203 tests across 18 files**.
+
+### Security
+
+- **Social JIT and silent-linking closure**: removed Auth.js dangerous email account linking from Google/GitHub providers, added a social `signIn` gate that allows only existing linked `ACTIVE` users, added adapter-level `createUser`/`linkAccount` fail-closed backstops, and records redacted social-denial telemetry.
 
 ### Changed
 
-- **Documentation baseline**: synchronized README, architecture, security, deployment, testing, changelog, journal, PR docs, and task reports with the Packet 02 schema, invite lifecycle, outbox worker, and admission-control foundation while keeping the user-facing invite gate marked as unfinished runtime work.
+- **Documentation baseline**: synchronized README, architecture, security, deployment, testing, changelog, journal, PR docs, and task reports with the Packet 02 schema, invite lifecycle, outbox worker, admission-control foundation, and social-JIT closure while keeping the user-facing invite gate and explicit social linking marked as unfinished runtime work.
 - **Outbox schema contract repair**: aligned the TASK-016 `OutboxEmail` schema with TASK-018's read-only dependency by adding lease/fencing, retry, terminal failure, and `inviteCiphertext` fields before worker implementation.
 
 ---

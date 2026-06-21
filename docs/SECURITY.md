@@ -66,6 +66,12 @@ public document describes the current implemented controls and known risks.
 - Public-key-only JWKS endpoint.
 - Signed `id_token_hint` verification for logout.
 - Allowlisted post-logout redirects.
+- Google/GitHub social sign-in is limited to existing linked accounts whose
+  owning user is `ACTIVE`.
+- Unlinked social first sign-in and same-email silent account linking are
+  denied before durable user/account persistence; adapter-level `createUser`
+  and `linkAccount` backstops also fail closed.
+- Social denial telemetry stores redacted provider/reason metadata only.
 
 ### Rate Limiting
 
@@ -117,8 +123,6 @@ public document describes the current implemented controls and known risks.
   security patches will be issued for v4 after its maintenance window closes.
 - **bcrypt cost 10:** Below the intended hardening target; bcrypt 12+ and a
   migration strategy are planned.
-- **Account linking:** Social providers still use
-  `allowDangerousEmailAccountLinking: true` — see Account Linking section.
 - **Password-reset tokens stored directly:** Tokens are not hashed before
   persistence.
 - **JWT validation gaps:** Header algorithm, issuer, audience, and runtime
@@ -129,6 +133,8 @@ public document describes the current implemented controls and known risks.
 ### Operational Gaps
 
 - Turnstile verification helpers exist, but the public registration runtime has not consumed them yet.
+- Explicit social account linking ceremony is not implemented yet; new social
+  links remain denied until TASK-023 ships.
 - No structured application logger.
 - No Sentry/error-tracking integration.
 - No request correlation IDs or alerting.
@@ -141,6 +147,7 @@ public document describes the current implemented controls and known risks.
 | Area | Current (1.9.0) | Required Next State |
 |------|-----------------|---------------------|
 | Registration | Kill switch plus Packet 02 schema, invite lifecycle, transactional outbox worker, and admission-control foundation | Invite/allowlist runtime gate |
+| Account linking | Social JIT and same-email silent linking denied; existing linked active social accounts can sign in | Explicit both-factor linking ceremony |
 | Rate limits | Upstash mandatory, OAuth endpoints covered, Packet 02 six-surface admission dimensions implemented | Consumer wiring for remaining Packet 02 runtime routes, logout limiting |
 | PKCE | S256 required, plain rejected | — (complete) |
 | Auth code use | Atomic conditional update | — (complete) |
@@ -149,21 +156,20 @@ public document describes the current implemented controls and known risks.
 | Dependencies | Blocking audit gate, 0 HIGH/CRITICAL | Ongoing maintenance |
 | Secrets | Full-history gitleaks in CI | Ongoing |
 | Observability | Console logs | Pino + request IDs + Sentry |
-| Testing | 17 files, 194 tests | Coverage thresholds + Playwright |
+| Testing | 18 files, 203 tests | Coverage thresholds + Playwright |
 | Session lifecycle | 30-day JWT | Max-age review, rotation |
 
 ## Account Linking
 
-Google and GitHub currently set:
+Google and GitHub no longer opt into Auth.js dangerous email account linking.
+An OAuth callback can sign in only when the provider identity already has an
+`Account` row linked to an `ACTIVE` user. A matching email alone does not link
+accounts, and an unlinked first social sign-in is denied generically before user
+or account persistence.
 
-```text
-allowDangerousEmailAccountLinking: true
-```
-
-This improves user experience but creates risk if provider email-verification
-semantics, provider trust, or account ownership assumptions change. It is not
-documented as "no account takeover risk." The setting requires a dedicated
-review and explicit provider policy before broader use.
+The Prisma adapter is wrapped so `createUser` and `linkAccount` fail closed if a
+future callback path reaches persistence unexpectedly. Explicit user-approved
+linking is reserved for TASK-023.
 
 ## Subjects and Privacy
 

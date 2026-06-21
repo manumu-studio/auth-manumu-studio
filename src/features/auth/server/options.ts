@@ -14,7 +14,6 @@
 
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import { z } from "zod";
@@ -22,6 +21,8 @@ import { googleProvider } from "@/features/auth/server/providers/google";
 import { githubProvider } from "@/features/auth/server/providers/github";
 import { env } from "@/lib/env";
 import { buildRateLimitKey, getClientIp, rateLimit } from "@/lib/rateLimit";
+import { allowSocialSignIn } from "@/features/auth/server/social/signInGate";
+import { gatedPrismaAdapter } from "@/features/auth/server/social/gatedPrismaAdapter";
 
 /**
  * Zod schema for validating credentials input
@@ -37,7 +38,7 @@ const CredentialsSchema = z.object({
  * @type {NextAuthOptions}
  */
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: gatedPrismaAdapter(prisma),
 
   // Use JWT strategy so credentials + OAuth both work without DB sessions
   session: { strategy: "jwt" },
@@ -131,6 +132,10 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
+    async signIn({ account }) {
+      return allowSocialSignIn(account);
+    },
+
     /**
      * JWT callback - called whenever a JWT is created or updated
      * 

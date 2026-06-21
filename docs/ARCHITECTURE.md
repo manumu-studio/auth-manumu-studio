@@ -35,7 +35,7 @@ flowchart LR
 | Layer | Location | Responsibility |
 |-------|----------|----------------|
 | App Router | `src/app/` | Pages, route handlers, layouts |
-| Authentication domain | `src/features/auth/` | Auth UI, actions, verification, reset, OAuth/OIDC, invite lifecycle services, admission helpers |
+| Authentication domain | `src/features/auth/` | Auth UI, actions, verification, reset, OAuth/OIDC, social sign-in gates, invite lifecycle services, admission helpers |
 | Account domain | `src/features/account/` | Profile, onboarding, password, providers, deletion |
 | Shared UI | `src/components/ui/` | Reusable application components |
 | Shared runtime | `src/lib/` | Prisma, environment, rate limiting, validation, data |
@@ -93,9 +93,20 @@ Current behavior:
 ### Social Sign-In
 
 Google and GitHub providers are enabled only when both provider environment
-variables exist. NextAuth's `allowDangerousEmailAccountLinking` option is
-currently enabled. That is a documented hardening target, not a guarantee that
-email-based linking is risk-free.
+variables exist. Social callbacks are gated by provider account identity, not by
+email equality:
+
+1. Non-OAuth sign-in follows the credentials flow.
+2. OAuth sign-in looks up the exact `{ provider, providerAccountId }` account.
+3. The callback allows the sign-in only when that account already exists and the
+   linked user is `ACTIVE`.
+4. Unlinked OAuth identities, same-email credentials users without an existing
+   social `Account`, and inactive/suspended/deleted users are denied generically.
+
+The Prisma adapter is wrapped so `createUser` and `linkAccount` throw before
+durable persistence if a future NextAuth path bypasses the callback gate.
+Explicit social account linking is reserved for the TASK-023 both-factor
+ceremony.
 
 ### Password Reset
 

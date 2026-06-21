@@ -9,7 +9,7 @@ Central authentication and OAuth/OIDC service for ManuMu Studio applications.
 ## Current Capabilities
 
 - Credentials sign-in with bcrypt password hashing.
-- Google and GitHub sign-in through NextAuth.
+- Google and GitHub sign-in through NextAuth for already-linked active accounts.
 - Six-digit OTP email verification with resend cooldown and auto-login.
 - Enumeration-resistant password-reset request flow.
 - JWT sessions with user ID and role claims.
@@ -27,13 +27,16 @@ The following hardening controls are active in production:
 - Upstash Redis rate limiting is required and fail-closed; the app refuses to start without it.
 - Packet 02 admission helpers add shared Turnstile verification, CSRF/parity helpers, and independent limiter dimensions for registration, invite redemption, login, password reset, OTP verify, fragment exchange, and admin operations.
 - Packet 02 outbox delivery uses an internal worker route with fail-closed bearer-secret auth, TASK-021 limiter wiring, claim-token fencing, encrypted invite payloads, and fragment-only invite links.
+- Packet 02 social JIT closure denies unlinked OAuth first sign-in and silent same-email account linking; explicit linking remains future TASK-023 work.
 - PKCE S256 is mandatory for every authorization request; `plain` is rejected.
 - Authorization codes are consumed atomically, preventing replay races.
 - Verification OTPs are stored as HMAC-SHA256 keyed with `OTP_HMAC_SECRET`.
 - Self-service signup is disabled in production via `SELF_SERVICE_REGISTRATION_ENABLED=false`.
 - CI enforces a blocking dependency audit (`pnpm audit --audit-level=high`) and a full-history secret scan.
 
-Remaining work: invite/allowlist runtime flows on top of the new foundation, bcrypt cost increase, observability, pairwise subjects. See [Security](docs/SECURITY.md).
+Remaining work: invite/allowlist runtime flows on top of the new foundation,
+explicit social account linking, bcrypt cost increase, observability, and
+pairwise subjects. See [Security](docs/SECURITY.md).
 
 Historical security review records live in `docs/audits/` and `docs/incidents/`.
 
@@ -75,7 +78,7 @@ src/
 ├── components/ui/                # Shared UI components
 ├── features/
 │   ├── account/                  # Profile and account settings
-│   └── auth/                     # Auth UI, actions, OAuth/OIDC, invites, outbox
+│   └── auth/                     # Auth UI, actions, OAuth/OIDC, social gates, invites, outbox
 └── lib/                          # Env, Prisma, rate limits, validation
 
 prisma/
@@ -166,7 +169,7 @@ pnpm prisma:deploy
 Current limitations:
 
 - `pnpm lint` runs ESLint with `--fix`; CI should become read-only.
-- Current suite: 17 Vitest files / 194 tests.
+- Current suite: 18 Vitest files / 203 tests.
 - Coverage thresholds and Playwright E2E tests are not configured.
 - The `smoke` script targets `/api/healthz`, which will be implemented during
   the LSA parity work.

@@ -7,8 +7,8 @@
 - Runner: Vitest `^4.1.9`
 - Environment: Node
 - Discovery: `tests/**/*.test.ts`
-- Current test files: 17
-- Current tests: 194
+- Current test files: 18
+- Current tests: 203
 - Coverage thresholds: not configured
 - Playwright E2E: not configured
 - CI: Vitest runs in the parallel `test-coverage` job; dependency audits run
@@ -27,9 +27,9 @@ Current suites cover:
 - mandatory S256 PKCE and plain rejection;
 - atomic authorization-code consumption and replay prevention;
 - HMAC OTP creation and verification, seed safety, and registration kill switch;
-- Packet 02 gated-registration schema, migration, invite lifecycle, transactional outbox, admission, Turnstile, CSRF, parity, and limiter invariants.
+- Packet 02 gated-registration schema, migration, invite lifecycle, transactional outbox, admission, Turnstile, CSRF, parity, limiter, social-JIT, and silent-linking invariants.
 
-Baseline verification on 2026-06-21: 17 files and 194 tests passed.
+Baseline verification on 2026-06-21: 18 files and 203 tests passed.
 
 ## Commands
 
@@ -64,6 +64,7 @@ Requirements" are now covered.
 | `tests/gated-registration-invites.test.ts` | 5 | Invite issuance, lookup, redemption CAS, reuse audit/alert, and revocation invariants |
 | `tests/gated-registration-outbox.test.ts` | 12 | Internal outbox route auth/rate-limit wiring, QStash body/dedup contract, SKIP LOCKED claim, fencing, retry/terminal failure, encrypted invite delivery, key rotation, and fragment-only invite links |
 | `tests/gated-registration-admission.test.ts` | 27 | Packet 02 env fail-closed contract, Turnstile verifier, CSRF/parity helpers, limiter dimensions, and reset/OTP admission wiring |
+| `tests/gated-registration-social-jit.test.ts` | 9 | Social provider config guard, existing linked-account compatibility, unlinked OAuth denial, same-email no-link behavior, inactive-user denial, redacted denial telemetry, and adapter create/link backstops |
 
 ## Gated-Registration Runtime Test Requirements
 
@@ -75,6 +76,7 @@ implemented:
 - disposable-email rejection;
 - end-to-end parity evidence across final registration and invite-redemption routes;
 - consumer wiring for final registration, fragment-exchange, invite-redemption, admin, and linking surfaces.
+- explicit both-factor social account linking ceremony.
 
 ## LSA Target State
 
