@@ -133,6 +133,10 @@ export async function exchangeAuthorizationCode(
   const issuedAt = Math.floor(now.getTime() / 1000);
   const issuer = resolveIssuer();
   const scopeString = codeRecord.scopes.join(" ");
+  const userClaims = await getUserClaims(codeRecord.userId, codeRecord.scopes);
+  if (!userClaims) {
+    return reject("invalid_grant", "Authorization code is invalid.", 400);
+  }
 
   // Access token
   const accessTokenPayload = {
@@ -148,10 +152,8 @@ export async function exchangeAuthorizationCode(
   // ID token (OIDC) — only when openid scope is granted
   let idToken: string | undefined;
   if (codeRecord.scopes.includes("openid")) {
-    const userClaims = await getUserClaims(codeRecord.userId, codeRecord.scopes);
     const idTokenPayload: Record<string, unknown> = {
       iss: issuer,
-      sub: codeRecord.userId,
       aud: codeRecord.clientId,
       exp: issuedAt + 3600,
       iat: issuedAt,

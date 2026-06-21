@@ -179,6 +179,7 @@ describe("Concurrency — two exchanges race for the same code", () => {
       emailVerified: new Date(),
       name: "Test User",
       image: null,
+      status: "ACTIVE",
     });
 
     const { getOAuthClient, verifyClientSecret } = await import(

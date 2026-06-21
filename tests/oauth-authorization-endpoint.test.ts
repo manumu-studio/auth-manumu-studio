@@ -7,6 +7,9 @@ vi.mock("@/lib/prisma", () => ({
     oAuthAuthorizationCode: {
       create: vi.fn(),
     },
+    user: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
@@ -50,7 +53,9 @@ describe("OAuth authorization code storage", () => {
     const { prisma } = await import("@/lib/prisma");
     const prismaMock = prisma as unknown as {
       oAuthAuthorizationCode: { create: Mock };
+      user: { findUnique: Mock };
     };
+    prismaMock.user.findUnique.mockResolvedValue({ status: "ACTIVE" });
 
     await createAuthorizationCode({
       clientId: "client-123",

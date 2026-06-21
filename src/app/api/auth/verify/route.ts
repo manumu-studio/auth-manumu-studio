@@ -4,7 +4,7 @@ import { consumeVerificationToken } from "@/features/auth/server/verify/consumeT
 import { createSessionToken, getSessionCookieName } from "@/features/auth/server/createSessionToken";
 import { prisma } from "@/lib/prisma";
 import { otpVerifySchema } from "@/lib/validation/verify";
-import { buildRateLimitKey, getClientIp, rateLimit } from "@/lib/rateLimit";
+import { buildAdmissionRateLimitChecks, getClientIp, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -15,17 +15,23 @@ export async function POST(req: Request) {
   }
 
   const ip = getClientIp(req.headers);
-  const identifier = buildRateLimitKey({
-    scope: "verify-otp",
+  const checks = buildAdmissionRateLimitChecks({
+    surface: "otp-verify",
     ip,
-    email: parsed.data.email,
+    accountIdentifier: parsed.data.email,
   });
-  const limitResult = await rateLimit(identifier);
-  if (!limitResult.success) {
-    return NextResponse.json({ ok: false, reason: "rate-limited" }, { status: 429 });
+  for (const check of checks) {
+    const limitResult = await rateLimit(check.key, check.policy);
+    if (!limitResult.success) {
+      return NextResponse.json({ ok: false, reason: "rate-limited" }, { status: 429 });
+    }
   }
 
-  const result = await consumeVerificationToken(parsed.data.email, parsed.data.code);
+  const result = await consumeVerificationToken(
+    parsed.data.email,
+    parsed.data.code,
+    parsed.data.password
+  );
 
   if (!result.ok) {
     return NextResponse.json(result, { status: 400 });
@@ -34,10 +40,10 @@ export async function POST(req: Request) {
   const normalizedEmail = parsed.data.email.toLowerCase().trim();
   const user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
-    select: { id: true, email: true, name: true, role: true },
+    select: { id: true, email: true, name: true, role: true, status: true, sessionVersion: true },
   });
 
-  if (!user) {
+  if (!user || user.status !== "ACTIVE") {
     return NextResponse.json({ ok: false, reason: "user-not-found" }, { status: 404 });
   }
 

@@ -38,6 +38,9 @@ vi.mock('@/features/auth/lib/email/provider', () => ({
 
 vi.mock('next/headers', () => ({
   headers: vi.fn(() => new Headers({ 'x-forwarded-for': '127.0.0.1' })),
+  cookies: vi.fn(() => ({
+    get: vi.fn(() => undefined),
+  })),
 }));
 
 beforeEach(() => {
@@ -55,12 +58,8 @@ afterEach(() => {
   Object.assign(process.env, ORIGINAL_ENV);
 });
 
-describe('Signup hashing flow', () => {
-  it('hashes the password before saving the user', async () => {
-    const { prisma } = await import('@/lib/prisma');
-    const prismaMock = prisma as unknown as {
-      user: { findUnique: Mock; create: Mock };
-    };
+describe('Signup registration flow', () => {
+  it('delegates to shared invite registration without hashing or direct email send', async () => {
     const bcrypt = await import('bcryptjs');
     const { createVerificationToken } = await import(
       '@/features/auth/server/verify/createToken'
@@ -71,15 +70,14 @@ describe('Signup hashing flow', () => {
 
     const bcryptHash = bcrypt.default.hash as unknown as Mock;
     const createVerificationTokenMock = createVerificationToken as unknown as Mock;
+    const sharedRegisterUser = vi.fn(async () => ({
+      ok: true as const,
+      meta: { requiresEmailVerification: true, email: 'user@example.com' },
+    }));
 
-    prismaMock.user.findUnique.mockResolvedValue(null);
-    prismaMock.user.create.mockResolvedValue({ id: 'user-id' });
-    bcryptHash.mockResolvedValue('hashed-password');
-    createVerificationTokenMock.mockResolvedValue({
-      ok: true,
-      token: 'token',
-      verifyUrl: 'https://app.test/verify?token=token',
-    });
+    vi.doMock('@/features/auth/server/registration/registerAction', () => ({
+      registerUser: sharedRegisterUser,
+    }));
 
     const { registerUser } = await import(
       '@/features/auth/server/actions/signup'
@@ -97,17 +95,13 @@ describe('Signup hashing flow', () => {
 
     const result = await registerUser(formData);
 
-    expect(result.ok).toBe(true);
-    expect(bcryptHash).toHaveBeenCalledWith('MyP@ss123', 10);
-    expect(prismaMock.user.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          email: 'user@example.com',
-          password: 'hashed-password',
-        }),
-      })
-    );
-    expect(createVerificationTokenMock).toHaveBeenCalledWith('user@example.com');
-    expect(sendVerificationEmail).toHaveBeenCalled();
+    expect(result).toEqual({
+      ok: true,
+      meta: { requiresEmailVerification: true, email: 'user@example.com' },
+    });
+    expect(sharedRegisterUser).toHaveBeenCalledWith(formData);
+    expect(bcryptHash).not.toHaveBeenCalled();
+    expect(createVerificationTokenMock).not.toHaveBeenCalled();
+    expect(sendVerificationEmail).not.toHaveBeenCalled();
   });
 });

@@ -25,6 +25,14 @@ function generateAuthorizationCode(): string {
 export async function createAuthorizationCode(
   input: AuthorizationCodeInput
 ): Promise<AuthorizationCodeResult> {
+  const user = await prisma.user.findUnique({
+    where: { id: input.userId },
+    select: { status: true },
+  });
+  if (!user || user.status !== "ACTIVE") {
+    throw new Error("OAUTH_USER_NOT_ACTIVE");
+  }
+
   const code = generateAuthorizationCode();
   const expiresAt = new Date(Date.now() + AUTH_CODE_TTL_MINUTES * 60 * 1000);
 
