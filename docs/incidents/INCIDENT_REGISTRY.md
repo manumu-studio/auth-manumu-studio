@@ -11,6 +11,8 @@ Track production, CI, test, build, and development-workflow incidents here.
 
 | ID | Date | Severity | Status | Summary | Owner |
 |----|------|----------|--------|---------|-------|
+| INCIDENT-P011 | 2026-06-21 | SEV-3 | OPEN | Vercel and GitHub release source drift: current Packet 02 branch lacks PR/CI evidence and Vercel project settings still show legacy build commands | Manu / Codex |
+| INCIDENT-P010 | 2026-06-21 | SEV-3 | OPEN | Packet 02 Production Vercel build fails because required env vars are absent and no env preflight blocks release actions | Manu / Codex |
 | INCIDENT-P007 | 2026-06-21 | SEV-4 | VERIFYING | Packet 02 PR CI lacks new build env fixtures and gitleaks flags fake Turnstile test fixtures | Manu / Codex |
 | INCIDENT-P006 | 2026-06-21 | SEV-4 | VERIFYING | Vercel Preview deployment for `feat/gated-registration` lacked eight new Packet 02 env variables | Manu |
 | INCIDENT-P001 | 2026-06-17 | SEV-2 | INVESTIGATING | Production-facing auth exposure: open registration, ineffective rate-limit fallback, vulnerable dependencies, and OAuth/OTP hardening gaps | Manu / Codex |

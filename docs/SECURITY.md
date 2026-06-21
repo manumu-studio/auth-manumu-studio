@@ -90,7 +90,7 @@ public document describes the current implemented controls and known risks.
 - Self-service signup disabled in production via
   `SELF_SERVICE_REGISTRATION_ENABLED=false`.
 - Transactional email delivery is handled by an internal outbox worker with
-  fail-closed bearer-secret auth, admission rate-limit checks, claim-token
+  fail-closed bearer-secret auth, admission limiter consumption, claim-token
   fencing, encrypted invite payloads, key-version decrypt support, and raw invite
   tokens emitted only in `/invite#token=...` fragments.
 
@@ -139,16 +139,16 @@ public document describes the current implemented controls and known risks.
 - No Sentry/error-tracking integration.
 - No request correlation IDs or alerting.
 - No coverage thresholds, E2E tests, or health endpoint.
-- Gated registration runtime flows are not yet implemented; the gated-registration schema, invite lifecycle service, transactional outbox worker, and admission-control foundation exist and the signup kill switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) remains the production guard until the runtime gate ships.
+- Gated registration runtime is partially implemented; the Packet 02 schema, invite lifecycle, transactional outbox worker, atomic invite registration service, and admission-control foundation exist, and the signup kill switch (`SELF_SERVICE_REGISTRATION_ENABLED=false`) remains the production guard until the remaining public gate surfaces ship.
 - Pairwise subjects not yet implemented.
 
 ## Control Matrix
 
 | Area | Current (1.9.0) | Required Next State |
 |------|-----------------|---------------------|
-| Registration | Kill switch plus gated-registration schema, invite lifecycle service, transactional outbox worker, and admission-control foundation | Invite/allowlist runtime gate |
+| Registration | Kill switch plus Packet 02 schema, invite lifecycle, transactional outbox worker, and admission-control foundation | Invite/allowlist runtime gate |
 | Account linking | Social JIT and same-email silent linking denied; existing linked active social accounts can sign in | Explicit both-factor linking ceremony |
-| Rate limits | Upstash mandatory, OAuth endpoints covered, seven-surface admission dimensions implemented | Consumer wiring for remaining runtime routes, logout limiting |
+| Rate limits | Upstash mandatory, OAuth endpoints covered, Packet 02 seven-surface admission dimensions implemented | Consumer wiring for remaining Packet 02 runtime routes, logout limiting |
 | PKCE | S256 required, plain rejected | — (complete) |
 | Auth code use | Atomic conditional update | — (complete) |
 | OTP storage | HMAC-SHA256 with server secret | — (complete) |
@@ -156,7 +156,7 @@ public document describes the current implemented controls and known risks.
 | Dependencies | Blocking audit gate, 0 HIGH/CRITICAL | Ongoing maintenance |
 | Secrets | Full-history gitleaks in CI | Ongoing |
 | Observability | Console logs | Pino + request IDs + Sentry |
-| Testing | 18 files, 203 tests | Coverage thresholds + Playwright |
+| Testing | 19 files, 220 tests | Coverage thresholds + Playwright |
 | Session lifecycle | 30-day JWT | Max-age review, rotation |
 
 ## Account Linking
@@ -235,8 +235,8 @@ Production-required values (enforced by env schema; build fails if absent):
 - `ADMIN_ELEVATION_MAX_AGE_SECONDS`
 
 `OAUTH_JWT_PRIVATE_KEY`, `OAUTH_JWT_PUBLIC_KEY`, `OTP_HMAC_SECRET`,
-`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and the
-admission/invite/Admin-MFA secrets listed above are required fields in the production
+`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and the Packet 02
+admission/invite/Admin-MFA secrets above are required fields in the production
 env schema; the build fails without them.
 `SKIP_ENV_VALIDATION` has been removed from `vercel.json` and CI.
 
